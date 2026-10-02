@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d26d59a4aa8a846a03a9cb02ec688c, type: 3}
+  m_Name: ShopCatalog
+  m_EditorClassIdentifier: Jumpline::Jumpline.Shop.ShopCatalog
+  items:
+  - id: rookie
+    displayName: ROOKIE
+    category: 0
+    currency: 0
+    price: 0
+    rewardGold: 0
+  - id: stealth
+    displayName: STEALTH
+    category: 0
+    currency: 1
+    price: 200
+    rewardGold: 0
+  - id: velocity
+    displayName: VELOCITY
+    category: 0
+    currency: 0
+    price: 1500
+    rewardGold: 0
+  - id: titanium
+    displayName: TITANIUM
+    category: 0
+    currency: 0
+    price: 3000
+    rewardGold: 0
+  - id: glitch
+    displayName: GLITCH
+    category: 0
+    currency: 1
+    price: 300
+    rewardGold: 0
+  - id: crimson
+    displayName: CRIMSON
+    category: 0
+    currency: 0
+    price: 1200
+    rewardGold: 0
+  - id: frost
+    displayName: FROST
+    category: 0
+    currency: 1
+    price: 150
+    rewardGold: 0
+  - id: blaze
+    displayName: BLAZE
+    category: 0
+    currency: 0
+    price: 2500
+    rewardGold: 0
+  - id: speed_boost
+    displayName: SPEED BOOST
+    category: 1
+    currency: 1
+    price: 150
+    rewardGold: 0
+  - id: shield
+    displayName: SHIELD
+    category: 1
+    currency: 1
+    price: 100
+    rewardGold: 0
+  - id: magnet
+    displayName: MAGNET
+    category: 1
+    currency: 0
+    price: 2000
+    rewardGold: 0
+  - id: double_gold
+    displayName: DOUBLE GOLD
+    category: 1
+    currency: 1
+    price: 300
+    rewardGold: 0
+  - id: gold_small
+    displayName: GOLD PACK S
+    category: 2
+    currency: 1
+    price: 50
+    rewardGold: 1000
+  - id: gold_medium
+    displayName: GOLD PACK M
+    category: 2
+    currency: 1
+    price: 200
+    rewardGold: 5000
+  - id: gold_large
+    displayName: GOLD PACK L
+    category: 2
+    currency: 1
+    price: 400
+    rewardGold: 12000
