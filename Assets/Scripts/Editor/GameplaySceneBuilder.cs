@@ -83,7 +83,6 @@ namespace Jumpline.EditorTools
             RunnerStageBuilder.ApplyDisplayPose(model.transform);
 
             var skin = model.AddComponent<Jumpline.Player.RunnerSkin>();
-            Set(skin, "target", model.GetComponentInChildren<SkinnedMeshRenderer>());
             var display = model.AddComponent<Jumpline.UI.RunnerDisplay>();
             Set(display, "runner", skin);
             Set(display, "library", library);

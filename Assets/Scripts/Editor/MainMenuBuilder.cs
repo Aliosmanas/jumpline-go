@@ -142,10 +142,10 @@ namespace Jumpline.EditorTools
             Txt(s.top, "GearHeader", "GEAR", new Rect(862f, 420f, 213f, 56f), fBold, 34f, Hex("#C9CCD6"));
             Line(s.top, new Rect(862f, 479f, 213f, 2f), Hex("#4E546B"));
             Panel(s.top, "GearPanel", new Rect(862f, 497f, 213f, 871f), Hex("#1E2438", 0.75f), Hex("#2A1A28", 0.75f), 18f, Hex("#5D6B93"));
-            TMP_Text suit = GearSlot(s.top, "Suit", 523f, "SUIT:", "ROOKIE", null);
-            GearSlot(s.top, "Boots", 742f, "BOOTS:", "SPRING BOOTS", "gear_boots");
-            GearSlot(s.top, "Gloves", 950f, "GLOVES:", "GRIP-TECH", "gear_gloves");
-            GearSlot(s.top, "Helmet", 1160f, "HELMET:", "VELOCITY VISOR", "gear_helmet");
+            TMP_Text suit = GearSlot(s.top, "Suit", 523f, "SUIT:", "ROOKIE", null, null);
+            GearSlot(s.top, "Boots", 742f, "BOOTS:", "SPRING BOOTS", "gear_boots", RunnerSkin.Boots);
+            GearSlot(s.top, "Gloves", 950f, "GLOVES:", "GRIP-TECH", "gear_gloves", RunnerSkin.Gloves);
+            GearSlot(s.top, "Helmet", 1160f, "HELMET:", "VELOCITY VISOR", "gear_helmet", RunnerSkin.Helmet);
 
             Link(PrimaryButton(s.bot, "CustomizeButton", new Rect(262f, 1362f, 590f, 180f), new Rect(285f, 1380f, 545f, 142f), "CUSTOMIZE", 80f), MenuLink.LinkAction.Open, "customize");
             Link(PillButton(s.bot, "UpgradeButton", new Rect(378f, 1572f, 360f, 68f), "UPGRADE", 30f, Hex("#C3C8D6"), 1f), MenuLink.LinkAction.Open, "upgrade");
@@ -167,14 +167,26 @@ namespace Jumpline.EditorTools
             return new Dictionary<string, object> { { "statId", id }, { "value", value }, { "tier", tier }, { "fill", fill }, { "fullWidth", 280f } };
         }
 
-        private static TMP_Text GearSlot(Box parent, string name, float y, string kind, string item, string icon)
+        private static TMP_Text GearSlot(Box parent, string name, float y, string kind, string item, string icon, string gearSlot)
         {
-            var slot = Panel(parent, name + "Slot", new Rect(901f, y, 134f, 134f), Hex("#5A1D33"), Hex("#2F3A5E"), 18f, Hex("#8193C0"));
-            if (icon != null) Icon(slot, icon, new Rect(905f, y + 6f, 126f, 122f), Color.white);
-            else Thumb(slot, "rookie", new Rect(905f, y + 4f, 126f, 126f));
+            var r = new Rect(901f, y, 134f, 134f);
+            var slot = Panel(parent, name + "Slot", r, Hex("#5A1D33"), Hex("#2F3A5E"), 18f, Hex("#8193C0"));
+            Image art = icon != null ? Icon(slot, icon, new Rect(905f, y + 6f, 126f, 122f), Color.white) : null;
+            if (icon == null) Thumb(slot, "rookie", new Rect(905f, y + 4f, 126f, 126f));
             Color c = Hex("#D9DCE3");
             Txt(parent, name + "Kind", kind, new Rect(868f, y + 142f, 200f, 26f), fBold, 18f, c);
-            return Txt(parent, name + "Item", item, new Rect(862f, y + 165f, 213f, 26f), fBold, 18f, c, localize: name != "Suit");
+            var itemText = Txt(parent, name + "Item", item, new Rect(862f, y + 165f, 213f, 26f), fBold, 18f, c, localize: name != "Suit");
+            Button button = MakeButton(slot, slot.rt.GetComponent<Image>());
+            if (gearSlot == null)
+            {
+                Link(button, MenuLink.LinkAction.Open, "customize");
+            }
+            else
+            {
+                var status = Txt(slot, "Status", "", new Rect(r.x, r.yMax - 26f, r.width, 22f), fExtra, 15f, c, localize: false);
+                button.gameObject.AddComponent<GearToggle>().Configure(gearSlot, item, art, status);
+            }
+            return itemText;
         }
 
         // ---------------------------------------------------------------------
@@ -201,7 +213,8 @@ namespace Jumpline.EditorTools
             SegmentedControl tabs = Tabs(s.top);
 
             // Skins sekmesi: referanstaki düzen
-            var skins = Add(s.top, "SkinsTab", Full);
+            var skinsTab = Add(s.top, "SkinsTab", Full);
+            Box skins = VerticalScroll(skinsTab, "SkinsScroll", new Rect(0f, 340f, 1116f, 1395f), 1960f);
             var band = Add(skins, "DealsBand", new Rect(0f, 380f, 1116f, 820f));
             Fill(band, Hex("#5C1C2E", 0f), Hex("#5C1C2E", 0.95f));
             Line(skins, new Rect(0f, 380f, 1116f, 2f), Hex("#6E2338"));
@@ -228,10 +241,34 @@ namespace Jumpline.EditorTools
             Set(view, "goldText", gold);
             Set(view, "gemsText", gems);
             Set(view, "tabs", tabs);
-            SetArray(view, "tabPanels", new Object[] { skins.go, boosts.go, currency.go });
+            SetArray(view, "tabPanels", new Object[] { skinsTab.go, boosts.go, currency.go });
             boosts.go.SetActive(false);
             currency.go.SetActive(false);
             SetArray(view, "cards", cards.ToArray());
+        }
+
+        /// <summary>
+        /// Dikey kaydırma alanı. Dönen kutuya referans koordinatlarıyla eklenir; içerik viewport'un üstünden
+        /// contentBottom'a kadar uzanır.
+        /// </summary>
+        private static Box VerticalScroll(Box parent, string name, Rect viewportRect, float contentBottom)
+        {
+            var viewport = Add(parent, name, viewportRect);
+            viewport.go.AddComponent<RectMask2D>();
+            viewport.go.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0f); // sürükleme için raycast hedefi
+            var contentRect = new Rect(viewportRect.x, viewportRect.y, viewportRect.width, contentBottom - viewportRect.y);
+            var content = Add(viewport, "Content", contentRect);
+            content.rt.anchorMin = content.rt.anchorMax = new Vector2(0.5f, 1f);
+            content.rt.pivot = new Vector2(0.5f, 1f);
+            content.rt.anchoredPosition = Vector2.zero;
+            var scroll = viewport.go.AddComponent<ScrollRect>();
+            scroll.content = content.rt;
+            scroll.viewport = viewport.rt;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Elastic;
+            scroll.scrollSensitivity = 30f;
+            return content;
         }
 
         private static SegmentedControl Tabs(Box parent)
@@ -521,6 +558,24 @@ namespace Jumpline.EditorTools
             for (int i = 0; i < BoostIds.Length; i++)
                 cards.Add(GridCard(boosts, BoostIds[i], new Rect(93f + i * 237f, 1020f, 220f, 245f), false));
 
+            var gear = Section(s.top, "Gear", "GEAR", new Rect(63f, 1320f, 990f, 400f));
+            (string slot, string icon, string label)[] items =
+            {
+                (RunnerSkin.Helmet, "gear_helmet", "VELOCITY VISOR"),
+                (RunnerSkin.Gloves, "gear_gloves", "GRIP-TECH"),
+                (RunnerSkin.Boots, "gear_boots", "SPRING BOOTS"),
+            };
+            for (int i = 0; i < items.Length; i++)
+            {
+                var r = new Rect(93f + i * 316f, 1430f, 298f, 262f);
+                var card = Panel(gear, items[i].slot + "Card", r, Hex("#5A1C30"), Hex("#273256"), 22f, Hex("#7184B0"));
+                Image art = Icon(card, items[i].icon, new Rect(r.x + 40f, r.y + 8f, r.width - 80f, 160f), Color.white);
+                Txt(card, "Title", items[i].label, new Rect(r.x + 6f, r.y + 172f, r.width - 12f, 40f), fBold, 26f, Color.white);
+                var status = Txt(card, "Status", "", new Rect(r.x + 6f, r.y + 212f, r.width - 12f, 36f), fExtra, 24f, C.Price, localize: false);
+                MakeButton(card, card.rt.GetComponent<Image>()).gameObject.AddComponent<GearToggle>()
+                    .Configure(items[i].slot, items[i].label, art, status);
+            }
+
             var view = s.screen.gameObject.AddComponent<ItemListView>();
             Set(view, "catalog", catalog);
             SetEnum(view, "mode", (int)CardMode.Inventory);
@@ -537,7 +592,7 @@ namespace Jumpline.EditorTools
             for (int i = 0; i < SkinIds.Length; i++)
                 cards.Add(GridCard(skins, SkinIds[i], new Rect(xs[i % 4], 380f + (i / 4) * 370f, 220f, 342f), true));
 
-            RawPreview(s.top, "RunnerPreview", new Rect(258f, 1150f, 600f, 600f), preview);
+            RawPreview(s.top, "RunnerPreview", new Rect(158f, 1145f, 800f, 850f), preview);
 
             var view = s.screen.gameObject.AddComponent<ItemListView>();
             Set(view, "catalog", catalog);

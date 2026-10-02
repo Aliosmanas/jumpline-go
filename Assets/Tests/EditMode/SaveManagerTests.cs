@@ -24,6 +24,7 @@ namespace Jumpline.Tests
         private static readonly string[] StringKeys =
             { SaveManager.EquippedSkinKey, SaveManager.LanguageKey, SaveManager.DailyClaimKey };
 
+        private bool unlimited;
         private readonly Dictionary<string, int> savedInts = new Dictionary<string, int>();
         private readonly Dictionary<string, float> savedFloats = new Dictionary<string, float>();
         private readonly Dictionary<string, string> savedStrings = new Dictionary<string, string>();
@@ -31,6 +32,8 @@ namespace Jumpline.Tests
         [SetUp]
         public void SetUp()
         {
+            unlimited = SaveManager.UnlimitedCurrency;
+            SaveManager.UnlimitedCurrency = false; // cüzdan testleri gerçek bakiye ister
             // Geliştiricinin gerçek kaydını koru.
             savedInts.Clear();
             savedFloats.Clear();
@@ -43,6 +46,7 @@ namespace Jumpline.Tests
         [TearDown]
         public void TearDown()
         {
+            SaveManager.UnlimitedCurrency = unlimited;
             foreach (string k in IntKeys) PlayerPrefs.DeleteKey(k);
             foreach (string k in FloatKeys) PlayerPrefs.DeleteKey(k);
             foreach (string k in StringKeys) PlayerPrefs.DeleteKey(k);
@@ -91,6 +95,16 @@ namespace Jumpline.Tests
 
             SaveManager.GraphicsQuality = 99;
             Assert.AreEqual(SaveManager.GraphicsQualityCount - 1, SaveManager.GraphicsQuality);
+        }
+
+        [Test]
+        public void UnlimitedCurrency_IgnoresSpending()
+        {
+            SaveManager.UnlimitedCurrency = true;
+            SaveManager.Gold -= 500;
+            Assert.AreEqual(SaveManager.UnlimitedAmount, SaveManager.Gold);
+            SaveManager.UnlimitedCurrency = false;
+            Assert.AreEqual(SaveManager.DefaultGold, SaveManager.Gold);
         }
 
         [Test]

@@ -63,16 +63,38 @@ namespace Jumpline.Save
 
         // ---------- Cüzdan ve eşyalar ----------
 
+        /// <summary>
+        /// Geliştirici modu: altın/elmas sınırsız (harcama düşmez). Editörde ve Development build'de açık,
+        /// yayın (release) build'inde otomatik kapalı.
+        /// </summary>
+        public static bool UnlimitedCurrency = Debug.isDebugBuild;
+        public const int UnlimitedAmount = 999999;
+
         public static int Gold
         {
-            get => PlayerPrefs.GetInt(GoldKey, DefaultGold);
-            set => PlayerPrefs.SetInt(GoldKey, Mathf.Max(0, value));
+            get => UnlimitedCurrency ? UnlimitedAmount : PlayerPrefs.GetInt(GoldKey, DefaultGold);
+            set { if (!UnlimitedCurrency) PlayerPrefs.SetInt(GoldKey, Mathf.Max(0, value)); }
         }
 
         public static int Gems
         {
-            get => PlayerPrefs.GetInt(GemsKey, DefaultGems);
-            set => PlayerPrefs.SetInt(GemsKey, Mathf.Max(0, value));
+            get => UnlimitedCurrency ? UnlimitedAmount : PlayerPrefs.GetInt(GemsKey, DefaultGems);
+            set { if (!UnlimitedCurrency) PlayerPrefs.SetInt(GemsKey, Mathf.Max(0, value)); }
+        }
+
+        // ---------- Ekipman (takılı / çıkarılmış) ----------
+
+        public const string GearPrefix = "jl.gear.";
+
+        public static event Action GearChanged;
+
+        public static bool IsGearEquipped(string slot) => PlayerPrefs.GetInt(GearPrefix + slot, 1) == 1;
+
+        public static void SetGearEquipped(string slot, bool equipped)
+        {
+            PlayerPrefs.SetInt(GearPrefix + slot, equipped ? 1 : 0);
+            PlayerPrefs.Save();
+            GearChanged?.Invoke();
         }
 
         public static bool IsOwned(string itemId) => itemId == DefaultSkin || PlayerPrefs.GetInt(OwnedPrefix + itemId, 0) == 1;

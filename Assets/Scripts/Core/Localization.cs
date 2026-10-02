@@ -61,6 +61,8 @@ namespace Jumpline.Core
             { "GLOVES:", "ELDİVEN:" },
             { "ACCESSORY:", "AKSESUAR:" },
             { "HELMET:", "KASK:" },
+            { "REMOVED", "ÇIKARILDI" },
+            { "{0} REMOVED", "{0} ÇIKARILDI" },
             { "SPRING BOOTS", "YAYLI BOTLAR" },
             { "VELOCITY VISOR", "HIZ VİZÖRÜ" },
             { "COIN MAGNET", "ALTIN MIKNATISI" },

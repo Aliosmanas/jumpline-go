@@ -191,7 +191,6 @@ namespace Jumpline.EditorTools
             model.transform.localRotation = Quaternion.Euler(0f, DisplayYaw, 0f);
 
             runner = model.AddComponent<RunnerSkin>();
-            Set(runner, "target", model.GetComponentInChildren<SkinnedMeshRenderer>());
             runner.Apply(library.Find("rookie"));
 
             var display = stage.gameObject.AddComponent<RunnerDisplay>();
@@ -248,12 +247,15 @@ namespace Jumpline.EditorTools
 
         private static void GroundModel(Transform model, float groundY)
         {
-            var smr = model.GetComponentInChildren<SkinnedMeshRenderer>();
-            var mesh = new Mesh();
-            smr.BakeMesh(mesh, true);
             float minY = float.MaxValue;
-            foreach (Vector3 v in mesh.vertices) minY = Mathf.Min(minY, smr.transform.TransformPoint(v).y);
-            Object.DestroyImmediate(mesh);
+            foreach (var smr in model.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                if (smr.name == "Runner_Feet") continue; // bot takılıyken gizli
+                var mesh = new Mesh();
+                smr.BakeMesh(mesh, true);
+                foreach (Vector3 v in mesh.vertices) minY = Mathf.Min(minY, smr.transform.TransformPoint(v).y);
+                Object.DestroyImmediate(mesh);
+            }
             model.position += new Vector3(0f, groundY - minY, 0f);
         }
 
@@ -266,7 +268,10 @@ namespace Jumpline.EditorTools
             var rt = new RenderTexture(512, 768, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB) { antiAliasing = 4 };
             float fov = camera.fieldOfView;
             camera.targetTexture = rt;
-            camera.fieldOfView = 34f;
+            camera.fieldOfView = 26f; // kostüm kartı: karakter kareyi doldursun
+            Quaternion rot = camera.transform.rotation;
+            camera.transform.LookAt(runner.transform.position + new Vector3(0f, 0.95f, 0f));
+            foreach (var r in runner.GetComponentsInChildren<Renderer>(true)) r.enabled = r.name != "Runner_Feet"; // tam ekipmanlı
             try
             {
                 foreach (SkinPreset skin in library.Skins)
@@ -294,6 +299,8 @@ namespace Jumpline.EditorTools
             {
                 camera.targetTexture = previous;
                 camera.fieldOfView = fov;
+                camera.transform.rotation = rot;
+                runner.ApplyGear();
                 Object.DestroyImmediate(rt);
                 runner.Apply(library.Find("rookie"));
             }

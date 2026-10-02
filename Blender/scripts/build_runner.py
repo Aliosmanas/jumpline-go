@@ -244,7 +244,7 @@ def paint_regions(body, sk):
             elif abs(c.x) > SIDE_X and c.z < SIDE_TOP_Z:
                 mat = SECONDARY                                              # yan paneller
         elif bone and (bone.startswith("hand") or is_finger(bone)):
-            mat = GLOVE
+            mat = SECONDARY                                                  # eldiven altı astar
         elif bone and bone.startswith("lowerarm"):
             mat = SECONDARY                                                  # ön kol (bileklik ayrı)
         elif bone and bone.startswith(("upperarm", "clavicle")):
@@ -358,16 +358,18 @@ def add_glove_details(body, sk, bones):
     return parts
 
 
-def remove_feet(body, bones):
-    """Bot içinde kalacak çıplak ayak yüzlerini sil (parmaklar bottan taşmasın)."""
+def split_feet(body, bones):
+    """Ayak yüzlerini gövdeden ayırıp lacivert çorap parçası yapar (bot takılıyken gizlenir)."""
+    feet = [i for i, b in enumerate(bones) if b and b.startswith(("foot", "ball"))]
+    obj = shell(body, feet, "Feet", 0.0, 0.0, SECONDARY, smooth=0, edge_smooth=0)
     bm = bmesh.new()
     bm.from_mesh(body.data)
     bm.faces.ensure_lookup_table()
-    dead = [bm.faces[i] for i, b in enumerate(bones) if b and b.startswith(("foot", "ball"))]
-    bmesh.ops.delete(bm, geom=dead, context="FACES")
+    bmesh.ops.delete(bm, geom=[bm.faces[i] for i in feet], context="FACES")
     bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
     bm.to_mesh(body.data)
     bm.free()
+    return obj
 
 
 SOLE_H = 0.03       # taban kalınlığı
@@ -694,6 +696,31 @@ def reduce(obj, ratio):
     bpy.ops.object.modifier_apply(modifier="Reduce")
 
 
+GEAR_GROUPS = {
+    "Runner_Helmet": ("Helmet", "Visor", "VisorGlow", "JawGlow", "Ear"),
+    "Runner_Gloves": ("Gloves", "Knuckles", "HandGlow", "GloveCuff"),
+    "Runner_Boots": ("Boot_", "Sole_", "Spring_", "BootCuff_", "BootRim_"),
+}
+
+
+def join_into(name, objs, body, rig):
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in objs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
+    if len(objs) > 1:
+        bpy.ops.object.join()
+    obj = bpy.context.active_object
+    obj.name = obj.data.name = name
+    for p in obj.data.polygons:
+        p.use_smooth = False
+    obj.parent = rig
+    if not any(m.type == "ARMATURE" for m in obj.modifiers):
+        mod = obj.modifiers.new("Armature", "ARMATURE")
+        mod.object = rig
+    return obj
+
+
 def build():
     make_materials()
     body, rig = create_body()
@@ -702,7 +729,7 @@ def build():
     sk = Skeleton(rig)
     bones = paint_regions(body, sk)
     parts = add_armor(body, sk, bones)
-    remove_feet(body, bones)
+    feet = split_feet(body, bones)
     parts += add_boots(body, sk)
     parts += add_helmet(body, bones)
     parts += add_glows(body, bones, 0.0)
@@ -711,14 +738,13 @@ def build():
         if part.name.startswith(("ShoulderPads", "KneePads", "Bracers", "ShinBands", "Gloves", "Knuckles", "GloveCuff")):
             reduce(part, SHELL_DECIMATE)
 
-    bpy.ops.object.select_all(action="DESELECT")
-    for p in parts:
-        p.select_set(True)
-    body.select_set(True)
-    bpy.context.view_layer.objects.active = body
-    bpy.ops.object.join()
-    for p in body.data.polygons:
-        p.use_smooth = False
+    gear = {}
+    for gname, prefixes in GEAR_GROUPS.items():
+        members = [p for p in parts if p.name.startswith(prefixes)]
+        parts = [p for p in parts if p not in members]
+        gear[gname] = join_into(gname, members, body, rig)
+    join_into("Runner_Feet", [feet], body, rig)
+    body = join_into("Runner", [body] + parts, body, rig)
     return rig, body
 
 
@@ -726,7 +752,8 @@ def export(rig, body):
     os.makedirs(os.path.dirname(FBX_PATH), exist_ok=True)
     bpy.ops.object.select_all(action="DESELECT")
     rig.select_set(True)
-    body.select_set(True)
+    for o in rig.children:
+        o.select_set(True)
     bpy.context.view_layer.objects.active = rig
     bpy.ops.export_scene.fbx(
         filepath=FBX_PATH, use_selection=True, object_types={"ARMATURE", "MESH"},
@@ -741,4 +768,4 @@ def export(rig, body):
 
 _rig, _body = build()
 export(_rig, _body)
-print("RUNNER_OK", len(_body.data.polygons), [m.name for m in _body.data.materials])
+print("RUNNER_OK", [(o.name, len(o.data.polygons)) for o in _rig.children])

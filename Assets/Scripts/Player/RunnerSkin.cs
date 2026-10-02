@@ -1,28 +1,60 @@
+using Jumpline.Save;
 using UnityEngine;
 
 namespace Jumpline.Player
 {
     /// <summary>
-    /// Koşucu modelinin malzeme slotlarını (M_Primary, M_Secondary...) kostüm renkleriyle boyar.
-    /// Malzeme kopyalamaz; MaterialPropertyBlock kullanır.
+    /// Koşucu modelinin malzeme slotlarını (M_Primary, M_Secondary...) kostüm renkleriyle boyar ve
+    /// takılı / çıkarılmış ekipmanı (kask, eldiven, bot) gösterir. Malzeme kopyalamaz; MaterialPropertyBlock kullanır.
     /// </summary>
     public class RunnerSkin : MonoBehaviour
     {
+        public const string Helmet = "helmet";
+        public const string Gloves = "gloves";
+        public const string Boots = "boots";
+
         private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
         private static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
         private static readonly int Metallic = Shader.PropertyToID("_Metallic");
         private static readonly int Smoothness = Shader.PropertyToID("_Smoothness");
 
-        [SerializeField] private Renderer target;
-
         private MaterialPropertyBlock block;
+        private Renderer[] renderers;
+
+        private Renderer[] Renderers => renderers ??= GetComponentsInChildren<Renderer>(true);
+
+        private void OnEnable()
+        {
+            SaveManager.GearChanged += ApplyGear;
+            ApplyGear();
+        }
+
+        private void OnDisable() => SaveManager.GearChanged -= ApplyGear;
+
+        /// <summary>Ekipman nesneleri: Runner_Helmet / Runner_Gloves / Runner_Boots; bot yoksa Runner_Feet görünür.</summary>
+        public void ApplyGear()
+        {
+            foreach (Renderer r in Renderers)
+            {
+                switch (r.name)
+                {
+                    case "Runner_Helmet": r.enabled = SaveManager.IsGearEquipped(Helmet); break;
+                    case "Runner_Gloves": r.enabled = SaveManager.IsGearEquipped(Gloves); break;
+                    case "Runner_Boots": r.enabled = SaveManager.IsGearEquipped(Boots); break;
+                    case "Runner_Feet": r.enabled = !SaveManager.IsGearEquipped(Boots); break;
+                }
+            }
+        }
 
         public void Apply(SkinPreset skin)
         {
             if (skin == null) return;
-            if (target == null) target = GetComponentInChildren<Renderer>();
             block ??= new MaterialPropertyBlock();
+            foreach (Renderer target in Renderers) Apply(skin, target);
+        }
 
+        private void Apply(SkinPreset skin, Renderer target)
+        {
             Material[] mats = target.sharedMaterials;
             for (int i = 0; i < mats.Length; i++)
             {
