@@ -16,6 +16,13 @@ Tam tasarım isteği: `docs/BRIEF.md`. Kullanıcı Türkçe konuşur, Türkçe c
 | Android | **Modül henüz kurulu değil** (Hub → Installs → Add modules: Android Build Support + SDK/NDK + OpenJDK) |
 | Blender | 5.2.2 LTS — `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe` (4.5 de kurulu) |
 
+## MCP (canlı kontrol, `.mcp.json`)
+
+- **blender:** `uvx blender-mcp` (PyPI 2.0.0) ↔ Blender eklentisi `Blender/addons/blender_mcp.py` (kurulu, localhost:9876). Blender açık + N panel → BlenderMCP → bağlan.
+- **unity:** `uvx --from mcpforunityserver==10.0.0 mcp-for-unity --transport stdio` ↔ paket `com.coplaydev.unity-mcp#v10.0.0`. Editör açık olmalı (Window → MCP for Unity).
+- uvx: winget ile kuruldu (`astral-sh.uv`). İndirme yavaşsa `UV_HTTP_TIMEOUT=300`.
+- Editör açıkken toplu mod (`-batchmode`) ÇALIŞMAZ (proje kilitli) → o sırada MCP ile çalış.
+
 ## Komutlar
 
 ```powershell
