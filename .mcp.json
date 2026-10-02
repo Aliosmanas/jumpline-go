@@ -1,8 +1,17 @@
 {
   "mcpServers": {
     "blender": {
+      "type": "stdio",
       "command": "C:\\Users\\Ali Osman Keskin\\AppData\\Local\\Microsoft\\WinGet\\Packages\\astral-sh.uv_Microsoft.Winget.Source_8wekyb3d8bbwe\\uvx.exe",
       "args": ["blender-mcp"],
+      "env": {
+        "DISABLE_TELEMETRY": "true"
+      }
+    },
+    "unity": {
+      "type": "stdio",
+      "command": "C:\\Users\\Ali Osman Keskin\\AppData\\Local\\Microsoft\\WinGet\\Packages\\astral-sh.uv_Microsoft.Winget.Source_8wekyb3d8bbwe\\uvx.exe",
+      "args": ["--from", "mcpforunityserver==10.0.0", "mcp-for-unity", "--transport", "stdio"],
       "env": {
         "DISABLE_TELEMETRY": "true"
       }
