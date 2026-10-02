@@ -32,15 +32,17 @@ PHENOTYPE = {"age": 0.5, "cupsize": 0.5, "firmness": 0.7, "gender": 1.0, "height
 FACET_ANGLE = 14.0      # derece: düzlemsel birleştirme açısı (yüzeyli low-poly görünüm)
 SHELL_DECIMATE = 0.45
 
-MAT_ORDER = ["M_Primary", "M_Secondary", "M_Armor", "M_Glove", "M_Glow", "M_Visor"]
-PRIMARY, SECONDARY, ARMOR, GLOVE, GLOW, VISOR = range(6)
+MAT_ORDER = ["M_Primary", "M_Secondary", "M_Armor", "M_Glove", "M_Glow", "M_Visor", "M_GlowAlt"]
+PRIMARY, SECONDARY, ARMOR, GLOVE, GLOW, VISOR, GLOWALT = range(7)
+UV_NAME = "UVMap"  # build() gövdenin UV katmanı adıyla günceller
 MATERIALS = {
-    "M_Primary": ("#7A2238", 0.55, 0.15, None),
-    "M_Secondary": ("#262B47", 0.6, 0.1, None),
-    "M_Armor": ("#9EA9C8", 0.35, 0.6, None),
+    "M_Primary": ("#7A2238", 0.5, 0.2, None),          # bordo karbon fiber
+    "M_Secondary": ("#1E2340", 0.7, 0.1, None),        # mat koyu lacivert
+    "M_Armor": ("#4E5675", 0.35, 0.6, None),           # lacivert-metal zırh
     "M_Glove": ("#1C2033", 0.7, 0.0, None),
     "M_Glow": ("#3FD8FF", 0.3, 0.0, ("#3FD8FF", 6.0)),
-    "M_Visor": ("#AEB8D6", 0.15, 0.7, None),
+    "M_Visor": ("#152045", 0.1, 0.6, None),            # koyu cam vizör
+    "M_GlowAlt": ("#C2305A", 0.4, 0.0, ("#FF3D7A", 3.0)),  # bot tabanı bordo ışık
 }
 
 
@@ -244,7 +246,7 @@ def paint_regions(body, sk):
         elif bone and (bone.startswith("hand") or is_finger(bone)):
             mat = GLOVE
         elif bone and bone.startswith("lowerarm"):
-            mat = SECONDARY if (c - sk.head(bone)).length < 0.05 else PRIMARY  # dirsek
+            mat = SECONDARY                                                  # ön kol (bileklik ayrı)
         elif bone and bone.startswith(("upperarm", "clavicle")):
             mat = PRIMARY
         elif bone and bone.startswith("thigh"):
@@ -309,19 +311,51 @@ def add_armor(body, sk, bones):
     parts.append(shell(body, select(lambda p, b: b.startswith(("upperarm", "clavicle")) and p.center.z > sh_z - 0.07
                                     and abs(p.center.x) > 0.16 and p.normal.z > -0.3),
                        "ShoulderPads", 0.022, 0.014, ARMOR))
-    parts.append(shell(body, select(lambda p, b: b == "spine_03" and p.normal.y < -0.35 and p.center.z > 1.43
-                                    and 0.05 < abs(p.center.x) < 0.17),
-                       "ChestPlates", 0.006, 0.006, ARMOR))
     parts.append(shell(body, select(lambda p, b: b.startswith(("calf", "thigh")) and p.normal.y < -0.2
-                                    and (p.center - sk.head("calf_" + b[-1])).length < 0.08),
-                       "KneePads", 0.014, 0.01, ARMOR))
-    parts.append(shell(body, select(lambda p, b: b.startswith("lowerarm") and 0.5 < sk.t_along(b, p.center) < 0.8),
-                       "Bracers", 0.008, 0.006, ARMOR))
+                                    and (p.center - sk.head("calf_" + b[-1])).length < 0.085),
+                       "KneePads", 0.016, 0.012, PRIMARY))
+    parts.append(shell(body, select(lambda p, b: b.startswith("lowerarm") and 0.45 < sk.t_along(b, p.center) < 0.92),
+                       "Bracers", 0.01, 0.007, PRIMARY))
     parts.append(shell(body, select(lambda p, b: b.startswith("calf") and 0.6 < sk.t_along(b, p.center) < 0.68),
                        "ShinBands", 0.007, 0.005, ARMOR))
     parts.append(shell(body, select(lambda p, b: b.startswith("hand") or is_finger(b)),
                        "Gloves", 0.004, 0.0, GLOVE, smooth=1, edge_smooth=2))
+    parts += add_glove_details(body, sk, bones)
     return [p for p in parts if p]
+
+
+def hand_back(sk, side):
+    """El sırtı yönü: parmak ekseni x eklem hattı; avuç tarafı başparmağın olduğu taraf."""
+    d = (sk.head("middle_01_" + side) - sk.head("hand_" + side)).normalized()
+    across = (sk.head("index_01_" + side) - sk.head("pinky_01_" + side)).normalized()
+    n = d.cross(across).normalized()
+    center = (sk.head("hand_" + side) + sk.head("middle_01_" + side)) / 2
+    thumb = sk.tail("thumb_02_" + side)
+    if (thumb - center).dot(n) > 0:
+        n = -n
+    return n
+
+
+def add_glove_details(body, sk, bones):
+    """docs/references/character/gloves.jpg: eklem korumaları, el sırtında mavi ışık, bilekte bordo manşet."""
+    parts = []
+    polys = body.data.polygons
+    for side in ("l", "r"):
+        back = hand_back(sk, side)
+        h0, h1 = sk.head("hand_" + side), sk.head("middle_01_" + side)
+        palm_t = lambda c, h0=h0, h1=h1: (c - h0).dot(h1 - h0) / (h1 - h0).length_squared
+        knuckle = [p.index for p, b in zip(polys, bones)
+                   if b and p.normal.dot(back) > 0.4 and
+                   (b in (f"index_01_{side}", f"middle_01_{side}", f"ring_01_{side}", f"pinky_01_{side}")
+                    or (b == f"hand_{side}" and palm_t(p.center) > 0.78))]
+        parts.append(shell(body, knuckle, f"Knuckles_{side}", 0.012, 0.01, ARMOR, smooth=2, edge_smooth=4))
+        glow = [p.index for p, b in zip(polys, bones)
+                if b == f"hand_{side}" and p.normal.dot(back) > 0.35 and 0.3 < palm_t(p.center) < 0.62]
+        parts.append(shell(body, glow, f"HandGlow_{side}", 0.009, 0.0, GLOW, smooth=2, edge_smooth=6))
+        cuff = [p.index for p, b in zip(polys, bones)
+                if (b == f"lowerarm_{side}" and sk.t_along(b, p.center) > 0.93) or (b == f"hand_{side}" and sk.t_along(b, p.center) < 0.1)]
+        parts.append(shell(body, cuff, f"GloveCuff_{side}", 0.012, 0.008, PRIMARY, smooth=2, edge_smooth=4))
+    return parts
 
 
 def remove_feet(body, bones):
@@ -336,51 +370,127 @@ def remove_feet(body, bones):
     bm.free()
 
 
+SOLE_H = 0.03       # taban kalınlığı
+HEEL_GAP = 0.035    # topukta yay boşluğu
+
+
+def uv_bm():
+    bm = bmesh.new()
+    bm.loops.layers.uv.new(UV_NAME)
+    return bm
+
+
 def add_boots(body, sk):
-    """Yuvarlatılmış low-poly bot: topuk→burun gövde, bileği saran konç. Ön kısım ball, gövde foot, konç calf kemiğine."""
+    """Lacivert metalik bot, bordo karbon şeritler, burun koruması, ışıklı bordo taban, topukta yay."""
     parts = []
     for side in ("l", "r"):
         ankle, ball, toe = sk.head("foot_" + side), sk.head("ball_" + side), sk.tail("ball_" + side)
         x = (ankle.x + ball.x) / 2
-        heel_y, toe_y = ankle.y + 0.07, toe.y - 0.03
-        bm = bmesh.new()
-        bmesh.ops.create_cube(bm, size=1.0)
-        bmesh.ops.subdivide_edges(bm, edges=list(bm.edges), cuts=2, use_grid_fill=True)
-        for _ in range(3):
-            bmesh.ops.smooth_vert(bm, verts=list(bm.verts), factor=0.6, use_axis_x=True, use_axis_y=True, use_axis_z=True)
-        length, width, height = heel_y - toe_y, 0.115, 0.13
-        for v in bm.verts:
-            u = v.co.y + 0.5            # 0 burun, 1 topuk
-            w = v.co.z + 0.5            # 0 taban, 1 üst
-            taper = 0.55 + 0.45 * min(1.0, u * 2.2)          # burunda incelir
-            top = height * (0.45 + 0.55 * min(1.0, u * 1.6))  # burun alçak, topuk yüksek
-            v.co = Vector((x + v.co.x * width * taper, toe_y + u * length, w * top))
-        bm.normal_update()
-        dl = bm.verts.layers.deform.verify()
+        heel_y, toe_y = ankle.y + 0.075, toe.y - 0.035
+        length, width, height = heel_y - toe_y, 0.12, 0.15
         gi_foot, gi_ball = body.vertex_groups["foot_" + side].index, body.vertex_groups["ball_" + side].index
-        for v in bm.verts:
-            v[dl][gi_ball if v.co.y < ball.y else gi_foot] = 1.0
+
+        def shaped(z0, z_top, heel_lift=0.0, flat_top=False):
+            bm = uv_bm()
+            bmesh.ops.create_cube(bm, size=1.0, calc_uvs=True)
+            bmesh.ops.subdivide_edges(bm, edges=list(bm.edges), cuts=3, use_grid_fill=True)
+            for _ in range(3):
+                bmesh.ops.smooth_vert(bm, verts=list(bm.verts), factor=0.6, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+            for v in bm.verts:
+                u = v.co.y + 0.5            # 0 burun, 1 topuk
+                w = v.co.z + 0.5            # 0 alt, 1 üst
+                taper = 0.6 + 0.4 * min(1.0, u * 2.4)
+                top = z_top if flat_top else z_top * (0.42 + 0.58 * min(1.0, u * 1.5))
+                bottom = z0 + heel_lift * max(0.0, (u - 0.62) / 0.38)
+                v.co = Vector((x + v.co.x * width * taper, toe_y + u * length, bottom + w * (top - bottom)))
+            bm.normal_update()
+            dl = bm.verts.layers.deform.verify()
+            for v in bm.verts:
+                v[dl][gi_ball if v.co.y < ball.y else gi_foot] = 1.0
+            return bm
+
+        # Üst kısım
+        bm = shaped(SOLE_H, height, heel_lift=HEEL_GAP)
         for f in bm.faces:
-            f.material_index = ARMOR if f.normal.z < -0.6 else PRIMARY
+            c, n = f.calc_center_median(), f.normal
+            u = (c.y - toe_y) / length
+            w = (c.z - SOLE_H) / (height - SOLE_H)
+            mat = SECONDARY
+            if u < 0.24 and n.z > -0.5:
+                mat = ARMOR                                            # burun koruması
+            elif abs(n.x) > 0.55 and 0.32 < w < 0.52 and u > 0.2:
+                mat = PRIMARY                                          # yan karbon şerit
+            elif w > 0.86:
+                mat = PRIMARY                                          # ağız kenarı
+            f.material_index = mat
             f.smooth = False
         parts.append(_mesh_part(f"Boot_{side}", bm, body))
 
-        # Konç: bileği saran kısa silindir
+        # Taban: üstü / altı bordo, kenarları ışıklı
+        bm = shaped(0.0, SOLE_H, flat_top=True)
+        for f in bm.faces:
+            f.material_index = PRIMARY if abs(f.normal.z) > 0.55 else GLOWALT
+            f.smooth = False
+        parts.append(_mesh_part(f"Sole_{side}", bm, body))
+
+        # Topuk yayı (helis boru)
         bm = bmesh.new()
-        bmesh.ops.create_cone(bm, cap_ends=False, segments=10, radius1=0.068, radius2=0.062, depth=0.11)
-        bmesh.ops.translate(bm, verts=bm.verts, vec=Vector((ankle.x, ankle.y + 0.012, ankle.z + 0.06)))
+        dl = bm.verts.layers.deform.verify()
+        turns, steps, ring = 3.5, 56, 6
+        coil_r, tube_r = 0.022, 0.0045
+        cy, z0, z1 = heel_y - 0.04, SOLE_H, SOLE_H + HEEL_GAP + 0.004
+        rings = []
+        for i in range(steps + 1):
+            t = i / steps
+            a = t * turns * 2 * math.pi
+            center = Vector((x + math.cos(a) * coil_r, cy + math.sin(a) * coil_r, z0 + t * (z1 - z0)))
+            tangent = Vector((-math.sin(a) * coil_r * turns * 2 * math.pi, math.cos(a) * coil_r * turns * 2 * math.pi, z1 - z0)).normalized()
+            radial = Vector((math.cos(a), math.sin(a), 0.0))
+            binorm = tangent.cross(radial).normalized()
+            verts = []
+            for k in range(ring):
+                b = k / ring * 2 * math.pi
+                v = bm.verts.new(center + (radial * math.cos(b) + binorm * math.sin(b)) * tube_r)
+                v[dl][gi_foot] = 1.0
+                verts.append(v)
+            rings.append(verts)
+        for i in range(steps):
+            for k in range(ring):
+                bm.faces.new((rings[i][k], rings[i][(k + 1) % ring], rings[i + 1][(k + 1) % ring], rings[i + 1][k]))
+        for f in bm.faces:
+            f.material_index = ARMOR
+            f.smooth = False
+        parts.append(_mesh_part(f"Spring_{side}", bm, body))
+
+        # Konç: bileği saran yüksek manşet, üst kenarı bordo
+        bm = uv_bm()
+        bmesh.ops.create_cone(bm, cap_ends=False, segments=12, radius1=0.07, radius2=0.064, depth=0.13, calc_uvs=True)
+        bmesh.ops.translate(bm, verts=bm.verts, vec=Vector((ankle.x, ankle.y + 0.012, ankle.z + 0.075)))
         dl = bm.verts.layers.deform.verify()
         gi_calf = body.vertex_groups["calf_" + side].index
         for v in bm.verts:
             v[dl][gi_calf if v.co.z > ankle.z + 0.03 else gi_foot] = 1.0
+        top_z = ankle.z + 0.14
+        for f in bm.faces:
+            f.material_index = SECONDARY
+            f.smooth = False
+        parts.append(_mesh_part(f"BootCuff_{side}", bm, body))
+        bm = uv_bm()
+        bmesh.ops.create_cone(bm, cap_ends=False, segments=12, radius1=0.072, radius2=0.07, depth=0.025, calc_uvs=True)
+        bmesh.ops.translate(bm, verts=bm.verts, vec=Vector((ankle.x, ankle.y + 0.012, top_z - 0.012)))
+        dl = bm.verts.layers.deform.verify()
+        for v in bm.verts:
+            v[dl][gi_calf] = 1.0
         for f in bm.faces:
             f.material_index = PRIMARY
             f.smooth = False
-        parts.append(_mesh_part(f"BootCuff_{side}", bm, body))
+        parts.append(_mesh_part(f"BootRim_{side}", bm, body))
     return parts
 
 
 def _mesh_part(name, bm, body):
+    if not bm.loops.layers.uv:
+        bm.loops.layers.uv.new(UV_NAME)
     me = bpy.data.meshes.new(name)
     bm.to_mesh(me)
     bm.free()
@@ -397,6 +507,8 @@ def _mesh_part(name, bm, body):
 # 5. Kask, çekirdek, ışıklar
 # ---------------------------------------------------------------------------
 def new_part(name, bm, bone, body, material):
+    if not bm.loops.layers.uv:
+        bm.loops.layers.uv.new(UV_NAME)
     for f in bm.faces:
         f.material_index = material
         f.smooth = False
@@ -429,48 +541,100 @@ def head_bounds(body, bones):
 
 
 def add_helmet(body, bones):
+    """Mat lacivert kabuk, üstte ve çene korumasında bordo karbon, koyu cam vizör, mavi ışık şeridi."""
     mn, mx = head_bounds(body, bones)
     c = (mn + mx) / 2
     size = mx - mn
     center = Vector((0.0, c.y + size.y * 0.04, c.z + size.z * 0.06))
-    radii = Vector((size.x * 0.66, size.y * 0.66, size.z * 0.6))
+    radii = Vector((size.x * 0.68, size.y * 0.68, size.z * 0.62))
     parts = []
 
     def sphere():
-        bm = bmesh.new()
-        bmesh.ops.create_uvsphere(bm, u_segments=16, v_segments=12, radius=1.0)
+        bm = uv_bm()
+        bmesh.ops.create_uvsphere(bm, u_segments=48, v_segments=34, radius=1.0, calc_uvs=True)
         return bm
 
-    # Kask kabuğu (alt açık, boyun görünsün)
+    def place(bm, scale=1.0):
+        for v in bm.verts:
+            x, y, z = v.co
+            if y > 0:
+                y *= 1.08  # ense
+            v.co = Vector((x * radii.x * scale, y * radii.y * scale, z * radii.z * scale)) + center
+
+    def keep_only(bm, pred):
+        bmesh.ops.delete(bm, geom=[f for f in bm.faces if not pred(f.calc_center_median())], context="FACES")
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+
+    # Vizör alt sınırı: ortada aşağı inen, yanlara yükselen V (çene koruması yanlarda yukarı çıkar)
+    def visor_bottom(x):
+        return -0.56 + 0.55 * abs(x)
+
+    def visor_top(x):
+        return 0.3 - 0.14 * abs(x)
+
+    # Kabuk
     bm = sphere()
-    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.calc_center_median().z < -0.62], context="FACES")
-    for v in bm.verts:
-        x, y, z = v.co
-        if y > 0:
-            y *= 1.08  # ense
-        v.co = Vector((x * radii.x, y * radii.y, z * radii.z)) + center
+    keep_only(bm, lambda m: m.z > -0.66)
+    for f in bm.faces:
+        m = f.calc_center_median()
+        mat = SECONDARY
+        if abs(m.x) < 0.3 and m.z > -0.05 and m.y > -0.75:
+            mat = PRIMARY                                  # üst karbon şerit
+        elif m.z < visor_bottom(m.x) and m.y < 0.25:
+            mat = PRIMARY                                  # çene koruması
+        f.material_index = mat
+        f.smooth = False
+    place(bm)
     bm.normal_update()
     bmesh.ops.solidify(bm, geom=list(bm.faces), thickness=0.008)
-    parts.append(new_part("Helmet", bm, "head", body, PRIMARY))
+    parts.append(_weighted(bm, "Helmet", "head", body))
 
-    # Vizör: ön bant, kaskın hemen önünde
+    # Vizör (koyu cam)
     bm = sphere()
-    keep = [f for f in bm.faces if f.calc_center_median().y < -0.66 and -0.36 < f.calc_center_median().z < 0.16]
-    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f not in keep], context="FACES")
-    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
-    for v in bm.verts:
-        x, y, z = v.co
-        v.co = Vector((x * radii.x * 1.03, y * radii.y * 1.03, z * radii.z * 1.03)) + center
-    parts.append(new_part("Visor", bm, "head", body, VISOR))
+    keep_only(bm, lambda m: m.y < -0.45 and visor_bottom(m.x) < m.z < visor_top(m.x) and abs(m.x) < 0.8)
+    for f in bm.faces:
+        f.material_index = VISOR
+        f.smooth = False
+    place(bm, 1.025)
+    parts.append(_weighted(bm, "Visor", "head", body))
 
-    # Yan diskler
+    # Göz hizasında ışık şeridi
+    bm = sphere()
+    keep_only(bm, lambda m: m.y < -0.45 and visor_top(m.x) - 0.16 < m.z < visor_top(m.x) - 0.02 and abs(m.x) < 0.74)
+    for f in bm.faces:
+        f.material_index = GLOW
+        f.smooth = False
+    place(bm, 1.04)
+    parts.append(_weighted(bm, "VisorGlow", "head", body))
+
+    # Çene altında ışık çizgileri
+    bm = sphere()
+    keep_only(bm, lambda m: -0.62 < m.z < -0.54 and m.y < 0.15 and abs(m.x) > 0.3)
+    for f in bm.faces:
+        f.material_index = GLOW
+        f.smooth = False
+    place(bm, 1.02)
+    parts.append(_weighted(bm, "JawGlow", "head", body))
+
+    # Yan diskler (bordo)
     for s in (-1, 1):
-        bm = bmesh.new()
-        bmesh.ops.create_cone(bm, cap_ends=True, segments=10, radius1=radii.z * 0.32, radius2=radii.z * 0.26, depth=0.025)
+        bm = uv_bm()
+        bmesh.ops.create_cone(bm, cap_ends=True, segments=12, radius1=radii.z * 0.34, radius2=radii.z * 0.27, depth=0.03, calc_uvs=True)
         bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(90 * s), 3, "Y"))
-        bmesh.ops.translate(bm, verts=bm.verts, vec=center + Vector((radii.x * 0.98 * s, radii.y * 0.05, -radii.z * 0.05)))
-        parts.append(new_part(f"Ear{s}", bm, "head", body, ARMOR))
+        bmesh.ops.translate(bm, verts=bm.verts, vec=center + Vector((radii.x * 0.98 * s, radii.y * 0.08, -radii.z * 0.08)))
+        for f in bm.faces:
+            f.material_index = PRIMARY
+            f.smooth = False
+        parts.append(_weighted(bm, f"Ear{s}", "head", body))
     return parts
+
+
+def _weighted(bm, name, bone, body):
+    dl = bm.verts.layers.deform.verify()
+    gi = body.vertex_groups[bone].index
+    for v in bm.verts:
+        v[dl][gi] = 1.0
+    return _mesh_part(name, bm, body)
 
 
 def surface_point(body, bones, bone_names, x, z, front=True, window=0.03):
@@ -533,6 +697,8 @@ def reduce(obj, ratio):
 def build():
     make_materials()
     body, rig = create_body()
+    global UV_NAME
+    UV_NAME = body.data.uv_layers.active.name if body.data.uv_layers else "UVMap"
     sk = Skeleton(rig)
     bones = paint_regions(body, sk)
     parts = add_armor(body, sk, bones)
@@ -542,7 +708,7 @@ def build():
     parts += add_glows(body, bones, 0.0)
     facet(body)
     for part in parts:
-        if part.name.startswith(("ShoulderPads", "ChestPlates", "KneePads", "Bracers", "ShinBands", "Boots", "BackPlate", "Gloves")):
+        if part.name.startswith(("ShoulderPads", "KneePads", "Bracers", "ShinBands", "Gloves", "Knuckles", "GloveCuff")):
             reduce(part, SHELL_DECIMATE)
 
     bpy.ops.object.select_all(action="DESELECT")

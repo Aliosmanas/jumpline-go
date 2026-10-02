@@ -35,6 +35,7 @@ namespace Jumpline.Player
                 else if (n.StartsWith("M_Secondary")) { baseColor = skin.secondary; emission = skin.glow * skin.secondaryGlow; }
                 else if (n.StartsWith("M_Armor")) { baseColor = skin.armor; metallic = Mathf.Max(metallic, 0.5f); smooth = 0.6f; }
                 else if (n.StartsWith("M_Glove")) { baseColor = skin.glove; metallic = 0f; smooth = 0.3f; }
+                else if (n.StartsWith("M_GlowAlt")) { baseColor = skin.primary; emission = Color.Lerp(skin.primary, Color.white, 0.25f) * skin.glowIntensity * 0.7f; }
                 else if (n.StartsWith("M_Glow")) { baseColor = skin.glow; emission = skin.glow * skin.glowIntensity; }
                 else if (n.StartsWith("M_Visor")) { baseColor = skin.visor; smooth = 0.85f; if (skin.visorGlows) emission = skin.glow * skin.glowIntensity * 0.6f; }
 

@@ -52,15 +52,54 @@ namespace Jumpline.EditorTools
             AssetDatabase.WriteImportSettingsIfDirty(FbxPath);
             AssetDatabase.ImportAsset(FbxPath, ImportAssetOptions.ForceUpdate);
 
+            Texture2D carbon = MakeCarbonTexture();
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { MaterialDir }))
             {
                 var mat = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
                 mat.EnableKeyword("_EMISSION");
                 mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
                 if (!mat.name.StartsWith("M_Glow")) mat.SetColor("_EmissionColor", Color.black);
+                if (mat.name.StartsWith("M_Primary"))
+                {
+                    // Bordo karbon fiber dokusu (renk kostümden _BaseColor ile gelir)
+                    mat.SetTexture("_BaseMap", carbon);
+                    mat.SetTextureScale("_BaseMap", new Vector2(CarbonTiling, CarbonTiling));
+                }
                 EditorUtility.SetDirty(mat);
             }
             AssetDatabase.SaveAssets();
+        }
+
+        private const float CarbonTiling = 70f;
+        private const string CarbonPath = "Assets/Art/Characters/Runner/CarbonFiber.png";
+
+        /// <summary>2x2 dimi örgü karbon fiber deseni (gri tonlu; renk malzemeden çarpılır).</summary>
+        private static Texture2D MakeCarbonTexture()
+        {
+            const int size = 64, cell = 8;
+            var tex = new Texture2D(size, size, TextureFormat.RGB24, true);
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                int cx = x / cell, cy = y / cell;
+                bool warp = ((cx + cy) / 2) % 2 == 0;   // diyagonal (dimi) örgü
+                float u = (x % cell + 0.5f) / cell, v = (y % cell + 0.5f) / cell;
+                float along = warp ? v : u;             // ipliğin uzunlamasına parlaması
+                float across = warp ? u : v;
+                float shade = 0.72f + 0.28f * Mathf.Sin(across * Mathf.PI) * (0.75f + 0.25f * Mathf.Sin(along * Mathf.PI));
+                if (!warp) shade *= 0.88f;
+                tex.SetPixel(x, y, new Color(shade, shade, shade));
+            }
+            tex.Apply();
+            File.WriteAllBytes(CarbonPath, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(CarbonPath, ImportAssetOptions.ForceSynchronousImport);
+            var imp = (TextureImporter)AssetImporter.GetAtPath(CarbonPath);
+            imp.wrapMode = TextureWrapMode.Repeat;
+            imp.mipmapEnabled = true;
+            imp.anisoLevel = 4;
+            imp.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(CarbonPath);
         }
 
         /// <summary>MPFB "game_engine" iskeleti → Unity Humanoid kemik eşlemesi.</summary>
@@ -272,7 +311,8 @@ namespace Jumpline.EditorTools
             return new List<SkinPreset>
             {
                 // docs/references/character/design_sheet.jpg
-                S("rookie", "#7A2238", "#262B47", "#9EA9C8", "#1C2033", "#3FD8FF", "#AEB8D6", 4f),
+                // docs/references/character/helmet.jpg: mat lacivert, bordo karbon, koyu vizör, mavi ışık
+                S("rookie", "#7A2238", "#1E2340", "#4E5675", "#1A1F33", "#3FD8FF", "#152045", 4f),
                 // docs/references/character/skins.jpg
                 S("stealth", "#4A1A30", "#141418", "#2C2C34", "#101014", "#8A2A4A", "#22242C", 1.5f, 0.3f, 0.5f),
                 S("velocity", "#1F2B52", "#18213D", "#2E3E6E", "#121A30", "#39E6FF", "#14203A", 6f, 0.2f, 0.6f, true),

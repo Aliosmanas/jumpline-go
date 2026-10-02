@@ -142,10 +142,10 @@ namespace Jumpline.EditorTools
             Txt(s.top, "GearHeader", "GEAR", new Rect(862f, 420f, 213f, 56f), fBold, 34f, Hex("#C9CCD6"));
             Line(s.top, new Rect(862f, 479f, 213f, 2f), Hex("#4E546B"));
             Panel(s.top, "GearPanel", new Rect(862f, 497f, 213f, 871f), Hex("#1E2438", 0.75f), Hex("#2A1A28", 0.75f), 18f, Hex("#5D6B93"));
-            TMP_Text suit = GearSlot(s.top, "Suit", 523f, "SUIT:", "ROOKIE", false);
-            GearSlot(s.top, "Boots", 742f, "BOOTS:", "GRAV-THRUSTERS", false);
-            GearSlot(s.top, "Gloves", 950f, "GLOVES:", "GRIP-TECH", false);
-            GearSlot(s.top, "Accessory", 1160f, "ACCESSORY:", "NONE", true);
+            TMP_Text suit = GearSlot(s.top, "Suit", 523f, "SUIT:", "ROOKIE", null);
+            GearSlot(s.top, "Boots", 742f, "BOOTS:", "SPRING BOOTS", "gear_boots");
+            GearSlot(s.top, "Gloves", 950f, "GLOVES:", "GRIP-TECH", "gear_gloves");
+            GearSlot(s.top, "Helmet", 1160f, "HELMET:", "VELOCITY VISOR", "gear_helmet");
 
             Link(PrimaryButton(s.bot, "CustomizeButton", new Rect(262f, 1362f, 590f, 180f), new Rect(285f, 1380f, 545f, 142f), "CUSTOMIZE", 80f), MenuLink.LinkAction.Open, "customize");
             Link(PillButton(s.bot, "UpgradeButton", new Rect(378f, 1572f, 360f, 68f), "UPGRADE", 30f, Hex("#C3C8D6"), 1f), MenuLink.LinkAction.Open, "upgrade");
@@ -167,11 +167,12 @@ namespace Jumpline.EditorTools
             return new Dictionary<string, object> { { "statId", id }, { "value", value }, { "tier", tier }, { "fill", fill }, { "fullWidth", 280f } };
         }
 
-        private static TMP_Text GearSlot(Box parent, string name, float y, string kind, string item, bool empty)
+        private static TMP_Text GearSlot(Box parent, string name, float y, string kind, string item, string icon)
         {
             var slot = Panel(parent, name + "Slot", new Rect(901f, y, 134f, 134f), Hex("#5A1D33"), Hex("#2F3A5E"), 18f, Hex("#8193C0"));
-            if (empty) Icon(slot, "ban", new Rect(933f, y + 32f, 70f, 70f), Hex("#8D7480", 0.8f));
-            Color c = empty ? Hex("#9A9FAE") : Hex("#D9DCE3");
+            if (icon != null) Icon(slot, icon, new Rect(905f, y + 6f, 126f, 122f), Color.white);
+            else Thumb(slot, "rookie", new Rect(905f, y + 4f, 126f, 126f));
+            Color c = Hex("#D9DCE3");
             Txt(parent, name + "Kind", kind, new Rect(868f, y + 142f, 200f, 26f), fBold, 18f, c);
             return Txt(parent, name + "Item", item, new Rect(862f, y + 165f, 213f, 26f), fBold, 18f, c, localize: name != "Suit");
         }
@@ -334,7 +335,7 @@ namespace Jumpline.EditorTools
         /// <summary>Kostümün 3B vitrinden çekilmiş görseli (varsa).</summary>
         private static void Thumb(Box parent, string itemId, Rect r)
         {
-            if (!thumbs.TryGetValue(itemId, out Sprite sprite) || sprite == null) return;
+            if ((!thumbs.TryGetValue(itemId, out Sprite sprite) || sprite == null) && !Icons.TryGetValue(itemId, out sprite)) return;
             var b = Add(parent, "Thumb", r);
             var img = b.go.AddComponent<Image>();
             img.sprite = sprite;
@@ -357,8 +358,8 @@ namespace Jumpline.EditorTools
                 bool gold = item.currency == CurrencyType.Gold;
                 var root = Add(parent, $"Offer_{ids[i]}", r);
                 Panel(root, "Card", r, Hex("#5B1C30"), Hex("#263257"), 24f, Hex("#8095C4"));
-                string art = item.category == ItemCategory.Currency ? "coin" : item.currency == CurrencyType.Gems ? "gem" : "coin";
-                Icon(root, art, new Rect(r.center.x - 110f, r.y + 70f, 220f, 220f), Color.white);
+                string art = Icons.ContainsKey(item.id) ? item.id : "coin";
+                Icon(root, art, new Rect(r.center.x - 150f, r.y + 30f, 300f, 290f), Color.white);
                 var title = Txt(root, "Title", item.displayName, new Rect(r.x, r.y + 330f, r.width, 50f), fBold, 36f, Color.white, localize: false);
                 var price = Txt(root, "Price", "", new Rect(r.x, r.y + 390f, r.width, 50f), fExtra, 36f, gold ? C.Gold : C.Price, localize: false);
                 Button buy = PillButton(root, "BuyButton", new Rect(r.center.x - 140f, r.y + 470f, 280f, 72f), "BUY", 32f, Color.white, 1f,
@@ -673,7 +674,7 @@ namespace Jumpline.EditorTools
                 I("blaze", "BLAZE", ItemCategory.Skin, CurrencyType.Gold, 2500),
                 I("speed_boost", "SPEED BOOST", ItemCategory.Boost, CurrencyType.Gems, 150),
                 I("shield", "SHIELD", ItemCategory.Boost, CurrencyType.Gems, 100),
-                I("magnet", "MAGNET", ItemCategory.Boost, CurrencyType.Gold, 2000),
+                I("magnet", "COIN MAGNET", ItemCategory.Boost, CurrencyType.Gold, 2000),
                 I("double_gold", "DOUBLE GOLD", ItemCategory.Boost, CurrencyType.Gems, 300),
                 I("gold_small", "GOLD PACK S", ItemCategory.Currency, CurrencyType.Gems, 50, 1000),
                 I("gold_medium", "GOLD PACK M", ItemCategory.Currency, CurrencyType.Gems, 200, 5000),

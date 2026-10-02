@@ -797,6 +797,14 @@ namespace Jumpline.EditorTools
             arcRing = MakeSizedSprite("ArcRing", 256, ArcRingAlpha);
             Icons["coin"] = MakeCoin();
             Icons["gem"] = MakeGem();
+            // docs/references/items + character: güç ve ekipman görselleri (referanstan kesilir)
+            Icons["shield"] = CropReference("shield", "items/shield.jpg", new RectInt(130, 520, 700, 790), false);
+            Icons["speed_boost"] = CropReference("speed_boost", "items/speed_boost.jpg", new RectInt(480, 380, 1060, 960), false);
+            Icons["magnet"] = CropReference("magnet", "items/magnet.jpg", new RectInt(30, 440, 980, 1020), false);
+            Icons["double_gold"] = CropReference("double_gold", "items/double_gold.jpg", new RectInt(330, 540, 1360, 850), false);
+            Icons["gear_helmet"] = CropReference("gear_helmet", "character/helmet.jpg", new RectInt(210, 560, 800, 920), true);
+            Icons["gear_gloves"] = CropReference("gear_gloves", "character/gloves.jpg", new RectInt(130, 630, 880, 830), true);
+            Icons["gear_boots"] = CropReference("gear_boots", "character/boots.jpg", new RectInt(110, 600, 1000, 810), true);
 
             fMedium = GetOrCreateFont("Montserrat-Medium");
             fBold = GetOrCreateFont("Montserrat-Bold");
@@ -931,6 +939,91 @@ namespace Jumpline.EditorTools
             float dx = (u - cx) / radius, dy = (v - cy) / (radius * 0.56f);
             float k = Mathf.Exp(-(dx * dx + dy * dy) * 2f) * strength;
             return Color.Lerp(c, glow, k);
+        }
+
+        /// <summary>
+        /// Referans görselden bölge keser (r: sol-üst köken, piksel). keyGrey: düz gri arka planı ve ince açıklama
+        /// çizgilerini siler (tasarım sayfaları). Aksi halde kenarlar yumuşakça saydamlaşır, parlak kısımlar korunur.
+        /// </summary>
+        private static Sprite CropReference(string name, string file, RectInt r, bool keyGrey)
+        {
+            const int maxSize = 512;
+            var src = new Texture2D(2, 2);
+            src.LoadImage(File.ReadAllBytes(Path.Combine("docs/references", file)));
+            int w = r.width, h = r.height;
+            var px = new Color[w * h];
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                px[y * w + x] = src.GetPixel(r.x + x, src.height - (r.y + r.height) + y);
+            Object.DestroyImmediate(src);
+
+            if (keyGrey)
+            {
+                Color bg = px[2 * w + 2]; // sol-alt köşe arka planı
+                bool IsBg(Color c) => Mathf.Abs(c.r - bg.r) + Mathf.Abs(c.g - bg.g) + Mathf.Abs(c.b - bg.b) < 0.09f;
+                var bgMask = new bool[w * h];
+                for (int i = 0; i < px.Length; i++) bgMask[i] = IsBg(px[i]);
+                // İnce çizgiler: iki yanında (yatay ya da dikey) arka plan olan dar parçalar
+                var line = new bool[w * h];
+                const int reach = 6;
+                for (int y = reach; y < h - reach; y++)
+                for (int x = reach; x < w - reach; x++)
+                {
+                    int i = y * w + x;
+                    if (bgMask[i]) continue;
+                    bool horiz = false, vert = false;
+                    for (int k = 1; k <= reach && !horiz; k++)
+                        for (int j = 1; j <= reach; j++)
+                            if (bgMask[i - k] && bgMask[i + j]) { horiz = true; break; }
+                    for (int k = 1; k <= reach && !vert; k++)
+                        for (int j = 1; j <= reach; j++)
+                            if (bgMask[i - k * w] && bgMask[i + j * w]) { vert = true; break; }
+                    line[i] = horiz || vert;
+                }
+                for (int i = 0; i < px.Length; i++)
+                {
+                    float d = Mathf.Abs(px[i].r - bg.r) + Mathf.Abs(px[i].g - bg.g) + Mathf.Abs(px[i].b - bg.b);
+                    float a = Mathf.Clamp01((d - 0.05f) / 0.1f);
+                    px[i].a = line[i] ? 0f : a;
+                }
+            }
+            else
+            {
+                for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    float dx = (x + 0.5f) / w * 2f - 1f, dy = (y + 0.5f) / h * 2f - 1f;
+                    float edge = Mathf.Clamp01((1f - Mathf.Sqrt(dx * dx + dy * dy)) / 0.35f);
+                    Color c = px[y * w + x];
+                    float lum = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+                    float a = Mathf.Max(edge * edge, Mathf.Clamp01((lum - 0.35f) / 0.4f) * Mathf.Clamp01(edge * 3f));
+                    px[y * w + x].a = a;
+                }
+            }
+
+            float scale = Mathf.Min(1f, maxSize / (float)Mathf.Max(w, h));
+            int ow = Mathf.RoundToInt(w * scale), oh = Mathf.RoundToInt(h * scale);
+            var tex = new Texture2D(ow, oh, TextureFormat.RGBA32, false);
+            for (int y = 0; y < oh; y++)
+            for (int x = 0; x < ow; x++)
+            {
+                // kutu filtreli küçültme (alfa ağırlıklı)
+                int x0 = (int)(x / scale), x1 = Mathf.Min(w, (int)((x + 1) / scale));
+                int y0 = (int)(y / scale), y1 = Mathf.Min(h, (int)((y + 1) / scale));
+                Color sum = Color.clear;
+                float aSum = 0f;
+                int n = 0;
+                for (int yy = y0; yy < Mathf.Max(y1, y0 + 1); yy++)
+                for (int xx = x0; xx < Mathf.Max(x1, x0 + 1); xx++)
+                {
+                    Color c = px[yy * w + xx];
+                    sum += new Color(c.r * c.a, c.g * c.a, c.b * c.a, 0f);
+                    aSum += c.a;
+                    n++;
+                }
+                tex.SetPixel(x, y, aSum > 0f ? new Color(sum.r / aSum, sum.g / aSum, sum.b / aSum, aSum / n) : Color.clear);
+            }
+            return SaveSprite($"{IconDir}/{name}.png", tex, Vector4.zero);
         }
 
         private static Sprite MakeSizedSprite(string name, int size, AlphaFn alpha)
