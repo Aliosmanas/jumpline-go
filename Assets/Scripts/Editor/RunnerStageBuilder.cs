@@ -22,7 +22,7 @@ namespace Jumpline.EditorTools
         private const string ThumbDir = UiDir + "/SkinThumbs";
         private const int PreviewSize = 1024;
         private static readonly Vector3 StagePosition = new Vector3(0f, -200f, 0f);
-        private const float DisplayYaw = 155f; // kameraya 3/4 dönük
+        private const float DisplayYaw = 0f; // kameraya dönük (model +Z'ye bakar, kamera +Z'de)
 
         public static SkinLibrary EnsureLibrary()
         {
@@ -36,15 +36,11 @@ namespace Jumpline.EditorTools
         public static void ConfigureImport()
         {
             var imp = (ModelImporter)AssetImporter.GetAtPath(FbxPath);
-            bool dirty = false;
-            if (imp.animationType != ModelImporterAnimationType.Human)
-            {
-                imp.animationType = ModelImporterAnimationType.Human;
-                imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
-                dirty = true;
-            }
-            if (imp.importAnimation) { imp.importAnimation = false; dirty = true; }
-            if (dirty) imp.SaveAndReimport();
+            imp.animationType = ModelImporterAnimationType.Human;
+            imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            imp.importAnimation = false;
+            imp.humanDescription = BuildHumanDescription(imp.humanDescription);
+            imp.SaveAndReimport();
 
             EnsureFolder(MaterialDir);
             foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(FbxPath))
@@ -65,6 +61,52 @@ namespace Jumpline.EditorTools
                 EditorUtility.SetDirty(mat);
             }
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>MPFB "game_engine" iskeleti → Unity Humanoid kemik eşlemesi.</summary>
+        private static HumanDescription BuildHumanDescription(HumanDescription desc)
+        {
+            var map = new Dictionary<string, string>
+            {
+                { "Hips", "pelvis" }, { "Spine", "spine_01" }, { "Chest", "spine_02" }, { "UpperChest", "spine_03" },
+                { "Neck", "neck_01" }, { "Head", "head" },
+            };
+            foreach ((string side, string s) in new[] { ("Left", "l"), ("Right", "r") })
+            {
+                map[$"{side}Shoulder"] = $"clavicle_{s}";
+                map[$"{side}UpperArm"] = $"upperarm_{s}";
+                map[$"{side}LowerArm"] = $"lowerarm_{s}";
+                map[$"{side}Hand"] = $"hand_{s}";
+                map[$"{side}UpperLeg"] = $"thigh_{s}";
+                map[$"{side}LowerLeg"] = $"calf_{s}";
+                map[$"{side}Foot"] = $"foot_{s}";
+                map[$"{side}Toes"] = $"ball_{s}";
+                foreach ((string finger, string mpfb) in new[] { ("Thumb", "thumb"), ("Index", "index"), ("Middle", "middle"), ("Ring", "ring"), ("Little", "pinky") })
+                {
+                    map[$"{side} {finger} Proximal"] = $"{mpfb}_01_{s}";
+                    map[$"{side} {finger} Intermediate"] = $"{mpfb}_02_{s}";
+                    map[$"{side} {finger} Distal"] = $"{mpfb}_03_{s}";
+                }
+            }
+
+            var human = new List<HumanBone>();
+            foreach (string traitName in HumanTrait.BoneName)
+            {
+                if (!map.TryGetValue(traitName, out string bone)) continue;
+                var hb = new HumanBone { humanName = traitName, boneName = bone };
+                hb.limit.useDefaultValues = true;
+                human.Add(hb);
+            }
+
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath);
+            var skeleton = new List<SkeletonBone>();
+            foreach (Transform t in model.GetComponentsInChildren<Transform>(true))
+                skeleton.Add(new SkeletonBone { name = t.name, position = t.localPosition, rotation = t.localRotation, scale = t.localScale });
+
+            desc.human = human.ToArray();
+            desc.skeleton = skeleton.ToArray();
+            desc.hasTranslationDoF = false;
+            return desc;
         }
 
         /// <summary>Açık sahneye vitrin kurar. Vitrin uzakta (y=-200) durur, menü kamerası görmez.</summary>
@@ -105,7 +147,7 @@ namespace Jumpline.EditorTools
             model.transform.localRotation = Quaternion.identity;
             if (model.TryGetComponent(out Animator anim)) anim.enabled = false; // animasyonlar sonraki adım
 
-            ApplyRunPose(model.transform);
+            ApplyDisplayPose(model.transform);
             GroundModel(model.transform, stage.position.y);
             model.transform.localRotation = Quaternion.Euler(0f, DisplayYaw, 0f);
 
@@ -133,35 +175,36 @@ namespace Jumpline.EditorTools
         }
 
         /// <summary>
-        /// Referanstaki koşu pozu (design_sheet, yan görünüş): sağ diz önde yukarıda, sol bacak geride;
-        /// kollar karşıt. Model +Z'ye bakar, sol taraf -X. Animasyonlar gelince bu poz yerini onlara bırakır.
+        /// Menü vitrini için dik duruş (A-poz iskeletten). Model +Z'ye bakar, sol taraf -X.
+        /// Animasyonlar gelince bu duruş yerini onlara bırakır.
         /// </summary>
-        public static void ApplyRunPose(Transform root)
+        public static void ApplyDisplayPose(Transform root)
         {
-            var bones = new Dictionary<string, Transform>();
-            foreach (Transform t in root.GetComponentsInChildren<Transform>()) bones[t.name] = t;
-
-            void Aim(string bone, string child, Vector3 dir)
+            // Humanoid avatar üzerinden: kemik adları iskelete göre değişse de çalışır.
+            var animator = root.GetComponent<Animator>();
+            if (animator == null || animator.avatar == null || !animator.avatar.isHuman)
             {
-                if (!bones.TryGetValue(bone, out Transform b) || !bones.TryGetValue(child, out Transform c)) return;
+                Debug.LogWarning("[Jumpline] Koşucu Humanoid değil; poz uygulanmadı.");
+                return;
+            }
+
+            void Aim(HumanBodyBones bone, HumanBodyBones child, Vector3 dir)
+            {
+                Transform b = animator.GetBoneTransform(bone), c = animator.GetBoneTransform(child);
+                if (b == null || c == null) return;
                 b.rotation = Quaternion.FromToRotation(c.position - b.position, dir.normalized) * b.rotation;
             }
 
-            Aim("Spine", "Spine1", new Vector3(0f, 1f, 0.12f));
-            Aim("Spine1", "Neck", new Vector3(0f, 1f, 0.2f));
-            Aim("Neck", "Head", new Vector3(0f, 1f, 0.05f));
-
-            Aim("RightUpLeg", "RightLeg", new Vector3(0.03f, -0.45f, 0.89f));
-            Aim("RightLeg", "RightFoot", new Vector3(0f, -0.92f, -0.38f));
-            Aim("RightFoot", "RightToeBase", new Vector3(0f, -0.35f, 0.94f));
-            Aim("LeftUpLeg", "LeftLeg", new Vector3(-0.03f, -0.86f, -0.5f));
-            Aim("LeftLeg", "LeftFoot", new Vector3(0f, -0.5f, -0.87f));
-            Aim("LeftFoot", "LeftToeBase", new Vector3(0f, -0.85f, -0.2f));
-
-            Aim("LeftArm", "LeftForeArm", new Vector3(-0.22f, -0.72f, 0.66f));
-            Aim("LeftForeArm", "LeftHand", new Vector3(-0.05f, 0.55f, 0.83f));
-            Aim("RightArm", "RightForeArm", new Vector3(0.25f, -0.72f, -0.64f));
-            Aim("RightForeArm", "RightHand", new Vector3(0.06f, -0.15f, -0.99f));
+            // Vitrin duruşu: dik, kollar yanda hafif bükük, ayaklar omuz genişliğinde.
+            // (Koşu / zıplama animasyonları gelince Animator bu duruşun yerini alır.)
+            Aim(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, new Vector3(-0.2f, -0.98f, 0.02f));
+            Aim(HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand, new Vector3(-0.06f, -0.96f, 0.26f));
+            Aim(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, new Vector3(0.2f, -0.98f, 0.02f));
+            Aim(HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, new Vector3(0.06f, -0.96f, 0.26f));
+            Aim(HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, new Vector3(-0.06f, -1f, 0f));
+            Aim(HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot, new Vector3(-0.02f, -1f, 0f));
+            Aim(HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, new Vector3(0.06f, -1f, 0f));
+            Aim(HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, new Vector3(0.02f, -1f, 0f));
         }
 
         private static void GroundModel(Transform model, float groundY)

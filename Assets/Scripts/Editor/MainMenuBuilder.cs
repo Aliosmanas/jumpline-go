@@ -228,6 +228,8 @@ namespace Jumpline.EditorTools
             Set(view, "gemsText", gems);
             Set(view, "tabs", tabs);
             SetArray(view, "tabPanels", new Object[] { skins.go, boosts.go, currency.go });
+            boosts.go.SetActive(false);
+            currency.go.SetActive(false);
             SetArray(view, "cards", cards.ToArray());
         }
 

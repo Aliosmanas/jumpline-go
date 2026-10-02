@@ -7,15 +7,15 @@ namespace Jumpline.UI
 {
     /// <summary>
     /// Menüdeki 3B karakter vitrini: giyili kostümü uygular, kostüm değişince günceller
-    /// ve çok yavaş bir şekilde sağa sola salınır.
+    /// ve kameraya dönükken iki yana yumuşakça döner.
     /// </summary>
     public class RunnerDisplay : MonoBehaviour
     {
         [SerializeField] private RunnerSkin runner;
         [SerializeField] private SkinLibrary library;
-        [Tooltip("Salınım genliği (derece) ve süresi (saniye).")]
-        [SerializeField] private float swayAngle = 8f;
-        [SerializeField, Min(0.1f)] private float swayPeriod = 9f;
+        [Tooltip("Dönüş genliği (derece, önden iki yana) ve bir tam salınımın süresi (saniye).")]
+        [SerializeField] private float swayAngle = 35f;
+        [SerializeField, Min(0.1f)] private float swayPeriod = 7f;
 
         private float baseYaw;
 

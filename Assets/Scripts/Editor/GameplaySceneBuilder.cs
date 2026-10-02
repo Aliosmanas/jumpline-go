@@ -31,6 +31,7 @@ namespace Jumpline.EditorTools
             var config = GetOrCreateAsset<GameConfig>(MainMenuBuilder.ConfigPath, null);
 
             BuildWorld();
+            BuildRunner();
             BuildCameraAndEvents(false);
             var cam = Camera.main;
             cam.transform.SetPositionAndRotation(new Vector3(0f, 5f, -9f), Quaternion.Euler(20f, 0f, 0f));
@@ -69,6 +70,24 @@ namespace Jumpline.EditorTools
             ground.transform.position = new Vector3(0f, -0.25f, 55f);
             ground.transform.localScale = new Vector3(6f, 0.5f, 120f);
             ground.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        }
+
+        /// <summary>Koşucu: başlangıç noktasında, koşu yönüne (+Z) bakar, giyili kostümle. Hareket sonraki adım.</summary>
+        private static void BuildRunner()
+        {
+            var library = RunnerStageBuilder.EnsureLibrary();
+            var model = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(RunnerStageBuilder.FbxPath));
+            model.name = "Runner";
+            model.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            if (model.TryGetComponent(out Animator anim)) anim.enabled = false;
+            RunnerStageBuilder.ApplyDisplayPose(model.transform);
+
+            var skin = model.AddComponent<Jumpline.Player.RunnerSkin>();
+            Set(skin, "target", model.GetComponentInChildren<SkinnedMeshRenderer>());
+            var display = model.AddComponent<Jumpline.UI.RunnerDisplay>();
+            Set(display, "runner", skin);
+            Set(display, "library", library);
+            SetFloat(display, "swayAngle", 0f);
         }
 
         private static void BuildUI(Transform safe, LevelFlowController flow, GameConfig config)
