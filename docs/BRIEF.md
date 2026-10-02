@@ -1,4 +1,4 @@
-# JUNPLINE — tasarım özeti (proje sahibinin brief'inden, 2 Eki 2026)
+# JUMPLINE GO — tasarım özeti (proje sahibinin brief'inden, 2 Eki 2026)
 
 **Tür:** 3D hyper-casual / arcade / runner · **Platform:** Android · **Hedef:** Google Play'e hazır ürün.
 **Öz:** Simple controls + fast gameplay + satisfying jumps + challenging obstacles + replayability.

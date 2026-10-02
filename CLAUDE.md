@@ -1,7 +1,8 @@
-# JUNPLINE — proje notları (Claude için)
+# JUMPLINE GO — proje notları (Claude için)
 
 3D hyper-casual mobil koşu oyunu (Android). Tek kontrol: **basılı tut = şarj, bırak = zıpla**; basma süresi zıplama gücünü belirler.
 Döngü: RUN → CHARGE → RELEASE → JUMP → LAND → RUN. Bölüm tabanlı (ilk hedef 10 bölüm).
+Oyun adı **JUMPLINE GO** (brief'teki "JUNPLINE" yazım hatasıydı; klasör adı `junpline` kaldı). Android paket adı `com.aliosmankeskin.jumplinego` — Play'e ilk yüklemeden sonra DEĞİŞTİRİLEMEZ.
 Tam tasarım isteği: `docs/BRIEF.md`. Kullanıcı Türkçe konuşur, Türkçe cevap ister.
 
 ## Ortam (2 Eki 2026)
