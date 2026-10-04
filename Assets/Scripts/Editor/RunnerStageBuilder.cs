@@ -165,6 +165,7 @@ namespace Jumpline.EditorTools
             camera.transform.SetParent(stage, false);
             camera.transform.localPosition = new Vector3(0f, 1.0f, 4.3f);
             camera.transform.LookAt(stage.position + new Vector3(0f, 0.88f, 0f));
+            stageRoot = stage;
             camera.fieldOfView = 30f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0f, 0f, 0f, 0f);
@@ -197,6 +198,199 @@ namespace Jumpline.EditorTools
             Set(display, "runner", runner);
             Set(display, "library", library);
             return rt;
+        }
+
+        // ---------------------------------------------------------------------
+        // Podyum (docs/references/menu/podium.jpg) ve kahraman duruşu (market_v2.jpg)
+        // ---------------------------------------------------------------------
+
+        public const string PodiumPath = "Assets/Art/Environment/Podium/Podium.fbx";
+        private const string PodiumMatDir = "Assets/Art/Environment/Podium/Materials";
+        private const float PodiumTop = 0.165f;   // Blender/scripts/build_podium.py: BASE_H + MID_H + TOP_H
+        private static Transform stageRoot;
+
+        /// <summary>
+        /// Kostüm kartları çekildikten sonra çağrılır: karakteri podyuma çıkarır, kahraman duruşu verir,
+        /// ışık hüzmesi ve parçacıkları ekler, kamerayı podyumu da görecek şekilde ayarlar.
+        /// </summary>
+        public static void FinishStage(RunnerSkin runner, Camera camera)
+        {
+            Transform stage = stageRoot;
+            var podium = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(PodiumPath), stage);
+            podium.name = "Podium";
+            podium.transform.localPosition = Vector3.zero;
+            podium.transform.localRotation = Quaternion.identity;
+            SetupPodiumMaterials(podium);
+            AddSparks(stage);
+            Light("PodiumGlow", stage, LightType.Point, new Vector3(0f, 0.35f, 0f), Quaternion.identity, Hex("#7FC0FF"), 3f, 2.2f);
+
+            Transform model = runner.transform;
+            model.localRotation = Quaternion.identity;
+            ApplyHeroPose(model);
+            GroundModel(model, stage.position.y + PodiumTop);
+            model.localRotation = Quaternion.Euler(0f, DisplayYaw, 0f);
+            foreach (var smr in model.GetComponentsInChildren<SkinnedMeshRenderer>(true)) smr.updateWhenOffscreen = true; // editörde de pozu göster
+
+            camera.transform.localPosition = new Vector3(0f, 1.2f, 5.0f);
+            camera.transform.LookAt(stage.position + new Vector3(0f, 1.0f, 0f));
+            camera.fieldOfView = 30f;
+        }
+
+        private static void SetupPodiumMaterials(GameObject podium)
+        {
+            var imp = (ModelImporter)AssetImporter.GetAtPath(PodiumPath);
+            EnsureFolder(PodiumMatDir);
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(PodiumPath))
+            {
+                if (o is not Material m) continue;
+                string dst = $"{PodiumMatDir}/{m.name}.mat";
+                if (AssetDatabase.LoadAssetAtPath<Material>(dst) == null) AssetDatabase.ExtractAsset(m, dst);
+            }
+            AssetDatabase.WriteImportSettingsIfDirty(PodiumPath);
+            AssetDatabase.ImportAsset(PodiumPath, ImportAssetOptions.ForceUpdate);
+
+            void Lit(string name, string color, float metal, float smooth, string emission = null, float intensity = 0f)
+            {
+                var mat = AssetDatabase.LoadAssetAtPath<Material>($"{PodiumMatDir}/{name}.mat");
+                if (mat == null) return;
+                mat.shader = Shader.Find("Universal Render Pipeline/Lit");
+                mat.SetColor("_BaseColor", Hex(color));
+                mat.SetFloat("_Metallic", metal);
+                mat.SetFloat("_Smoothness", smooth);
+                if (emission != null)
+                {
+                    mat.EnableKeyword("_EMISSION");
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    mat.SetColor("_EmissionColor", Hex(emission) * intensity);
+                }
+                EditorUtility.SetDirty(mat);
+            }
+            Lit("P_Metal", "#3A4052", 0.9f, 0.72f);
+            Lit("P_MetalDark", "#1C2030", 0.85f, 0.6f);
+            Lit("P_Top", "#4A5470", 0.6f, 0.88f, "#5A8CFF", 0.35f);
+            Lit("P_Glow", "#B8DCFF", 0f, 0.7f, "#7FC0FF", 5f);
+
+            // Işık hüzmesi: aşağıdan yukarı sönen, kenarları yumuşak, toplamalı şeffaf
+            var beam = AssetDatabase.LoadAssetAtPath<Material>($"{PodiumMatDir}/P_Beam.mat");
+            if (beam != null)
+            {
+                beam.shader = Shader.Find("Universal Render Pipeline/Unlit");
+                beam.SetFloat("_Surface", 1f);          // Transparent
+                beam.SetFloat("_Blend", 2f);            // Additive
+                beam.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                beam.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.One);
+                beam.SetFloat("_ZWrite", 0f);
+                beam.SetFloat("_Cull", 0f);             // iki yüz
+                beam.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                beam.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                beam.SetTexture("_BaseMap", MakeBeamTexture());
+                beam.SetColor("_BaseColor", new Color(0.55f, 0.75f, 1f, 0.5f));
+                EditorUtility.SetDirty(beam);
+            }
+            AssetDatabase.SaveAssets();
+            foreach (var r in podium.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+
+        private static Texture2D MakeBeamTexture()
+        {
+            const string path = "Assets/Art/Environment/Podium/BeamGradient.png";
+            const int w = 64, h = 128;
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float v = y / (h - 1f);                       // 0 alt → 1 üst
+                float fade = Mathf.Pow(1f - v, 1.8f);
+                float streak = 0.75f + 0.25f * Mathf.Sin(x / (float)w * Mathf.PI * 2f * 12f); // ince dikey çizgiler
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, fade * streak));
+            }
+            tex.Apply();
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            var imp = (TextureImporter)AssetImporter.GetAtPath(path);
+            imp.alphaIsTransparency = true;
+            imp.wrapModeU = TextureWrapMode.Repeat;
+            imp.wrapModeV = TextureWrapMode.Clamp;
+            imp.mipmapEnabled = false;
+            imp.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        /// <summary>Podyumdan yavaşça yükselen ışık zerreleri.</summary>
+        private static void AddSparks(Transform stage)
+        {
+            var go = new GameObject("PodiumSparks", typeof(ParticleSystem));
+            go.transform.SetParent(stage, false);
+            go.transform.localPosition = new Vector3(0f, PodiumTop, 0f);
+            go.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            var ps = go.GetComponent<ParticleSystem>();
+            var main = ps.main;
+            main.loop = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1.6f, 2.8f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.25f, 0.6f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.012f, 0.03f);
+            main.startColor = new ParticleSystem.MinMaxGradient(Hex("#9FD0FF"), Hex("#FFFFFF"));
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+            main.maxParticles = 120;
+            main.useUnscaledTime = true;
+            var emission = ps.emission;
+            emission.rateOverTime = 22f;
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = 0.46f;
+            shape.radiusThickness = 0.15f;
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            var g = new Gradient();
+            g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.15f), new GradientAlphaKey(0f, 1f) });
+            col.color = g;
+            var r = go.GetComponent<ParticleSystemRenderer>();
+            var mat = AssetDatabase.LoadAssetAtPath<Material>($"{PodiumMatDir}/P_Spark.mat");
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")) { name = "P_Spark" };
+                AssetDatabase.CreateAsset(mat, $"{PodiumMatDir}/P_Spark.mat");
+            }
+            mat.SetFloat("_Surface", 1f);
+            mat.SetFloat("_Blend", 2f);
+            mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.One);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>($"{SpriteDir}/SoftCircle.png"));
+            EditorUtility.SetDirty(mat);
+            r.sharedMaterial = mat;
+        }
+
+        /// <summary>
+        /// docs/references/menu/market_v2.jpg: sol diz yukarıda, sağ bacak üstünde durur; sağ yumruk göğüs hizasında,
+        /// sol kol aşağıda. Model +Z'ye (kameraya) bakar, sol taraf -X.
+        /// </summary>
+        public static void ApplyHeroPose(Transform root)
+        {
+            var animator = root.GetComponent<Animator>();
+            if (animator == null || animator.avatar == null || !animator.avatar.isHuman) return;
+
+            void Aim(HumanBodyBones bone, HumanBodyBones child, Vector3 dir)
+            {
+                Transform b = animator.GetBoneTransform(bone), c = animator.GetBoneTransform(child);
+                if (b == null || c == null) return;
+                b.rotation = Quaternion.FromToRotation(c.position - b.position, dir.normalized) * b.rotation;
+            }
+
+            Aim(HumanBodyBones.Spine, HumanBodyBones.Chest, new Vector3(0.03f, 1f, 0.06f));
+            Aim(HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, new Vector3(0.05f, -1f, 0.02f));
+            Aim(HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, new Vector3(0.02f, -1f, -0.02f));
+            Aim(HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, new Vector3(-0.1f, -0.42f, 0.9f));
+            Aim(HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot, new Vector3(0.04f, -0.96f, -0.28f));
+            Aim(HumanBodyBones.LeftFoot, HumanBodyBones.LeftToes, new Vector3(0f, -0.55f, 0.83f));
+            Aim(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, new Vector3(0.3f, -0.88f, 0.36f));
+            Aim(HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, new Vector3(-0.35f, 0.45f, 0.82f));
+            Aim(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, new Vector3(-0.35f, -0.9f, -0.1f));
+            Aim(HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand, new Vector3(-0.12f, -0.75f, 0.65f));
         }
 
         private static void Light(string name, Transform parent, LightType type, Vector3 pos, Quaternion rot, Color color, float intensity, float range)

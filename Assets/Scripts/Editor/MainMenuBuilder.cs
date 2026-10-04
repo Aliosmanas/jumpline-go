@@ -55,6 +55,7 @@ namespace Jumpline.EditorTools
             RunnerStageBuilder.ConfigureImport();
             preview = RunnerStageBuilder.BuildStage(skins, out _, out var runner, out var stageCamera);
             thumbs = RunnerStageBuilder.RenderThumbnails(skins, runner, stageCamera);
+            RunnerStageBuilder.FinishStage(runner, stageCamera); // podyum + kahraman duruşu
 
             BuildCameraAndEvents(true);
             Transform canvas = BuildCanvas("MainMenuCanvas", true);
@@ -193,44 +194,46 @@ namespace Jumpline.EditorTools
         // MARKET
         // ---------------------------------------------------------------------
 
+        // docs/references/menu/market_v2.jpg (768x1376 → x1.453): üst çubuk, solda Günün Fırsatları sütunu,
+        // sağda podyumda karakter, altta kostüm ızgarası. Sekmeler (Güçler / Para) üst çubuğun altında.
         private static void BuildMarket(Screen s)
         {
             var cards = new List<ShopItemCard>();
 
-            var bar = Add(s.top, "CurrencyBar", new Rect(0f, 0f, 1116f, 212f));
-            Fill(bar, Hex("#1C2133"), Hex("#232A40"));
-            Panel(s.top, "GoldBox", new Rect(63f, 66f, 464f, 87f), Hex("#1B2236"), Hex("#232C46"), 26f, Hex("#4F5E86"));
-            var gold = Txt(s.top, "GoldText", "GOLD: 5000", new Rect(80f, 76f, 350f, 66f), fExtra, 42f, C.Gold, TextAlignmentOptions.Right, localize: false);
-            Icon(s.top, "coin", new Rect(442f, 76f, 66f, 66f), Color.white);
-            Panel(s.top, "GemsBox", new Rect(589f, 66f, 464f, 87f), Hex("#1B2236"), Hex("#232C46"), 26f, Hex("#4F5E86"));
-            var gems = Txt(s.top, "GemsText", "GEMS: 250", new Rect(600f, 76f, 350f, 66f), fExtra, 42f, C.GemText, TextAlignmentOptions.Right, localize: false);
-            Icon(s.top, "gem", new Rect(966f, 74f, 68f, 68f), Color.white);
+            var bar = Add(s.top, "TopBar", new Rect(0f, 0f, 1116f, 124f));
+            Fill(bar, Hex("#141826"), Hex("#1C2133"));
+            Line(s.top, new Rect(0f, 122f, 1116f, 2f), Hex("#3B4A6E"));
+            Txt(s.top, "Title", "JUMPLINE GO", new Rect(48f, 22f, 520f, 80f), fExtra, 50f, Color.white, TextAlignmentOptions.Left, localize: false);
+            Icon(s.top, "coin", new Rect(655f, 32f, 60f, 60f), Color.white);
+            var gold = Txt(s.top, "GoldText", "0", new Rect(722f, 30f, 180f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
+            Icon(s.top, "gem", new Rect(890f, 30f, 62f, 64f), Color.white);
+            var gems = Txt(s.top, "GemsText", "0", new Rect(958f, 30f, 150f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
 
-            var strip = Add(s.top, "TabStrip", new Rect(0f, 212f, 1116f, 128f));
-            Fill(strip, Hex("#1F2840"), Hex("#253049"));
-            Line(s.top, new Rect(0f, 212f, 1116f, 2f), Hex("#3B4A6E"));
-            Line(s.top, new Rect(0f, 338f, 1116f, 2f), Hex("#3B4A6E"));
             SegmentedControl tabs = Tabs(s.top);
 
-            // Skins sekmesi: referanstaki düzen
+            // Kostümler sekmesi
             var skinsTab = Add(s.top, "SkinsTab", Full);
-            Box skins = VerticalScroll(skinsTab, "SkinsScroll", new Rect(0f, 340f, 1116f, 1395f), 1960f);
-            var band = Add(skins, "DealsBand", new Rect(0f, 380f, 1116f, 820f));
-            Fill(band, Hex("#5C1C2E", 0f), Hex("#5C1C2E", 0.95f));
-            Line(skins, new Rect(0f, 380f, 1116f, 2f), Hex("#6E2338"));
-            Txt(skins, "DealsTitle", "DAILY DEALS", new Rect(258f, 425f, 600f, 70f), fExtra, 50f, Color.white);
-            DealsScroller(skins, cards);
-            float[] xs = { 63f, 318f, 572f, 827f };
-            float[] ys = { 1190f, 1560f };
+            Box skins = VerticalScroll(skinsTab, "SkinsScroll", new Rect(0f, 222f, 1116f, 1513f), 2420f);
+
+            RawPreview(skins, "RunnerPreview", new Rect(430f, 470f, 680f, 1000f), preview);
+
+            var deals = Panel(skins, "DealsPanel", new Rect(75f, 250f, 333f, 1340f), Hex("#1E2236", 0.85f), Hex("#262D48", 0.85f), 22f, Hex("#5D6B93"));
+            Txt(deals, "DealsTitle", "DAILY DEALS", new Rect(75f, 270f, 333f, 70f), fExtra, 38f, Color.white);
+            cards.Add(DealCard(deals, 1, "stealth", new Rect(102f, 352f, 279f, 412f), true));
+            cards.Add(DealCard(deals, 2, "speed_boost", new Rect(102f, 780f, 279f, 398f), false));
+            cards.Add(DealCard(deals, 3, "titanium", new Rect(102f, 1194f, 279f, 370f), false));
+
+            float[] xs = { 75f, 323f, 571f, 820f };
+            float[] ys = { 1640f, 1950f };
             int n = 0;
             foreach (float y in ys)
             foreach (float x in xs)
             {
-                cards.Add(GridCard(skins, SkinIds[n], new Rect(x, y, 227f, 342f), false));
+                cards.Add(GridCard(skins, SkinIds[n], new Rect(x, y, 221f, 281f), false));
                 n++;
             }
 
-            // Boosts / Currency sekmeleri
+            // Güçler / Para sekmeleri
             var boosts = Add(s.top, "BoostsTab", Full);
             OfferGrid(boosts, BoostIds, cards);
             var currency = Add(s.top, "CurrencyTab", Full);
@@ -274,14 +277,14 @@ namespace Jumpline.EditorTools
         private static SegmentedControl Tabs(Box parent)
         {
             string[] names = { "SKINS", "BOOSTS", "CURRENCY" };
-            float[] xs = { 63f, 405f, 748f };
-            var root = Add(parent, "Tabs", new Rect(63f, 236f, 990f, 78f));
+            float[] xs = { 75f, 410f, 745f };
+            var root = Add(parent, "Tabs", new Rect(75f, 140f, 966f, 66f));
             var buttons = new Button[3];
             var selected = new GameObject[3];
             var labels = new TMP_Text[3];
             for (int i = 0; i < 3; i++)
             {
-                var r = new Rect(xs[i], 236f, 305f, 78f);
+                var r = new Rect(xs[i], 140f, 296f, 66f);
                 var tab = Panel(root, names[i] + "Tab", r, Hex("#1C2338"), Hex("#232C46"), 22f, Hex("#4C5A80"));
                 var sel = Add(tab, "Selected", r);
                 Glow(sel, Expand(r, 26f), Hex("#5AA8FF", 0.35f));
@@ -289,7 +292,7 @@ namespace Jumpline.EditorTools
                 selFill.rt.GetComponent<Image>().raycastTarget = false;
                 GlowLine(sel, new Rect(r.x + 50f, r.yMax - 9f, r.width - 100f, 16f), Hex("#7FB8FF"));
                 selected[i] = sel.go;
-                labels[i] = Txt(tab, "Label", names[i], r, fExtra, 36f, Color.white);
+                labels[i] = Txt(tab, "Label", names[i], r, fExtra, 30f, Color.white);
                 buttons[i] = MakeButton(tab, tab.rt.GetComponent<Image>());
             }
             var control = root.go.AddComponent<SegmentedControl>();
@@ -302,41 +305,26 @@ namespace Jumpline.EditorTools
             return control;
         }
 
-        private static void DealsScroller(Box parent, List<ShopItemCard> cards)
-        {
-            var viewport = Add(parent, "DealsViewport", new Rect(0f, 505f, 1116f, 630f));
-            viewport.go.AddComponent<RectMask2D>();
-            viewport.go.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0f); // sürükleme için raycast hedefi
-
-            var content = Add(viewport, "Content", new Rect(0f, 505f, 1310f, 630f));
-            content.rt.anchorMin = content.rt.anchorMax = new Vector2(0f, 0.5f);
-            content.rt.pivot = new Vector2(0f, 0.5f);
-            content.rt.anchoredPosition = Vector2.zero;
-
-            var scroll = viewport.go.AddComponent<ScrollRect>();
-            scroll.content = content.rt;
-            scroll.viewport = viewport.rt;
-            scroll.horizontal = true;
-            scroll.vertical = false;
-
-            cards.Add(DealCard(content, 1, "stealth",new Rect(63f, 520f, 402f, 595f), true, 905f, 957f, new Rect(134f, 1007f, 260f, 70f)));
-            cards.Add(DealCard(content, 2, "speed_boost", new Rect(497f, 545f, 355f, 528f), false, 888f, 936f, new Rect(560f, 975f, 230f, 65f)));
-            cards.Add(DealCard(content, 3, "titanium",new Rect(886f, 545f, 355f, 528f), false, 888f, 936f, new Rect(948f, 975f, 230f, 65f)));
-        }
-
-        private static ShopItemCard DealCard(Box parent, int number, string itemId, Rect r, bool highlighted, float titleY, float priceY, Rect buyRect)
+        private static ShopItemCard DealCard(Box parent, int number, string itemId, Rect r, bool highlighted)
         {
             ShopItem item = catalog.Find(itemId);
             bool gold = item.currency == CurrencyType.Gold;
             var root = Add(parent, $"DealCard_{number}", r);
-            if (highlighted) Glow(root, Expand(r, 30f), Hex("#5AA8FF", 0.4f));
-            Panel(root, "Card", r, Hex("#5B1C30"), Hex("#263257"), 24f, highlighted ? Hex("#A9CCFF") : Hex("#8095C4"));
-            var tab = Panel(root, "NumberTab", new Rect(r.x, r.y, 80f, 78f), Hex("#2A3556"), Hex("#3A4A72"), 18f, highlighted ? Hex("#A9CCFF") : Hex("#8095C4"));
-            Txt(tab, "Number", number.ToString(), new Rect(r.x + 4f, r.y + 6f, 72f, 66f), fExtra, 44f, Color.white, localize: false);
-            Thumb(root, itemId, new Rect(r.x + 30f, r.y + 50f, r.width - 60f, titleY - 30f - (r.y + 50f)));
-            var title = Txt(root, "Title", item.displayName, new Rect(r.x, titleY - 22f, r.width, 44f), fBold, 34f, Color.white, localize: false);
-            var price = Txt(root, "Price", "", new Rect(r.x, priceY - 24f, r.width, 48f), fExtra, 36f, gold ? C.Gold : C.Price, localize: false);
-            Button buy = PillButton(root, "BuyButton", buyRect, "BUY", 32f, Color.white, 1f, out TextMeshProUGUI buyLabel,
+            if (highlighted) Glow(root, Expand(r, 22f), Hex("#5AA8FF", 0.4f));
+            Panel(root, "Card", r, Hex("#5B1C30"), Hex("#263257"), 20f, highlighted ? Hex("#A9CCFF") : Hex("#8095C4"));
+            var tab = Panel(root, "NumberTab", new Rect(r.x + 10f, r.y + 10f, 50f, 50f), Hex("#2A3556"), Hex("#3A4A72"), 12f, Hex("#8095C4"));
+            Txt(tab, "Number", number.ToString(), new Rect(r.x + 10f, r.y + 12f, 50f, 46f), fExtra, 30f, Color.white, localize: false);
+            float bottom = r.yMax;
+            Thumb(root, itemId, new Rect(r.x + 30f, r.y + 20f, r.width - 60f, r.height - 190f));
+            var title = Txt(root, "Title", item.displayName, new Rect(r.x, bottom - 168f, r.width, 40f), fBold, 28f, Color.white, localize: false);
+            var price = Txt(root, "Price", "", new Rect(r.x, bottom - 130f, r.width, 40f), fExtra, 26f, gold ? C.Gold : C.Price, localize: false);
+            foreach (var t in new[] { title, price })
+            {
+                t.enableAutoSizing = true;
+                t.fontSizeMin = 14f;
+                t.fontSizeMax = t.fontSize;
+            }
+            Button buy = PillButton(root, "BuyButton", new Rect(r.center.x - 90f, bottom - 82f, 180f, 58f), "BUY", 26f, Color.white, 1f, out TextMeshProUGUI buyLabel,
                 gold ? Hex("#E2B45A") : Hex("#6EA6FF"), gold ? Hex("#F2C366") : C.Blue, false);
             return Card(root, itemId, buy, title, price, buyLabel, null);
         }

@@ -64,8 +64,8 @@ namespace Jumpline.UI
 
         private void Refresh()
         {
-            goldText.text = Localization.Format("GOLD: {0}", SaveManager.Gold);
-            gemsText.text = Localization.Format("GEMS: {0}", SaveManager.Gems);
+            goldText.text = SaveManager.Gold.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+            gemsText.text = SaveManager.Gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
             foreach (ShopItemCard c in cards)
             {
                 ShopItem item = catalog.Find(c.ItemId);
