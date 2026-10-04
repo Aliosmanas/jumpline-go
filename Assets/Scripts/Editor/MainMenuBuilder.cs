@@ -159,6 +159,20 @@ namespace Jumpline.EditorTools
             SetStructArray(view, "bars", bars);
         }
 
+        /// <summary>Takıp çıkarma + takılı çeşide göre ikon (standard / stealth / velocity / titanium).</summary>
+        private static void AddGearToggle(GameObject go, string slot, string label, Image art, TMP_Text status, string standardIcon)
+        {
+            var toggle = go.AddComponent<GearToggle>();
+            toggle.Configure(slot, label, art, status);
+            string[] ids = { "standard", "stealth", "velocity", "titanium" };
+            var sprites = new Sprite[ids.Length];
+            sprites[0] = Icons[standardIcon];
+            for (int i = 1; i < ids.Length; i++)
+                sprites[i] = Icons.TryGetValue($"{ids[i]}_{slot}", out Sprite sp) ? sp : sprites[0];
+            toggle.SetVariants(ids, sprites);
+            EditorUtility.SetDirty(toggle);
+        }
+
         private static void SetBool(Object target, string field, bool value)
         {
             var so = new SerializedObject(target);
@@ -192,7 +206,7 @@ namespace Jumpline.EditorTools
             else
             {
                 var status = Txt(slot, "Status", "", new Rect(r.x, r.yMax - 26f, r.width, 22f), fExtra, 15f, c, localize: false);
-                button.gameObject.AddComponent<GearToggle>().Configure(gearSlot, item, art, status);
+                AddGearToggle(button.gameObject, gearSlot, item, art, status, icon);
             }
             return itemText;
         }
@@ -806,8 +820,7 @@ namespace Jumpline.EditorTools
                 Image art = Icon(card, items[i].icon, new Rect(r.x + 40f, r.y + 8f, r.width - 80f, 160f), Color.white);
                 Txt(card, "Title", items[i].label, new Rect(r.x + 6f, r.y + 172f, r.width - 12f, 40f), fBold, 26f, Color.white);
                 var status = Txt(card, "Status", "", new Rect(r.x + 6f, r.y + 212f, r.width - 12f, 36f), fExtra, 24f, C.Price, localize: false);
-                MakeButton(card, card.rt.GetComponent<Image>()).gameObject.AddComponent<GearToggle>()
-                    .Configure(items[i].slot, items[i].label, art, status);
+                AddGearToggle(MakeButton(card, card.rt.GetComponent<Image>()).gameObject, items[i].slot, items[i].label, art, status, items[i].icon);
             }
 
             var view = s.screen.gameObject.AddComponent<ItemListView>();

@@ -18,12 +18,22 @@ namespace Jumpline.UI
         [SerializeField] private Color equippedColor = new Color(0.85f, 0.87f, 0.92f);
         [SerializeField] private Color removedColor = new Color(0.6f, 0.62f, 0.7f);
 
+        [Tooltip("Takılı çeşide göre ikon: variantIds[i] takılıysa variantSprites[i] gösterilir.")]
+        [SerializeField] private string[] variantIds = new string[0];
+        [SerializeField] private Sprite[] variantSprites = new Sprite[0];
+
         public void Configure(string gearSlot, string displayName, Graphic iconGraphic, TMP_Text statusText)
         {
             slot = gearSlot;
             itemName = displayName;
             icon = iconGraphic;
             status = statusText;
+        }
+
+        public void SetVariants(string[] ids, Sprite[] sprites)
+        {
+            variantIds = ids;
+            variantSprites = sprites;
         }
 
         private void Awake() => GetComponent<Button>().onClick.AddListener(Toggle);
@@ -52,6 +62,9 @@ namespace Jumpline.UI
         private void Refresh()
         {
             bool on = SaveManager.IsGearEquipped(slot);
+            int v = System.Array.IndexOf(variantIds, SaveManager.GetGearVariant(slot));
+            if (icon is Image image && v >= 0 && v < variantSprites.Length && variantSprites[v] != null)
+                image.sprite = variantSprites[v];
             if (icon != null)
             {
                 Color c = icon.color;
