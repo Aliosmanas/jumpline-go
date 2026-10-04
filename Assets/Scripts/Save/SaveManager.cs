@@ -88,6 +88,20 @@ namespace Jumpline.Save
 
         public static event Action GearChanged;
 
+        public const string GearVariantPrefix = "jl.gearVariant.";
+        public const string DefaultGearVariant = "standard";
+
+        /// <summary>Yuvaya takılı ekipman çeşidi (standard, stealth, velocity, titanium).</summary>
+        public static string GetGearVariant(string slot) => PlayerPrefs.GetString(GearVariantPrefix + slot, DefaultGearVariant);
+
+        public static void SetGearVariant(string slot, string variant)
+        {
+            PlayerPrefs.SetString(GearVariantPrefix + slot, variant);
+            PlayerPrefs.SetInt(GearPrefix + slot, 1); // çeşit seçmek takar
+            PlayerPrefs.Save();
+            GearChanged?.Invoke();
+        }
+
         public static bool IsGearEquipped(string slot) => PlayerPrefs.GetInt(GearPrefix + slot, 1) == 1;
 
         public static void SetGearEquipped(string slot, bool equipped)

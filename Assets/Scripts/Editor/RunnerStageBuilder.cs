@@ -28,6 +28,7 @@ namespace Jumpline.EditorTools
         {
             var lib = GetOrCreateAsset<SkinLibrary>(LibraryPath, null);
             lib.SetSkins(DefaultSkins());
+            lib.SetGear(DefaultGear());
             EditorUtility.SetDirty(lib);
             return lib;
         }
@@ -192,6 +193,7 @@ namespace Jumpline.EditorTools
             model.transform.localRotation = Quaternion.Euler(0f, DisplayYaw, 0f);
 
             runner = model.AddComponent<RunnerSkin>();
+            Set(runner, "library", library);
             runner.Apply(library.Find("rookie"));
 
             var display = stage.gameObject.AddComponent<RunnerDisplay>();
@@ -468,26 +470,24 @@ namespace Jumpline.EditorTools
             foreach (var r in runner.GetComponentsInChildren<Renderer>(true)) r.enabled = r.name != "Runner_Feet"; // tam ekipmanlı
             try
             {
+                var bustRt = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB) { antiAliasing = 4 };
+                Vector3 full = runner.transform.position + new Vector3(0f, 0.95f, 0f);
+                Vector3 bust = runner.transform.position + new Vector3(0f, 1.5f, 0f);
                 foreach (SkinPreset skin in library.Skins)
                 {
                     runner.Apply(skin);
-                    camera.Render();
-                    var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false);
-                    RenderTexture.active = rt;
-                    tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
-                    tex.Apply();
-                    RenderTexture.active = null;
-                    string path = $"{ThumbDir}/{skin.id}.png";
-                    File.WriteAllBytes(path, tex.EncodeToPNG());
-                    Object.DestroyImmediate(tex);
-                    AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-                    var imp = (TextureImporter)AssetImporter.GetAtPath(path);
-                    imp.textureType = TextureImporterType.Sprite;
-                    imp.alphaIsTransparency = true;
-                    imp.mipmapEnabled = false;
-                    imp.SaveAndReimport();
-                    result[skin.id] = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                    camera.targetTexture = rt;
+                    camera.fieldOfView = 26f;
+                    camera.transform.LookAt(full);
+                    result[skin.id] = Capture(camera, rt, $"{ThumbDir}/{skin.id}.png");
+                    // Göğüs portresi (market kostüm kartları — docs/references/market/offers.jpg)
+                    camera.targetTexture = bustRt;
+                    camera.fieldOfView = 12.5f;
+                    camera.transform.LookAt(bust);
+                    result[skin.id + "_bust"] = Capture(camera, bustRt, $"{ThumbDir}/{skin.id}_bust.png");
                 }
+                camera.targetTexture = rt;
+                Object.DestroyImmediate(bustRt);
             }
             finally
             {
@@ -501,6 +501,38 @@ namespace Jumpline.EditorTools
             return result;
         }
 
+        private static Sprite Capture(Camera camera, RenderTexture rt, string path)
+        {
+            camera.Render();
+            var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false);
+            RenderTexture.active = rt;
+            tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            tex.Apply();
+            RenderTexture.active = null;
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            var imp = (TextureImporter)AssetImporter.GetAtPath(path);
+            imp.textureType = TextureImporterType.Sprite;
+            imp.alphaIsTransparency = true;
+            imp.mipmapEnabled = false;
+            imp.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        /// <summary>Ekipman çeşitleri — docs/references/market/gear.jpg.</summary>
+        private static List<SkinPreset> DefaultGear() => new List<SkinPreset>
+        {
+            // Stealth: mat siyah, kırmızı ışık
+            new SkinPreset { id = "stealth", primary = Hex("#1A1A20"), secondary = Hex("#101014"), armor = Hex("#2A2A32"), glove = Hex("#141418"),
+                glow = Hex("#FF2A3A"), visor = Hex("#141C34"), glowIntensity = 3f, metallic = 0.3f, smoothness = 0.35f },
+            // Velocity: parlak mavi, camgöbeği ışık
+            new SkinPreset { id = "velocity", primary = Hex("#1E4FD0"), secondary = Hex("#163A9A"), armor = Hex("#3A6CFF"), glove = Hex("#1A3C9E"),
+                glow = Hex("#4FE0FF"), visor = Hex("#0E2A70"), glowIntensity = 6f, metallic = 0.4f, smoothness = 0.7f, visorGlows = true },
+            // Titanium: kırmızı + altın, mavi vizör
+            new SkinPreset { id = "titanium", primary = Hex("#B0161E"), secondary = Hex("#8A1218"), armor = Hex("#E2B04A"), glove = Hex("#9C141C"),
+                glow = Hex("#FFD27A"), visor = Hex("#2F6FE0"), glowIntensity = 3f, metallic = 0.75f, smoothness = 0.75f },
+        };
         private static List<SkinPreset> DefaultSkins()
         {
             SkinPreset S(string id, string p, string s, string a, string g, string glow, string visor, float intensity,

@@ -109,3 +109,40 @@ MonoBehaviour:
     secondaryGlow: 0
     metallic: 0.15
     smoothness: 0.45
+  gear:
+  - id: stealth
+    primary: {r: 0.101960786, g: 0.101960786, b: 0.1254902, a: 1}
+    secondary: {r: 0.0627451, g: 0.0627451, b: 0.078431375, a: 1}
+    armor: {r: 0.16470589, g: 0.16470589, b: 0.19607843, a: 1}
+    glove: {r: 0.078431375, g: 0.078431375, b: 0.09411765, a: 1}
+    glow: {r: 1, g: 0.16470589, b: 0.22745098, a: 1}
+    visor: {r: 0.078431375, g: 0.10980392, b: 0.20392157, a: 1}
+    glowIntensity: 3
+    visorGlows: 0
+    secondaryGlow: 0
+    metallic: 0.3
+    smoothness: 0.35
+  - id: velocity
+    primary: {r: 0.11764706, g: 0.30980393, b: 0.8156863, a: 1}
+    secondary: {r: 0.08627451, g: 0.22745098, b: 0.6039216, a: 1}
+    armor: {r: 0.22745098, g: 0.42352942, b: 1, a: 1}
+    glove: {r: 0.101960786, g: 0.23529412, b: 0.61960787, a: 1}
+    glow: {r: 0.30980393, g: 0.8784314, b: 1, a: 1}
+    visor: {r: 0.05490196, g: 0.16470589, b: 0.4392157, a: 1}
+    glowIntensity: 6
+    visorGlows: 1
+    secondaryGlow: 0
+    metallic: 0.4
+    smoothness: 0.7
+  - id: titanium
+    primary: {r: 0.6901961, g: 0.08627451, b: 0.11764706, a: 1}
+    secondary: {r: 0.5411765, g: 0.07058824, b: 0.09411765, a: 1}
+    armor: {r: 0.8862745, g: 0.6901961, b: 0.2901961, a: 1}
+    glove: {r: 0.6117647, g: 0.078431375, b: 0.10980392, a: 1}
+    glow: {r: 1, g: 0.8235294, b: 0.47843137, a: 1}
+    visor: {r: 0.18431373, g: 0.43529412, b: 0.8784314, a: 1}
+    glowIntensity: 3
+    visorGlows: 0
+    secondaryGlow: 0
+    metallic: 0.75
+    smoothness: 0.75

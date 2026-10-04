@@ -159,6 +159,13 @@ namespace Jumpline.EditorTools
             SetStructArray(view, "bars", bars);
         }
 
+        private static void SetBool(Object target, string field, bool value)
+        {
+            var so = new SerializedObject(target);
+            so.FindProperty(field).boolValue = value;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         private static Dictionary<string, object> StatRow(Box parent, string id, string label, float y)
         {
             Txt(parent, id + "Label", label, new Rect(45f, y, 230f, 40f), fBold, 28f, Hex("#E2E4EA"), TextAlignmentOptions.Left);
@@ -194,35 +201,195 @@ namespace Jumpline.EditorTools
         // MARKET
         // ---------------------------------------------------------------------
 
-        // docs/references/menu/market_v2.jpg (768x1376 → x1.453): üst çubuk, solda Günün Fırsatları sütunu,
-        // sağda podyumda karakter, altta kostüm ızgarası. Sekmeler (Güçler / Para) üst çubuğun altında.
+        // =====================================================================
+        // MARKET — docs/references/market/*.jpg (768x1376 → x1.453) + menu/market_v2 (Kostümler sekmesi)
+        // Sekmeler: OFFERS, SKINS, GEAR, BOOSTS, CURRENCY
+        // =====================================================================
+
+        private const float NavTop = 1735f;
+
         private static void BuildMarket(Screen s)
         {
             var cards = new List<ShopItemCard>();
+            string[] tabNames = { "OFFERS", "SKINS", "GEAR", "BOOSTS", "CURRENCY" };
 
-            var bar = Add(s.top, "TopBar", new Rect(0f, 0f, 1116f, 124f));
+            var offers = TabPage(s.top, "OffersTab", false);
+            BuildOffersTab(offers, cards);
+            var skins = TabPage(s.top, "SkinsTab", false);
+            BuildSkinsTab(skins, cards, out TMP_Text gold, out TMP_Text gems);
+            var gear = TabPage(s.top, "GearTab", false);
+            BuildGearTab(gear, cards);
+            var boosts = TabPage(s.top, "BoostsTab", true);
+            BuildBoostsTab(boosts, cards);
+            var currency = TabPage(s.top, "CurrencyTab", true);
+            BuildCurrencyTab(currency, cards);
+
+            SegmentedControl tabs = Tabs(s.top, tabNames);
+
+            var view = s.screen.gameObject.AddComponent<MarketView>();
+            Set(view, "catalog", catalog);
+            Set(view, "goldText", gold);
+            Set(view, "gemsText", gems);
+            Set(view, "tabs", tabs);
+            SetArray(view, "tabPanels", new Object[] { offers.go, skins.go, gear.go, boosts.go, currency.go });
+            offers.go.SetActive(true);
+            foreach (var t in new[] { skins, gear, boosts, currency }) t.go.SetActive(false);
+            SetArray(view, "cards", cards.ToArray());
+        }
+
+        /// <summary>Sekme sayfası: kendi arka planı (koyu geçiş ya da yol görseli).</summary>
+        private static Box TabPage(Box parent, string name, bool road)
+        {
+            var page = Add(parent, name, Full);
+            var bg = Img(page.rt, "Background", road ? Icons["bg_road"] : background, Color.white, false);
+            bg.raycastTarget = false;
+            if (road)
+            {
+                // Görsel ekranın altını kaplasın; üstü koyu laciverte erisin (referans)
+                Place(bg.rectTransform, page, new Rect(-200f, 320f, 1516f, 1600f));
+                var solid = Add(page, "TopSolid", new Rect(0f, -300f, 1116f, 700f));
+                Fill(solid, Hex("#141826"), Hex("#141826"));
+                var fade = Add(page, "TopFade", new Rect(0f, 400f, 1116f, 600f));
+                Fill(fade, new Color(0.078f, 0.094f, 0.149f, 0f), Hex("#141826"));
+                solid.rt.SetSiblingIndex(1);
+                fade.rt.SetSiblingIndex(2);
+            }
+            else
+            {
+                Stretch(bg.rectTransform, new Vector2(-300f, -300f), new Vector2(300f, 300f));
+            }
+            return page;
+        }
+
+        private static TextMeshProUGUI SectionTitle(Box parent, string text, float y) =>
+            Txt(parent, text.Replace(" ", "") + "Title", text, new Rect(58f, y, 900f, 56f), fExtra, 38f, Color.white, TextAlignmentOptions.Left);
+
+        /// <summary>Lacivert parlak fiyat kapsülü (referanstaki "$2.99").</summary>
+        private static Button PricePill(Box parent, Rect r, out TextMeshProUGUI label, float size = 34f)
+        {
+            return PillButton(parent, "PriceButton", r, "", size, Color.white, 1f, out label, Hex("#6EA6FF"), C.Blue, false);
+        }
+
+        /// <summary>Bordo fiyat butonu (ekipman mağazası).</summary>
+        private static Button RedPill(Box parent, Rect r, out TextMeshProUGUI label)
+        {
+            var b = Panel(parent, "PriceButton", r, Hex("#5A0F24"), Hex("#8A1A3A"), 12f, Hex("#E0406E"));
+            GlowLine(b, new Rect(r.x + 30f, r.yMax - 7f, r.width - 60f, 12f), Hex("#FF5C8A"));
+            label = Txt(b, "Label", "", r, fExtra, 34f, Color.white, localize: false);
+            return MakeButton(b, b.rt.GetComponent<Image>());
+        }
+
+        /// <summary>Mavi dikdörtgen fiyat butonu (güç mağazası).</summary>
+        private static Button BluePill(Box parent, Rect r, out TextMeshProUGUI label)
+        {
+            var b = Panel(parent, "PriceButton", r, Hex("#1B4FB0"), Hex("#3F82F0"), 12f, Hex("#9CC6FF"));
+            label = Txt(b, "Label", "", r, fExtra, 44f, Color.white, localize: false);
+            Shadow(label);
+            return MakeButton(b, b.rt.GetComponent<Image>());
+        }
+
+        private static Box RarityCard(Box parent, string name, Rect r, Rarity rarity, Color bottom, Color top)
+        {
+            var card = Add(parent, name, r);
+            Panel(card, "Face", r, bottom, top, 20f, RarityColor(rarity));
+            return card;
+        }
+
+        private static ShopItemCard Bind(Box root, string itemId, Button button, TMP_Text title, TMP_Text status, TMP_Text action, bool keepTitle)
+        {
+            var card = Card(root, itemId, button, title, status, action, null);
+            if (keepTitle) SetBool(card, "keepTitle", true);
+            return card;
+        }
+
+        // ---------------- OFFERS ----------------
+        private static void BuildOffersTab(Box page, List<ShopItemCard> cards)
+        {
+            Box c = VerticalScroll(page, "OffersScroll", new Rect(0f, 113f, 1116f, NavTop - 113f), 2060f);
+
+            SectionTitle(c, "FEATURED", 150f);
+            var vp = Add(c, "FeaturedViewport", new Rect(0f, 222f, 1116f, 440f));
+            vp.go.AddComponent<RectMask2D>();
+            vp.go.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
+            var strip = Add(vp, "Content", new Rect(0f, 222f, 1716f, 440f));
+            strip.rt.anchorMin = strip.rt.anchorMax = new Vector2(0f, 0.5f);
+            strip.rt.pivot = new Vector2(0f, 0.5f);
+            strip.rt.anchoredPosition = Vector2.zero;
+            var sr = vp.go.AddComponent<ScrollRect>();
+            sr.content = strip.rt;
+            sr.viewport = vp.rt;
+            sr.horizontal = true;
+            sr.vertical = false;
+            cards.Add(FeaturedCard(strip, "velocity_pack", new Rect(58f, 240f, 785f, 404f), "pack_velocity", true));
+            cards.Add(FeaturedCard(strip, "velocity_bundle", new Rect(873f, 240f, 785f, 404f), "pack_bundle", false));
+
+            SectionTitle(c, "CHARACTER SKINS", 700f);
+            string[] skinOffers = { "offer_stealth", "offer_titanium", "offer_crimson", "offer_glitch", "offer_velocity", "offer_blaze" };
+            for (int i = 0; i < skinOffers.Length; i++)
+            {
+                var r = new Rect(58f + (i % 3) * 341f, 780f + (i / 3) * 391f, 317f, 366f);
+                ShopItem item = catalog.Find(skinOffers[i]);
+                var card = RarityCard(c, skinOffers[i], r, item.rarity, Hex("#1C2236"), Hex("#2A3352"));
+                Thumb(card, item.rewardSkin + "_bust", new Rect(r.x + 30f, r.y + 18f, r.width - 60f, 238f));
+                RarityIcon(card, r, item.rarity);
+                var title = Txt(card, "Title", item.displayName, new Rect(r.x, r.y + 252f, r.width, 40f), fExtra, 28f, Color.white, localize: false);
+                Button b = PricePill(card, new Rect(r.x + 50f, r.y + 296f, r.width - 100f, 60f), out TextMeshProUGUI price);
+                cards.Add(Bind(card, item.id, b, title, null, price, true));
+            }
+
+            SectionTitle(c, "GEMS & GOLD", 1590f);
+            (string id, string art)[] packs = { ("pack_starter", "pack_starter"), ("pack_value", "pack_value"), ("pack_goldbundle", "pack_goldbundle") };
+            for (int i = 0; i < packs.Length; i++)
+            {
+                var r = new Rect(58f + i * 341f, 1664f, 317f, 366f);
+                ShopItem item = catalog.Find(packs[i].id);
+                var card = RarityCard(c, packs[i].id, r, item.rarity, Hex("#1C2236"), Hex("#2A3352"));
+                Icon(card, packs[i].art, new Rect(r.x + 40f, r.y + 40f, r.width - 80f, 200f), Color.white);
+                RarityIcon(card, r, item.rarity);
+                var title = Txt(card, "Title", item.displayName, new Rect(r.x, r.y + 252f, r.width, 40f), fExtra, 28f, Color.white, localize: false);
+                Button b = PricePill(card, new Rect(r.x + 50f, r.y + 296f, r.width - 100f, 60f), out TextMeshProUGUI price);
+                cards.Add(Bind(card, item.id, b, title, null, price, true));
+            }
+        }
+
+        private static ShopItemCard FeaturedCard(Box parent, string itemId, Rect r, string art, bool pink)
+        {
+            ShopItem item = catalog.Find(itemId);
+            var card = Add(parent, itemId, r);
+            Color accent = pink ? Hex("#FF6FB0") : Hex("#6FA8FF");
+            Panel(card, "Face", r, pink ? Hex("#3A1530") : Hex("#152040"), pink ? Hex("#6A2048") : Hex("#22386A"), 22f, RarityColor(item.rarity));
+            var glow = Img(card.rt, "Glow", softCircle, accent * new Color(1f, 1f, 1f, 0.35f), false);
+            Place(glow.rectTransform, card, new Rect(r.x + 300f, r.y - 60f, 520f, 520f));
+            glow.raycastTarget = false;
+            if (pink) Thumb(card, "velocity", new Rect(r.x + 400f, r.y + 6f, 240f, 300f));
+            Icon(card, art, new Rect(r.x + 40f, r.y + 130f, 260f, 210f), Color.white);
+            var title = Txt(card, "Title", item.displayName, new Rect(r.x + 32f, r.y + 26f, 700f, 60f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
+            Txt(card, "Subtitle", item.subtitle, new Rect(r.x + 32f, r.y + 86f, 500f, 36f), fExtra, 24f, accent, TextAlignmentOptions.Left, localize: false);
+            RarityIcon(card, r, item.rarity);
+            Txt(card, "Rarity", pink ? "RARITY: 0/3" : "RARITY: 0/51", new Rect(r.x + 32f, r.yMax - 64f, 400f, 36f), fBold, 24f, Hex("#A9AEBD"), TextAlignmentOptions.Left, localize: false);
+            Button b = PricePill(card, new Rect(r.xMax - 250f, r.yMax - 98f, 221f, 68f), out TextMeshProUGUI price, 38f);
+            return Bind(card, itemId, b, title, null, price, true);
+        }
+
+        // ---------------- SKINS (menu/market_v2.jpg) ----------------
+        private static void BuildSkinsTab(Box page, List<ShopItemCard> cards, out TMP_Text gold, out TMP_Text gems)
+        {
+            var bar = Add(page, "TopBar", new Rect(0f, 113f, 1116f, 104f));
             Fill(bar, Hex("#141826"), Hex("#1C2133"));
-            Line(s.top, new Rect(0f, 122f, 1116f, 2f), Hex("#3B4A6E"));
-            Txt(s.top, "Title", "JUMPLINE GO", new Rect(48f, 22f, 520f, 80f), fExtra, 50f, Color.white, TextAlignmentOptions.Left, localize: false);
-            Icon(s.top, "coin", new Rect(655f, 32f, 60f, 60f), Color.white);
-            var gold = Txt(s.top, "GoldText", "0", new Rect(722f, 30f, 180f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
-            Icon(s.top, "gem", new Rect(890f, 30f, 62f, 64f), Color.white);
-            var gems = Txt(s.top, "GemsText", "0", new Rect(958f, 30f, 150f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
+            Line(page, new Rect(0f, 215f, 1116f, 2f), Hex("#3B4A6E"));
+            Txt(page, "Title", "JUMPLINE GO", new Rect(48f, 125f, 520f, 80f), fExtra, 50f, Color.white, TextAlignmentOptions.Left, localize: false);
+            Icon(page, "coin", new Rect(655f, 135f, 60f, 60f), Color.white);
+            gold = Txt(page, "GoldText", "0", new Rect(722f, 133f, 180f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
+            Icon(page, "gem", new Rect(890f, 133f, 62f, 64f), Color.white);
+            gems = Txt(page, "GemsText", "0", new Rect(958f, 133f, 150f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
 
-            SegmentedControl tabs = Tabs(s.top);
-
-            // Kostümler sekmesi
-            var skinsTab = Add(s.top, "SkinsTab", Full);
-            Box skins = VerticalScroll(skinsTab, "SkinsScroll", new Rect(0f, 222f, 1116f, 1513f), 2420f);
-
+            Box skins = VerticalScroll(page, "SkinsScroll", new Rect(0f, 217f, 1116f, NavTop - 217f), 2420f);
             RawPreview(skins, "RunnerPreview", new Rect(430f, 470f, 680f, 1000f), preview);
-
             var deals = Panel(skins, "DealsPanel", new Rect(75f, 250f, 333f, 1340f), Hex("#1E2236", 0.85f), Hex("#262D48", 0.85f), 22f, Hex("#5D6B93"));
             Txt(deals, "DealsTitle", "DAILY DEALS", new Rect(75f, 270f, 333f, 70f), fExtra, 38f, Color.white);
             cards.Add(DealCard(deals, 1, "stealth", new Rect(102f, 352f, 279f, 412f), true));
             cards.Add(DealCard(deals, 2, "speed_boost", new Rect(102f, 780f, 279f, 398f), false));
             cards.Add(DealCard(deals, 3, "titanium", new Rect(102f, 1194f, 279f, 370f), false));
-
             float[] xs = { 75f, 323f, 571f, 820f };
             float[] ys = { 1640f, 1950f };
             int n = 0;
@@ -232,22 +399,96 @@ namespace Jumpline.EditorTools
                 cards.Add(GridCard(skins, SkinIds[n], new Rect(x, y, 221f, 281f), false));
                 n++;
             }
+        }
 
-            // Güçler / Para sekmeleri
-            var boosts = Add(s.top, "BoostsTab", Full);
-            OfferGrid(boosts, BoostIds, cards);
-            var currency = Add(s.top, "CurrencyTab", Full);
-            OfferGrid(currency, CurrencyIds, cards);
+        // ---------------- GEAR (market/gear.jpg) ----------------
+        private static void BuildGearTab(Box page, List<ShopItemCard> cards)
+        {
+            Box c = VerticalScroll(page, "GearScroll", new Rect(0f, 113f, 1116f, NavTop - 113f), 1880f);
+            var banner = Add(c, "Banner", new Rect(150f, 150f, 816f, 82f));
+            var poly = AddPolygon(banner);
+            poly.Configure(new[] { new Vector2(0.08f, 0f), new Vector2(0.92f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) });
+            poly.color = Hex("#6A1430");
+            poly.raycastTarget = false;
+            banner.go.AddComponent<UIGradient>().SetColors(Hex("#3A0C1E"), Hex("#8A1A3A"), true);
+            GlowLine(c, new Rect(150f, 226f, 816f, 12f), Hex("#FF4F7A"));
+            Txt(c, "BannerTitle", "GEAR SHOP", new Rect(150f, 152f, 816f, 80f), fExtra, 54f, Color.white);
 
-            var view = s.screen.gameObject.AddComponent<MarketView>();
-            Set(view, "catalog", catalog);
-            Set(view, "goldText", gold);
-            Set(view, "gemsText", gems);
-            Set(view, "tabs", tabs);
-            SetArray(view, "tabPanels", new Object[] { skinsTab.go, boosts.go, currency.go });
-            boosts.go.SetActive(false);
-            currency.go.SetActive(false);
-            SetArray(view, "cards", cards.ToArray());
+            string[] slots = { "helmet", "gloves", "boots" };
+            string[] titles = { "HELMETS", "GLOVES", "BOOTS" };
+            string[] variants = { "stealth", "velocity", "titanium" };
+            for (int row = 0; row < 3; row++)
+            {
+                float y = 330f + row * 520f;
+                Txt(c, titles[row] + "Title", titles[row], new Rect(52f, y - 62f, 600f, 56f), fExtra, 38f, Color.white, TextAlignmentOptions.Left);
+                for (int col = 0; col < 3; col++)
+                {
+                    string id = $"{variants[col]}_{slots[row]}";
+                    ShopItem item = catalog.Find(id);
+                    var r = new Rect(52f + col * 345f, y, 322f, 433f);
+                    var card = RarityCard(c, id, r, item.rarity, Hex("#151C30"), Hex("#22304E"));
+                    Icon(card, id, new Rect(r.x + 26f, r.y + 50f, r.width - 52f, 240f), Color.white);
+                    RarityTag(card, r, item.rarity);
+                    var title = Txt(card, "Title", item.displayName, new Rect(r.x, r.y + 298f, r.width, 44f), fExtra, 28f, Color.white, localize: false);
+                    Button b = RedPill(card, new Rect(r.x + 22f, r.y + 356f, r.width - 44f, 60f), out TextMeshProUGUI price);
+                    cards.Add(Bind(card, id, b, title, null, price, true));
+                }
+            }
+        }
+
+        // ---------------- BOOSTS (market/boosts.jpg) ----------------
+        private static void BuildBoostsTab(Box page, List<ShopItemCard> cards)
+        {
+            Box c = VerticalScroll(page, "BoostsScroll", new Rect(0f, 113f, 1116f, NavTop - 113f), 2280f);
+            Chrome(Txt(c, "Title", "BOOSTS SHOP", new Rect(158f, 165f, 800f, 90f), fExtra, 62f, Color.white));
+            (string id, string art, string desc)[] boosts =
+            {
+                ("magnet", "boost_magnet_big", "Attracts nearby coins automatically."),
+                ("double_gold", "boost_x2_big", "Earn double gold coins for 24h."),
+                ("speed_boost", "boost_speed_big", "Temporarily increases speed."),
+                ("shield", "shield", "Blocks one hit from an obstacle."),
+            };
+            for (int i = 0; i < boosts.Length; i++)
+            {
+                var r = new Rect(90f, 293f + i * 495f, 937f, 439f);
+                ShopItem item = catalog.Find(boosts[i].id);
+                var card = Add(c, boosts[i].id, r);
+                Panel(card, "Face", r, Hex("#4A1428", 0.92f), Hex("#22305A", 0.92f), 18f, Hex("#8095C4"));
+                Icon(card, boosts[i].art, new Rect(r.x + 15f, r.y + 15f, 470f, 410f), Color.white);
+                var title = Txt(card, "Title", item.displayName, new Rect(r.x + 515f, r.y + 70f, 410f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
+                Chrome(title);
+                Txt(card, "Description", boosts[i].desc, new Rect(r.x + 515f, r.y + 140f, 400f, 120f), fMedium, 30f, C.TextSoft, TextAlignmentOptions.TopLeft, wrap: true);
+                Button b = BluePill(card, new Rect(r.x + 515f, r.y + 300f, 312f, 90f), out TextMeshProUGUI price);
+                cards.Add(Bind(card, item.id, b, title, null, price, true));
+            }
+        }
+
+        // ---------------- CURRENCY (market/gold.jpg + gems.jpg) ----------------
+        private static void BuildCurrencyTab(Box page, List<ShopItemCard> cards)
+        {
+            Box c = VerticalScroll(page, "CurrencyScroll", new Rect(0f, 113f, 1116f, NavTop - 113f), 1500f);
+            (string title, float y, Color border, (string id, string art)[] items)[] groups =
+            {
+                ("GOLD PACKS", 150f, Hex("#C9A06A"), new[] { ("gold_small", "gold_pouch"), ("gold_medium", "gold_stack"), ("gold_large", "gold_vault") }),
+                ("GEM PACKS", 800f, Hex("#9AA8D8"), new[] { ("gem_small", "gem_pouch"), ("gem_medium", "gem_cluster"), ("gem_large", "gem_cache") }),
+            };
+            foreach (var g in groups)
+            {
+                SectionTitle(c, g.title, g.y);
+                for (int i = 0; i < g.items.Length; i++)
+                {
+                    var r = new Rect(58f + i * 341f, g.y + 90f, 317f, 491f);
+                    ShopItem item = catalog.Find(g.items[i].id);
+                    var card = Add(c, item.id, r);
+                    Panel(card, "Face", r, Hex("#151A2C", 0.95f), Hex("#232C46", 0.95f), 20f, g.border);
+                    Txt(card, "Name", item.displayName, new Rect(r.x, r.y + 22f, r.width, 50f), fBold, 31f, Color.white, localize: false);
+                    Icon(card, g.items[i].art, new Rect(r.x + 28f, r.y + 82f, r.width - 56f, 228f), Color.white);
+                    string amount = item.rewardGold > 0 ? $"{item.rewardGold} GOLD" : $"{item.rewardGems} GEMS";
+                    var title = Txt(card, "Amount", amount, new Rect(r.x, r.y + 322f, r.width, 48f), fExtra, 33f, Color.white, localize: false);
+                    Button b = PricePill(card, new Rect(r.x + 50f, r.y + 396f, r.width - 100f, 62f), out TextMeshProUGUI price);
+                    cards.Add(Bind(card, item.id, b, title, null, price, true));
+                }
+            }
         }
 
         /// <summary>
@@ -274,32 +515,37 @@ namespace Jumpline.EditorTools
             return content;
         }
 
-        private static SegmentedControl Tabs(Box parent)
+        private static SegmentedControl Tabs(Box parent, string[] names)
         {
-            string[] names = { "SKINS", "BOOSTS", "CURRENCY" };
-            float[] xs = { 75f, 410f, 745f };
-            var root = Add(parent, "Tabs", new Rect(75f, 140f, 966f, 66f));
-            var buttons = new Button[3];
-            var selected = new GameObject[3];
-            var labels = new TMP_Text[3];
-            for (int i = 0; i < 3; i++)
+            var strip = Add(parent, "Tabs", new Rect(0f, 0f, 1116f, 113f));
+            Fill(strip, Hex("#121726"), Hex("#1A2036"));
+            Line(parent, new Rect(0f, 111f, 1116f, 2f), Hex("#2E3A5A"));
+            float w = 1116f / names.Length;
+            var buttons = new Button[names.Length];
+            var selected = new GameObject[names.Length];
+            var labels = new TMP_Text[names.Length];
+            for (int i = 0; i < names.Length; i++)
             {
-                var r = new Rect(xs[i], 140f, 296f, 66f);
-                var tab = Panel(root, names[i] + "Tab", r, Hex("#1C2338"), Hex("#232C46"), 22f, Hex("#4C5A80"));
-                var sel = Add(tab, "Selected", r);
-                Glow(sel, Expand(r, 26f), Hex("#5AA8FF", 0.35f));
-                var selFill = Panel(sel, "Fill", r, Hex("#223463"), Hex("#2E4478"), 22f, Hex("#8CC0FF"));
-                selFill.rt.GetComponent<Image>().raycastTarget = false;
-                GlowLine(sel, new Rect(r.x + 50f, r.yMax - 9f, r.width - 100f, 16f), Hex("#7FB8FF"));
+                var r = new Rect(i * w, 0f, w, 111f);
+                var tab = Add(strip, names[i] + "Tab", r);
+                var hit = tab.go.AddComponent<Image>();
+                hit.color = new Color(0f, 0f, 0f, 0f);
+                var sel = Add(tab, "Selected", new Rect(r.x + 8f, r.y + 8f, r.width - 16f, r.height - 8f));
+                Fill(sel, Hex("#3A1024"), Hex("#6A1A3A"));
+                sel.rt.GetComponent<Image>().raycastTarget = false;
+                GlowLine(sel, new Rect(r.x + 30f, r.yMax - 8f, r.width - 60f, 12f), Hex("#FF4F7A"));
                 selected[i] = sel.go;
-                labels[i] = Txt(tab, "Label", names[i], r, fExtra, 30f, Color.white);
-                buttons[i] = MakeButton(tab, tab.rt.GetComponent<Image>());
+                labels[i] = Txt(tab, "Label", names[i], r, fExtra, names[i].Length > 7 ? 32f : 36f, Color.white);
+                labels[i].enableAutoSizing = true;
+                labels[i].fontSizeMin = 20f;
+                labels[i].fontSizeMax = labels[i].fontSize;
+                buttons[i] = MakeButton(tab, hit, false);
             }
-            var control = root.go.AddComponent<SegmentedControl>();
+            var control = strip.go.AddComponent<SegmentedControl>();
             SetArray(control, "segments", buttons);
             SetArray(control, "selectedVisuals", selected);
             SetArray(control, "labels", labels);
-            SetColor(control, "normalLabelColor", Hex("#A7AEC2"));
+            SetColor(control, "normalLabelColor", Hex("#8C95AA"));
             SetColor(control, "selectedLabelColor", Color.white);
             control.SetWithoutNotify(0);
             return control;
@@ -704,9 +950,14 @@ namespace Jumpline.EditorTools
         {
             ShopItem I(string id, string name, ItemCategory cat, CurrencyType cur, int price, int reward = 0) =>
                 new ShopItem { id = id, displayName = name, category = cat, currency = cur, price = price, rewardGold = reward };
+            ShopItem Usd(string id, string name, ItemCategory cat, Rarity rarity, float usd, int gold = 0, int gems = 0, string skin = null, string sub = null) =>
+                new ShopItem { id = id, displayName = name, subtitle = sub, category = cat, rarity = rarity, priceUsd = usd, rewardGold = gold, rewardGems = gems, rewardSkin = skin };
+            ShopItem Gear(string variant, string slot, string name, Rarity rarity, float usd) =>
+                new ShopItem { id = $"{variant}_{slot}", displayName = name, category = ItemCategory.Gear, rarity = rarity, priceUsd = usd, gearSlot = slot, gearVariant = variant };
+
             return new List<ShopItem>
             {
-                // docs/references/character/skins.jpg + renk çeşitleri
+                // Kostümler (altın / elmas) — menu/market_v2.jpg
                 I("rookie", "ROOKIE", ItemCategory.Skin, CurrencyType.Gold, 0),
                 I("stealth", "STEALTH", ItemCategory.Skin, CurrencyType.Gems, 200),
                 I("velocity", "VELOCITY", ItemCategory.Skin, CurrencyType.Gold, 1500),
@@ -715,13 +966,44 @@ namespace Jumpline.EditorTools
                 I("crimson", "CRIMSON", ItemCategory.Skin, CurrencyType.Gold, 1200),
                 I("frost", "FROST", ItemCategory.Skin, CurrencyType.Gems, 150),
                 I("blaze", "BLAZE", ItemCategory.Skin, CurrencyType.Gold, 2500),
-                I("speed_boost", "SPEED BOOST", ItemCategory.Boost, CurrencyType.Gems, 150),
-                I("shield", "SHIELD", ItemCategory.Boost, CurrencyType.Gems, 100),
-                I("magnet", "COIN MAGNET", ItemCategory.Boost, CurrencyType.Gold, 2000),
-                I("double_gold", "DOUBLE GOLD", ItemCategory.Boost, CurrencyType.Gems, 300),
-                I("gold_small", "GOLD PACK S", ItemCategory.Currency, CurrencyType.Gems, 50, 1000),
-                I("gold_medium", "GOLD PACK M", ItemCategory.Currency, CurrencyType.Gems, 200, 5000),
-                I("gold_large", "GOLD PACK L", ItemCategory.Currency, CurrencyType.Gems, 400, 12000),
+
+                // Fırsatlar — market/offers.jpg
+                Usd("velocity_pack", "VELOCITY PACK", ItemCategory.Bundle, Rarity.Epic, 9.99f, gems: 500, skin: "velocity", sub: "SPECIAL RACER"),
+                Usd("velocity_bundle", "VELOCITY", ItemCategory.Bundle, Rarity.Rare, 14.99f, gold: 10000, gems: 1000, sub: "SPECIAL BUNDLE"),
+                Usd("offer_stealth", "NIGHT RUNNER", ItemCategory.Bundle, Rarity.Common, 2.99f, skin: "stealth"),
+                Usd("offer_titanium", "CHROME FLASH", ItemCategory.Bundle, Rarity.Rare, 2.99f, skin: "titanium"),
+                Usd("offer_crimson", "CRIMSON SKIN", ItemCategory.Bundle, Rarity.Epic, 3.99f, skin: "crimson"),
+                Usd("offer_glitch", "GLITCH SKIN", ItemCategory.Bundle, Rarity.Rare, 4.99f, skin: "glitch"),
+                Usd("offer_velocity", "VELOCITY SKIN", ItemCategory.Bundle, Rarity.Epic, 3.99f, skin: "velocity"),
+                Usd("offer_blaze", "BLAZE SKIN", ItemCategory.Bundle, Rarity.Common, 5.99f, skin: "blaze"),
+                Usd("pack_starter", "STARTER BUNDLE", ItemCategory.Currency, Rarity.Common, 7.99f, gems: 800),
+                Usd("pack_value", "VALUE PACK", ItemCategory.Currency, Rarity.Epic, 25.99f, gems: 3000),
+                Usd("pack_goldbundle", "GOLD BUNDLE", ItemCategory.Currency, Rarity.Gold, 29.99f, gold: 30000),
+
+                // Ekipman — market/gear.jpg
+                Gear("stealth", "helmet", "STEALTH HELMET", Rarity.Rare, 4.99f),
+                Gear("velocity", "helmet", "VELOCITY HELMET", Rarity.Epic, 7.99f),
+                Gear("titanium", "helmet", "TITANIUM HELMET", Rarity.Legendary, 9.99f),
+                Gear("stealth", "gloves", "STEALTH GLOVES", Rarity.Rare, 3.99f),
+                Gear("velocity", "gloves", "VELOCITY GLOVES", Rarity.Epic, 5.99f),
+                Gear("titanium", "gloves", "TITANIUM GLOVES", Rarity.Legendary, 8.99f),
+                Gear("stealth", "boots", "STEALTH BOOTS", Rarity.Rare, 5.99f),
+                Gear("velocity", "boots", "VELOCITY BOOTS", Rarity.Epic, 8.99f),
+                Gear("titanium", "boots", "TITANIUM BOOTS", Rarity.Legendary, 12.99f),
+
+                // Güçler — market/boosts.jpg
+                Usd("magnet", "COIN MAGNET", ItemCategory.Boost, Rarity.Rare, 1.99f),
+                Usd("double_gold", "DOUBLE GOLD", ItemCategory.Boost, Rarity.Epic, 2.99f),
+                Usd("speed_boost", "SPEED BOOST", ItemCategory.Boost, Rarity.Rare, 1.99f),
+                Usd("shield", "SHIELD", ItemCategory.Boost, Rarity.Rare, 1.99f),
+
+                // Para — market/gold.jpg, gems.jpg
+                Usd("gold_small", "Pouch of Coins", ItemCategory.Currency, Rarity.Common, 1.99f, gold: 1000),
+                Usd("gold_medium", "Stack of Coins", ItemCategory.Currency, Rarity.Rare, 9.99f, gold: 5000),
+                Usd("gold_large", "Vault of Coins", ItemCategory.Currency, Rarity.Epic, 49.99f, gold: 20000),
+                Usd("gem_small", "Gem Pouch", ItemCategory.Currency, Rarity.Common, 1.99f, gems: 500),
+                Usd("gem_medium", "Gem Cluster", ItemCategory.Currency, Rarity.Rare, 9.99f, gems: 2500),
+                Usd("gem_large", "Gem Cache", ItemCategory.Currency, Rarity.Epic, 49.99f, gems: 10000),
             };
         }
 

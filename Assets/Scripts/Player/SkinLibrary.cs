@@ -28,11 +28,18 @@ namespace Jumpline.Player
     public class SkinLibrary : ScriptableObject
     {
         [SerializeField] private List<SkinPreset> skins = new List<SkinPreset>();
+        [Tooltip("Ekipman çeşitleri (stealth / velocity / titanium): kask, eldiven, bot renkleri. 'standard' = kostüm rengi.")]
+        [SerializeField] private List<SkinPreset> gear = new List<SkinPreset>();
 
         public IReadOnlyList<SkinPreset> Skins => skins;
 
         public SkinPreset Find(string id) => skins.Find(s => s.id == id) ?? (skins.Count > 0 ? skins[0] : null);
 
+        /// <summary>Ekipman çeşidi rengi; yoksa (standard) null → kostüm rengi kullanılır.</summary>
+        public SkinPreset FindGear(string variant) => gear.Find(g => g.id == variant);
+
         public void SetSkins(List<SkinPreset> newSkins) => skins = newSkins;
+
+        public void SetGear(List<SkinPreset> newGear) => gear = newGear;
     }
 }

@@ -43,7 +43,8 @@ namespace Jumpline.UI
             if (item == null) return;
 
             string message;
-            if (item.category == ItemCategory.Skin && SaveManager.IsOwned(item.id))
+            bool wearable = item.category == ItemCategory.Skin || item.category == ItemCategory.Gear;
+            if (wearable && ShopService.IsOwned(item))
             {
                 ShopService.TryEquip(item);
                 message = Localization.Format("{0} EQUIPPED", Localization.Get(item.displayName));
@@ -53,10 +54,12 @@ namespace Jumpline.UI
                 PurchaseResult result = ShopService.TryPurchase(item);
                 message = result switch
                 {
-                    PurchaseResult.Success => Localization.Get("PURCHASED!"),
+                    PurchaseResult.Success => Localization.Get(item.IsRealMoney ? "PURCHASED! (DEV: FREE)" : "PURCHASED!"),
                     PurchaseResult.NotEnoughFunds => Localization.Get(item.currency == CurrencyType.Gold ? "NOT ENOUGH GOLD" : "NOT ENOUGH GEMS"),
+                    PurchaseResult.StoreUnavailable => Localization.Get("STORE COMING SOON"),
                     _ => Localization.Get("OWNED"),
                 };
+                if (result == PurchaseResult.Success && wearable) ShopService.TryEquip(item); // alınca hemen giy
             }
             GetComponentInParent<MenuNavigator>(true).Toast.Show(message);
             Refresh();

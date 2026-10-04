@@ -804,6 +804,35 @@ namespace Jumpline.EditorTools
             Icons["double_gold"] = CropReference("double_gold", "items/double_gold.jpg", new RectInt(330, 540, 1360, 850), false);
             Icons["gear_helmet"] = CropReference("gear_helmet", "character/helmet.jpg", new RectInt(210, 560, 800, 920), true);
             Icons["gear_gloves"] = CropReference("gear_gloves", "character/gloves.jpg", new RectInt(130, 630, 880, 830), true);
+            // docs/references/market: market görselleri (768x1376 referanslar)
+            (string key, string file, RectInt r)[] market =
+            {
+                ("pack_velocity", "offers.jpg", new RectInt(70, 255, 155, 130)),
+                ("pack_bundle", "offers.jpg", new RectInt(630, 250, 138, 150)),
+                ("pack_starter", "offers.jpg", new RectInt(80, 1158, 125, 102)),
+                ("pack_value", "offers.jpg", new RectInt(312, 1155, 128, 105)),
+                ("pack_goldbundle", "offers.jpg", new RectInt(548, 1150, 135, 110)),
+                ("gold_pouch", "gold.jpg", new RectInt(60, 225, 180, 160)),
+                ("gold_stack", "gold.jpg", new RectInt(285, 222, 200, 170)),
+                ("gold_vault", "gold.jpg", new RectInt(530, 222, 180, 165)),
+                ("gem_pouch", "gems.jpg", new RectInt(65, 240, 175, 150)),
+                ("gem_cluster", "gems.jpg", new RectInt(290, 240, 185, 145)),
+                ("gem_cache", "gems.jpg", new RectInt(530, 236, 180, 155)),
+                ("stealth_helmet", "gear.jpg", new RectInt(60, 262, 178, 165)),
+                ("velocity_helmet", "gear.jpg", new RectInt(292, 262, 200, 165)),
+                ("titanium_helmet", "gear.jpg", new RectInt(528, 262, 182, 165)),
+                ("stealth_gloves", "gear.jpg", new RectInt(60, 622, 178, 165)),
+                ("velocity_gloves", "gear.jpg", new RectInt(292, 622, 200, 165)),
+                ("titanium_gloves", "gear.jpg", new RectInt(528, 622, 182, 165)),
+                ("stealth_boots", "gear.jpg", new RectInt(60, 988, 178, 165)),
+                ("velocity_boots", "gear.jpg", new RectInt(292, 988, 200, 165)),
+                ("titanium_boots", "gear.jpg", new RectInt(528, 988, 182, 165)),
+                ("boost_magnet_big", "boosts.jpg", new RectInt(70, 210, 340, 290)),
+                ("boost_x2_big", "boosts.jpg", new RectInt(95, 560, 300, 270)),
+                ("boost_speed_big", "boosts.jpg", new RectInt(95, 900, 300, 280)),
+            };
+            foreach (var m in market) Icons[m.key] = CropReference(m.key, "market/" + m.file, m.r, false);
+            Icons["bg_road"] = CropPlain("bg_road", "market/gold.jpg", new RectInt(0, 500, 768, 720));
             Icons["gear_boots"] = CropReference("gear_boots", "character/boots.jpg", new RectInt(110, 600, 1000, 810), true);
 
             fMedium = GetOrCreateFont("Montserrat-Medium");
@@ -1024,6 +1053,78 @@ namespace Jumpline.EditorTools
                 tex.SetPixel(x, y, aSum > 0f ? new Color(sum.r / aSum, sum.g / aSum, sum.b / aSum, aSum / n) : Color.clear);
             }
             return SaveSprite($"{IconDir}/{name}.png", tex, Vector4.zero);
+        }
+
+        /// <summary>Referanstan düz kesim (saydamlık yok) — arka plan görselleri.</summary>
+        private static Sprite CropPlain(string name, string file, RectInt r)
+        {
+            var src = new Texture2D(2, 2);
+            src.LoadImage(File.ReadAllBytes(Path.Combine("docs/references", file)));
+            var tex = new Texture2D(r.width, r.height, TextureFormat.RGB24, false);
+            tex.SetPixels(src.GetPixels(r.x, src.height - (r.y + r.height), r.width, r.height));
+            Object.DestroyImmediate(src);
+            return SaveSprite($"{SpriteDir}/{name}.png", tex, Vector4.zero);
+        }
+
+        // ---------------------------------------------------------------------
+        // Nadirlik (rarity) rozetleri — docs/references/market
+        // ---------------------------------------------------------------------
+
+        public static Color RarityColor(Jumpline.Shop.Rarity r) => r switch
+        {
+            Jumpline.Shop.Rarity.Rare => Hex("#4F9CFF"),
+            Jumpline.Shop.Rarity.Epic => Hex("#B45CFF"),
+            Jumpline.Shop.Rarity.Legendary => Hex("#E8B95B"),
+            Jumpline.Shop.Rarity.Gold => Hex("#F2C044"),
+            _ => Hex("#A9AEBD"),
+        };
+
+        public static string RarityLabel(Jumpline.Shop.Rarity r) => r.ToString().ToUpperInvariant();
+
+        /// <summary>Sağ üst köşe: şekil ikonu (elmas / üçgen / yıldız / taç) + altında küçük etiket.</summary>
+        public static void RarityIcon(Box parent, Rect card, Jumpline.Shop.Rarity rarity)
+        {
+            Color c = RarityColor(rarity);
+            var r = new Rect(card.xMax - 64f, card.y + 14f, 40f, 40f);
+            Vector2[] shape = rarity switch
+            {
+                Jumpline.Shop.Rarity.Rare => new[] { new Vector2(0.5f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) },
+                Jumpline.Shop.Rarity.Epic => Star(),
+                Jumpline.Shop.Rarity.Gold or Jumpline.Shop.Rarity.Legendary => new[]
+                {
+                    new Vector2(0f, 0.25f), new Vector2(0.25f, 0.55f), new Vector2(0.5f, 0f), new Vector2(0.75f, 0.55f),
+                    new Vector2(1f, 0.25f), new Vector2(0.9f, 1f), new Vector2(0.1f, 1f),
+                },
+                _ => new[] { new Vector2(0.5f, 0f), new Vector2(1f, 0.5f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f) },
+            };
+            if (rarity == Jumpline.Shop.Rarity.Rare || rarity == Jumpline.Shop.Rarity.Common)
+                Poly(parent, "RarityFill", Expand(r, -9f), shape, c * new Color(1f, 1f, 1f, 0.55f));
+            PolyStroke(parent, "RarityIcon", r, shape, c, 3f);
+            Txt(parent, "RarityLabel", RarityLabel(rarity), new Rect(card.xMax - 120f, card.y + 58f, 104f, 24f), fBold, 16f, c);
+        }
+
+        /// <summary>Sağ üst köşe dolu etiket ("RARE", "EPIC", "LEGENDARY") — ekipman kartları.</summary>
+        public static void RarityTag(Box parent, Rect card, Jumpline.Shop.Rarity rarity)
+        {
+            Color c = RarityColor(rarity);
+            string label = RarityLabel(rarity);
+            float w = 22f + label.Length * 13f;
+            var r = new Rect(card.xMax - w - 12f, card.y + 12f, w, 34f);
+            var tag = Panel(parent, "RarityTag", r, c * 0.75f, c, 7f, new Color(0, 0, 0, 0));
+            tag.rt.GetComponent<Image>().raycastTarget = false;
+            Txt(tag, "Label", label, r, fExtra, 18f, Color.white);
+        }
+
+        private static Vector2[] Star()
+        {
+            var pts = new Vector2[10];
+            for (int i = 0; i < 10; i++)
+            {
+                float a = -Mathf.PI / 2f + i * Mathf.PI / 5f;
+                float rad = i % 2 == 0 ? 0.5f : 0.21f;
+                pts[i] = new Vector2(0.5f + Mathf.Cos(a) * rad, 0.53f + Mathf.Sin(a) * rad);
+            }
+            return pts;
         }
 
         private static Sprite MakeSizedSprite(string name, int size, AlphaFn alpha)

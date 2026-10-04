@@ -15,91 +15,533 @@ MonoBehaviour:
   items:
   - id: rookie
     displayName: ROOKIE
+    subtitle: 
+    description: 
     category: 0
+    rarity: 0
     currency: 0
     price: 0
+    priceUsd: 0
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: stealth
     displayName: STEALTH
+    subtitle: 
+    description: 
     category: 0
+    rarity: 0
     currency: 1
     price: 200
+    priceUsd: 0
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: velocity
     displayName: VELOCITY
+    subtitle: 
+    description: 
     category: 0
+    rarity: 0
     currency: 0
     price: 1500
+    priceUsd: 0
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: titanium
     displayName: TITANIUM
+    subtitle: 
+    description: 
     category: 0
+    rarity: 0
     currency: 0
     price: 3000
+    priceUsd: 0
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: glitch
     displayName: GLITCH
+    subtitle: 
+    description: 
     category: 0
+    rarity: 0
     currency: 1
     price: 300
+    priceUsd: 0
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: crimson
     displayName: CRIMSON
+    subtitle: 
+    description: 
     category: 0
+    rarity: 0
     currency: 0
     price: 1200
+    priceUsd: 0
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: frost
     displayName: FROST
+    subtitle: 
+    description: 
     category: 0
+    rarity: 0
     currency: 1
     price: 150
+    priceUsd: 0
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: blaze
     displayName: BLAZE
+    subtitle: 
+    description: 
     category: 0
+    rarity: 0
     currency: 0
     price: 2500
+    priceUsd: 0
     rewardGold: 0
-  - id: speed_boost
-    displayName: SPEED BOOST
-    category: 1
-    currency: 1
-    price: 150
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: velocity_pack
+    displayName: VELOCITY PACK
+    subtitle: SPECIAL RACER
+    description: 
+    category: 4
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 9.99
     rewardGold: 0
-  - id: shield
-    displayName: SHIELD
-    category: 1
-    currency: 1
-    price: 100
+    rewardGems: 500
+    rewardSkin: velocity
+    gearSlot: 
+    gearVariant: 
+  - id: velocity_bundle
+    displayName: VELOCITY
+    subtitle: SPECIAL BUNDLE
+    description: 
+    category: 4
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 14.99
+    rewardGold: 10000
+    rewardGems: 1000
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: offer_stealth
+    displayName: NIGHT RUNNER
+    subtitle: 
+    description: 
+    category: 4
+    rarity: 0
+    currency: 0
+    price: 0
+    priceUsd: 2.99
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: stealth
+    gearSlot: 
+    gearVariant: 
+  - id: offer_titanium
+    displayName: CHROME FLASH
+    subtitle: 
+    description: 
+    category: 4
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 2.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: titanium
+    gearSlot: 
+    gearVariant: 
+  - id: offer_crimson
+    displayName: CRIMSON SKIN
+    subtitle: 
+    description: 
+    category: 4
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 3.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: crimson
+    gearSlot: 
+    gearVariant: 
+  - id: offer_glitch
+    displayName: GLITCH SKIN
+    subtitle: 
+    description: 
+    category: 4
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 4.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: glitch
+    gearSlot: 
+    gearVariant: 
+  - id: offer_velocity
+    displayName: VELOCITY SKIN
+    subtitle: 
+    description: 
+    category: 4
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 3.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: velocity
+    gearSlot: 
+    gearVariant: 
+  - id: offer_blaze
+    displayName: BLAZE SKIN
+    subtitle: 
+    description: 
+    category: 4
+    rarity: 0
+    currency: 0
+    price: 0
+    priceUsd: 5.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: blaze
+    gearSlot: 
+    gearVariant: 
+  - id: pack_starter
+    displayName: STARTER BUNDLE
+    subtitle: 
+    description: 
+    category: 2
+    rarity: 0
+    currency: 0
+    price: 0
+    priceUsd: 7.99
+    rewardGold: 0
+    rewardGems: 800
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: pack_value
+    displayName: VALUE PACK
+    subtitle: 
+    description: 
+    category: 2
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 25.99
+    rewardGold: 0
+    rewardGems: 3000
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: pack_goldbundle
+    displayName: GOLD BUNDLE
+    subtitle: 
+    description: 
+    category: 2
+    rarity: 4
+    currency: 0
+    price: 0
+    priceUsd: 29.99
+    rewardGold: 30000
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: stealth_helmet
+    displayName: STEALTH HELMET
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 4.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: helmet
+    gearVariant: stealth
+  - id: velocity_helmet
+    displayName: VELOCITY HELMET
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 7.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: helmet
+    gearVariant: velocity
+  - id: titanium_helmet
+    displayName: TITANIUM HELMET
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 3
+    currency: 0
+    price: 0
+    priceUsd: 9.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: helmet
+    gearVariant: titanium
+  - id: stealth_gloves
+    displayName: STEALTH GLOVES
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 3.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: gloves
+    gearVariant: stealth
+  - id: velocity_gloves
+    displayName: VELOCITY GLOVES
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 5.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: gloves
+    gearVariant: velocity
+  - id: titanium_gloves
+    displayName: TITANIUM GLOVES
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 3
+    currency: 0
+    price: 0
+    priceUsd: 8.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: gloves
+    gearVariant: titanium
+  - id: stealth_boots
+    displayName: STEALTH BOOTS
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 5.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: boots
+    gearVariant: stealth
+  - id: velocity_boots
+    displayName: VELOCITY BOOTS
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 8.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: boots
+    gearVariant: velocity
+  - id: titanium_boots
+    displayName: TITANIUM BOOTS
+    subtitle: 
+    description: 
+    category: 3
+    rarity: 3
+    currency: 0
+    price: 0
+    priceUsd: 12.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: boots
+    gearVariant: titanium
   - id: magnet
     displayName: COIN MAGNET
+    subtitle: 
+    description: 
     category: 1
+    rarity: 1
     currency: 0
-    price: 2000
+    price: 0
+    priceUsd: 1.99
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: double_gold
     displayName: DOUBLE GOLD
+    subtitle: 
+    description: 
     category: 1
-    currency: 1
-    price: 300
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 2.99
     rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: speed_boost
+    displayName: SPEED BOOST
+    subtitle: 
+    description: 
+    category: 1
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 1.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: shield
+    displayName: SHIELD
+    subtitle: 
+    description: 
+    category: 1
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 1.99
+    rewardGold: 0
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: gold_small
-    displayName: GOLD PACK S
+    displayName: Pouch of Coins
+    subtitle: 
+    description: 
     category: 2
-    currency: 1
-    price: 50
+    rarity: 0
+    currency: 0
+    price: 0
+    priceUsd: 1.99
     rewardGold: 1000
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: gold_medium
-    displayName: GOLD PACK M
+    displayName: Stack of Coins
+    subtitle: 
+    description: 
     category: 2
-    currency: 1
-    price: 200
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 9.99
     rewardGold: 5000
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
   - id: gold_large
-    displayName: GOLD PACK L
+    displayName: Vault of Coins
+    subtitle: 
+    description: 
     category: 2
-    currency: 1
-    price: 400
-    rewardGold: 12000
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 49.99
+    rewardGold: 20000
+    rewardGems: 0
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: gem_small
+    displayName: Gem Pouch
+    subtitle: 
+    description: 
+    category: 2
+    rarity: 0
+    currency: 0
+    price: 0
+    priceUsd: 1.99
+    rewardGold: 0
+    rewardGems: 500
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: gem_medium
+    displayName: Gem Cluster
+    subtitle: 
+    description: 
+    category: 2
+    rarity: 1
+    currency: 0
+    price: 0
+    priceUsd: 9.99
+    rewardGold: 0
+    rewardGems: 2500
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 
+  - id: gem_large
+    displayName: Gem Cache
+    subtitle: 
+    description: 
+    category: 2
+    rarity: 2
+    currency: 0
+    price: 0
+    priceUsd: 49.99
+    rewardGold: 0
+    rewardGems: 10000
+    rewardSkin: 
+    gearSlot: 
+    gearVariant: 

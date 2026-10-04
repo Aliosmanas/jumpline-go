@@ -18,8 +18,12 @@ namespace Jumpline.Player
         private static readonly int Metallic = Shader.PropertyToID("_Metallic");
         private static readonly int Smoothness = Shader.PropertyToID("_Smoothness");
 
+        [Tooltip("Ekipman çeşidi renkleri için (stealth / velocity / titanium).")]
+        [SerializeField] private SkinLibrary library;
+
         private MaterialPropertyBlock block;
         private Renderer[] renderers;
+        private SkinPreset currentSkin;
 
         private Renderer[] Renderers => renderers ??= GetComponentsInChildren<Renderer>(true);
 
@@ -44,13 +48,29 @@ namespace Jumpline.Player
                     case "Runner_Feet": r.enabled = !SaveManager.IsGearEquipped(Boots); break;
                 }
             }
+            if (currentSkin != null) Apply(currentSkin);
         }
 
+        private static string SlotOf(string rendererName) => rendererName switch
+        {
+            "Runner_Helmet" => Helmet,
+            "Runner_Gloves" => Gloves,
+            "Runner_Boots" => Boots,
+            _ => null,
+        };
+
+        /// <summary>Kostüm renklerini uygular; ekipman parçalarına takılı çeşidin rengi (varsa) gelir.</summary>
         public void Apply(SkinPreset skin)
         {
             if (skin == null) return;
+            currentSkin = skin;
             block ??= new MaterialPropertyBlock();
-            foreach (Renderer target in Renderers) Apply(skin, target);
+            foreach (Renderer target in Renderers)
+            {
+                string slot = SlotOf(target.name);
+                SkinPreset gear = slot != null && library != null ? library.FindGear(SaveManager.GetGearVariant(slot)) : null;
+                Apply(gear ?? skin, target);
+            }
         }
 
         private void Apply(SkinPreset skin, Renderer target)
