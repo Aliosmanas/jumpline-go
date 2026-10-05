@@ -19,6 +19,14 @@ namespace Jumpline.EditorTools
         [MenuItem("Jumpline/Build Android APK")]
         public static void BuildApk()
         {
+            // Kullanıcı adındaki boşluk Java 17'nin geçici soketini bozar ("Unable to establish loopback connection"):
+            // Gradle'a boşluksuz geçici klasör ver (alt süreçler bu ortamı devralır).
+            const string tmp = @"D:\tmp";
+            Directory.CreateDirectory(tmp);
+            System.Environment.SetEnvironmentVariable("TEMP", tmp);
+            System.Environment.SetEnvironmentVariable("TMP", tmp);
+            System.Environment.SetEnvironmentVariable("JAVA_TOOL_OPTIONS", $"-Djdk.net.unixdomain.tmpdir={tmp} -Djava.io.tmpdir={tmp}");
+
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
                 EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
 

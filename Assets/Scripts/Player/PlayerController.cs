@@ -12,14 +12,27 @@ namespace Jumpline.Player
     /// Yüzey: <see cref="ObstacleField"/> — rampaya/kasaya çıkar, kenardan düşer; aşamadığı engele çarparsa ölür.
     /// Zipline (Level/Zipline.cs): halatın önünde ZIPLAYAN koşucu tutunur → kayar → bırakır; zıplamayan boşluğa düşer.
     /// Ölüm: çarpınca ölme animasyonu, boşluğa düşünce düşüş animasyonu → <see cref="Died"/> (oyun bitti paneli).
+    /// Tavan (sur kapısı): kafası alt kenarı aşan koşucu çarpar. Kırılabilir engel çarpınca savrulur.
+    /// Hız: her <c>speedInterval</c> saniyede bir kademe artar (<see cref="SpeedLevelChanged"/>), koşu animasyonu da hızlanır.
     /// Dünya geçişi (Level/WorldSwitcher.cs): Teleport ile sokak ↔ çatı.
     /// </summary>
     public class PlayerController : MonoBehaviour
     {
         private enum State { Running, Charging, Airborne, ZipGrab, ZipSlide, Dead, FallingDead }
 
-        [Header("Koşu")]
-        [SerializeField, Min(0f)] private float runSpeed = 7f;
+        [Header("Koşu / hız")]
+        [Tooltip("Başlangıç koşu hızı (m/sn).")]
+        [SerializeField, Min(0f)] private float runSpeed = 9f;
+        [Tooltip("Her kademede eklenen hız.")]
+        [SerializeField, Min(0f)] private float speedStep = 1.2f;
+        [Tooltip("Kaç saniyede bir hızlanır.")]
+        [SerializeField, Min(1f)] private float speedInterval = 30f;
+        [SerializeField, Min(0f)] private float maxSpeed = 18f;
+        [Tooltip("Yeni hıza geçiş süresi (yumuşak).")]
+        [SerializeField, Min(0.01f)] private float speedRampTime = 1.5f;
+        [Tooltip("Koşu animasyonunun bu hızda 1x oynadığı varsayılır; üstünde hızlanır.")]
+        [SerializeField, Min(0.1f)] private float animReferenceSpeed = 9f;
+        [SerializeField, Min(1f)] private float maxAnimSpeed = 1.6f;
 
         [Header("Şeritler")]
         [Tooltip("Şerit merkezleri arası mesafe (Blender/scripts/build_street.py LANE_W).")]
@@ -45,6 +58,8 @@ namespace Jumpline.Player
         [SerializeField, Min(0f)] private float stepUp = 0.3f;
         [Tooltip("Koşarken bu kadar alçalan yüzeye yapışır (rampa inişi); daha fazlası düşüş.")]
         [SerializeField, Min(0f)] private float snapDown = 0.25f;
+        [Tooltip("Ayaktan kafaya yükseklik (tavana çarpma).")]
+        [SerializeField, Min(0.5f)] private float headHeight = 1.7f;
 
         [Header("Zipline")]
         [Tooltip("Halat üzerinde ileri hız (m/sn).")]
@@ -77,6 +92,9 @@ namespace Jumpline.Player
         private float deathTime;
         private float deathSpeed;
         private bool diedRaised;
+        private float currentSpeed;
+        private float aliveTime;
+        private int speedLevel;
 
         // zipline: kök (ayak) yolu
         private Vector3 zipA, zipB;
@@ -88,9 +106,12 @@ namespace Jumpline.Player
 
         /// <summary>Ölüm animasyonu bitti — oyun bitti paneli açılmalı.</summary>
         public event System.Action Died;
+        /// <summary>Hız kademesi arttı (1, 2, 3…).</summary>
+        public event System.Action<int> SpeedLevelChanged;
 
         public float Charge01 { get; private set; }
-        public float RunSpeed => runSpeed;
+        public float RunSpeed => currentSpeed;
+        public float SpeedFactor => runSpeed > 0f ? currentSpeed / runSpeed : 1f;
         public int Lane => lane;
         public float LaneWidth => laneWidth;
         public float LaneOriginX => laneOriginX;
@@ -112,6 +133,7 @@ namespace Jumpline.Player
         {
             if (animator == null) animator = GetComponentInChildren<Animator>();
             laneOriginX = transform.position.x;
+            currentSpeed = runSpeed;
         }
 
         private void Update()
@@ -121,9 +143,11 @@ namespace Jumpline.Player
 
             if (IsDead)
             {
+                if (animator != null) animator.speed = 1f;
                 UpdateDead(dt);
                 return;
             }
+            UpdateSpeed(dt);
 
             bool pressed = IsPressed(out Vector2 pointer, out bool hasPointer);
             bool down = pressed && !wasPressed;
@@ -166,7 +190,7 @@ namespace Jumpline.Player
                 case State.ZipGrab:
                 {
                     // halata doğru sıçrama: z ilerlerken yükseklik yumuşakça halat başına çıkar
-                    p.z += runSpeed * dt;
+                    p.z += currentSpeed * dt;
                     float t = Mathf.InverseLerp(grabStartZ, zipA.z, p.z);
                     p.y = Mathf.Lerp(grabStartY, zipA.y, Mathf.SmoothStep(0f, 1f, t));
                     p.x = Mathf.Lerp(p.x, laneX, laneK);
@@ -176,7 +200,7 @@ namespace Jumpline.Player
                 }
                 case State.ZipSlide:
                 {
-                    p.z += ziplineSpeed * dt;
+                    p.z += Mathf.Max(ziplineSpeed, currentSpeed * 1.3f) * dt;
                     float t = Mathf.InverseLerp(zipA.z, zipB.z, p.z);
                     p.y = Mathf.Lerp(zipA.y, zipB.y, t) - zipSag * 4f * t * (1f - t);
                     p.x = Mathf.Lerp(p.x, laneX, laneK);
@@ -187,7 +211,7 @@ namespace Jumpline.Player
             }
 
             float prevY = p.y;
-            float speed = runSpeed * (state == State.Charging ? chargeSpeedMultiplier : 1f);
+            float speed = currentSpeed * (state == State.Charging ? chargeSpeedMultiplier : 1f);
             p.z += speed * dt;
             p.x = Mathf.Lerp(p.x, laneX, laneK);
             p.y += verticalVelocity * dt;
@@ -232,8 +256,30 @@ namespace Jumpline.Player
                 }
             }
 
+            // tavan: kafa sur kapısının alt kenarını aşıyorsa çarpar
+            if (p.y + headHeight > ObstacleField.CeilingAt(p.x, p.z))
+            {
+                Crash(ref p, prevY);
+                return;
+            }
             if (p.y < groundHeight - fallDeathDepth) BeginFallDeath();
             transform.position = p;
+        }
+
+        private void UpdateSpeed(float dt)
+        {
+            aliveTime += dt;
+            int level = Mathf.FloorToInt(aliveTime / speedInterval);
+            if (level != speedLevel)
+            {
+                speedLevel = level;
+                SpeedLevelChanged?.Invoke(level);
+            }
+            float target = Mathf.Min(maxSpeed, runSpeed + speedLevel * speedStep);
+            currentSpeed = Mathf.MoveTowards(currentSpeed, target, Mathf.Max(speedStep, 0.01f) / speedRampTime * dt);
+            if (animator != null)
+                animator.speed = state == State.Running || state == State.Charging
+                    ? Mathf.Clamp(currentSpeed / animReferenceSpeed, 1f, maxAnimSpeed) : 1f;
         }
 
         // ------------------------------------------------------------------
@@ -283,12 +329,14 @@ namespace Jumpline.Player
 
         private void Crash(ref Vector3 p, float prevY)
         {
+            Obstacle hit = ObstacleField.SolidAt(p.x, p.z);
+            if (hit != null && hit.TryGetComponent(out Breakable breakable)) breakable.Break(currentSpeed);
             p.y = Mathf.Max(prevY, ObstacleField.SurfaceAt(p.x, p.z - 0.6f, groundHeight));
             p.z -= 0.15f;   // engelin içine girmesin
             transform.position = p;
             state = State.Dead;
             deathTime = Time.time;
-            deathSpeed = runSpeed;
+            deathSpeed = currentSpeed;
             verticalVelocity = 0f;
             Charge01 = 0f;
             if (ziplineSparks != null) ziplineSparks.Stop();
@@ -300,7 +348,7 @@ namespace Jumpline.Player
             if (IsDead) return;
             state = State.FallingDead;
             deathTime = Time.time;
-            deathSpeed = runSpeed * 0.5f;
+            deathSpeed = currentSpeed * 0.5f;
             Charge01 = 0f;
             Trigger(FallTrigger);
         }
@@ -311,7 +359,7 @@ namespace Jumpline.Player
             if (state == State.Dead)
             {
                 // yumuşak duruş: hız sıfıra iner, ölme animasyonu oynar
-                deathSpeed = Mathf.MoveTowards(deathSpeed, 0f, runSpeed / deathSlideTime * dt);
+                deathSpeed = Mathf.MoveTowards(deathSpeed, 0f, Mathf.Max(currentSpeed, 1f) / deathSlideTime * dt);
                 p.z += deathSpeed * dt;
                 float surface = ObstacleField.SurfaceAt(p.x, p.z + 0.4f, groundHeight);
                 if (surface > p.y + stepUp) p.z -= deathSpeed * dt;   // engelin içine kaymasın

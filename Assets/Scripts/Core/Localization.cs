@@ -182,6 +182,7 @@ namespace Jumpline.Core
             { "WIN (TEST)", "KAZAN (TEST)" },
             { "FAIL (TEST)", "KAYBET (TEST)" },
             { "ALL LEVELS COMPLETE!", "TÜM BÖLÜMLER TAMAM!" },
+            { "SPEED UP! x{0}", "HIZLANDI! x{0}" },
             {
                 "The runner and obstacles come next.\nUse the test buttons to try the flow.",
                 "Koşucu ve engeller sıradaki adım.\nAkışı denemek için test butonlarını kullan."

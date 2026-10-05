@@ -8,11 +8,12 @@ namespace Jumpline.Level
     /// her karede <see cref="ObstacleField.SurfaceAt"/> ile altındaki yüzeyi sorar.
     /// Katı: yüksekliği aşamayan koşucu çarpar (ölür), üstüne çıkan koşar (kasalar, kamyon tavanı, rampa).
     /// Boşluk: zemini aşağı indirir (çatı arası) — düşen koşucu ölür.
+    /// Tavan: alt kenarı (yükseklik) koşucunun kafasına çarpar (sur kapısı — kamyon tavanındaki koşucu ölür).
     /// Döndürme desteklenmez: engeller hep +Z'ye bakar.
     /// </summary>
     public class Obstacle : MonoBehaviour
     {
-        public enum Kind { Solid, Hole }
+        public enum Kind { Solid, Hole, Ceiling }
 
         [System.Serializable]
         public struct Segment
@@ -61,7 +62,7 @@ namespace Jumpline.Level
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
-            Gizmos.color = kind == Kind.Solid ? new Color(1f, 0.3f, 0.3f, 0.6f) : new Color(0.3f, 0.6f, 1f, 0.6f);
+            Gizmos.color = kind == Kind.Solid ? new Color(1f, 0.3f, 0.3f, 0.6f) : kind == Kind.Hole ? new Color(0.3f, 0.6f, 1f, 0.6f) : new Color(1f, 0.8f, 0.2f, 0.6f);
             Vector3 o = transform.position;
             foreach (Segment s in segments)
             {
@@ -95,6 +96,29 @@ namespace Jumpline.Level
             for (int i = 0; i < Active.Count; i++)
                 if (Active[i].Type == Obstacle.Kind.Solid && Active[i].TryHeight(x, z, out float h)) surface = Mathf.Max(surface, h);
             return surface;
+        }
+
+        /// <summary>(x,z) noktasındaki en alçak tavan (yoksa +∞).</summary>
+        public static float CeilingAt(float x, float z)
+        {
+            float ceiling = float.PositiveInfinity;
+            for (int i = 0; i < Active.Count; i++)
+                if (Active[i].Type == Obstacle.Kind.Ceiling && Active[i].TryHeight(x, z, out float h)) ceiling = Mathf.Min(ceiling, h);
+            return ceiling;
+        }
+
+        /// <summary>(x,z) noktasındaki en yüksek katı engel (çarpılan engel; yoksa null).</summary>
+        public static Obstacle SolidAt(float x, float z)
+        {
+            Obstacle best = null;
+            float bestH = float.NegativeInfinity;
+            for (int i = 0; i < Active.Count; i++)
+            {
+                if (Active[i].Type != Obstacle.Kind.Solid || !Active[i].TryHeight(x, z, out float h) || h <= bestH) continue;
+                best = Active[i];
+                bestH = h;
+            }
+            return best;
         }
 
         /// <summary>z aralığında (x şeridinde) katı engel var mı.</summary>

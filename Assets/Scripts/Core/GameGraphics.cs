@@ -20,6 +20,8 @@ namespace Jumpline.Core
         {
             quality = Mathf.Clamp(quality, 0, SaveManager.GraphicsQualityCount - 1);
             int level = Mathf.Min(QualityLevel[quality], QualitySettings.names.Length - 1);
+            // telefonda masaüstü (PC) URP ayarı ağır gelir (MSAA 4x, 4 kademe yumuşak gölge) → hep mobil profil
+            if (Application.isMobilePlatform) level = 0;
             QualitySettings.SetQualityLevel(level, true);
             Application.targetFrameRate = TargetFps[quality];
         }

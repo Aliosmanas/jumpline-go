@@ -17,8 +17,16 @@ namespace Jumpline.CameraSystem
         [Tooltip("Şerit değişiminde yatay hareketin ne kadarını kamera izlesin (0 = sabit, 1 = tam).")]
         [SerializeField, Range(0f, 1f)] private float sideFollow = 0.6f;
         [SerializeField, Min(0f)] private float sideSmoothing = 8f;
+        [Header("Hız hissi")]
+        [Tooltip("Hız çarpanındaki her +1 için görüş açısı artışı (derece).")]
+        [SerializeField, Min(0f)] private float fovPerSpeed = 14f;
+        [SerializeField, Min(0f)] private float maxFovBoost = 12f;
+        [Tooltip("Koşarken hafif sarsıntı (m), hızla artar.")]
+        [SerializeField, Min(0f)] private float shake = 0.025f;
 
         private PlayerController player;
+        private Camera cam;
+        private float baseFov;
         private float smoothedY;
         private float smoothedX;
 
@@ -29,6 +37,8 @@ namespace Jumpline.CameraSystem
         {
             if (target == null) return;
             player = target.GetComponent<PlayerController>();
+            cam = GetComponent<Camera>();
+            if (cam != null) baseFov = cam.fieldOfView;
             Snap();
         }
 
@@ -48,6 +58,15 @@ namespace Jumpline.CameraSystem
             smoothedY = Mathf.Lerp(smoothedY, (target.position.y - BaseY) * heightFollow, 1f - Mathf.Exp(-heightSmoothing * dt));
             smoothedX = Mathf.Lerp(smoothedX, (target.position.x - BaseX) * sideFollow, 1f - Mathf.Exp(-sideSmoothing * dt));
             Apply();
+            if (player == null) return;
+            float factor = player.IsDead ? 1f : player.SpeedFactor;
+            if (cam != null)
+                cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, baseFov + Mathf.Min(maxFovBoost, (factor - 1f) * fovPerSpeed), 1f - Mathf.Exp(-3f * dt));
+            if (!player.IsDead && !player.OnZipline)
+            {
+                float a = shake * factor, t = Time.time * 18f;
+                transform.position += new Vector3((Mathf.PerlinNoise(t, 0.3f) - 0.5f) * a, (Mathf.PerlinNoise(0.7f, t) - 0.5f) * a, 0f);
+            }
         }
 
         private void Apply()
