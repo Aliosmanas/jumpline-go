@@ -36,8 +36,8 @@ namespace Jumpline.EditorTools
             BuildCameraAndEvents(false);
             var cam = Camera.main;
             // Üçüncü şahıs: karakterin arkasında, ekranın alt-ortasında (brief)
-            cam.transform.SetPositionAndRotation(new Vector3(0f, 3.0f, -5.5f), Quaternion.Euler(14f, 0f, 0f));
-            cam.fieldOfView = 62f;
+            cam.transform.SetPositionAndRotation(new Vector3(0f, 4f, -7f), Quaternion.Euler(18f, 0f, 0f)); // 3 şerit ekrana sığsın
+            cam.fieldOfView = 66f;
             cam.farClipPlane = 220f;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Hex("#C3CCD8");
@@ -103,13 +103,13 @@ namespace Jumpline.EditorTools
         /// <summary>Segment içi yerleşim (yerel x, y, z, Y açısı). Hepsi duvar dibinde / kaldırımda; koşu şeridi boş.</summary>
         private static readonly (string name, float x, float y, float z, float rot)[] DecorLayout =
         {
-            ("Samovar", -2.45f, 0f, 6f, 90f), ("Crates", 2.2f, 0f, 9f, -90f), ("WallLantern", -2.9f, 2.6f, 4f, 90f),
-            ("WallLantern", 2.9f, 2.6f, 13f, -90f), ("KilimPile", -2.3f, 0f, 14f, 90f), ("FruitBasket", 2.45f, 0f, 16.5f, -90f),
-            ("IronGate", 2.95f, 0f, 21f, -90f), ("Sack", -2.45f, 0f, 22f, 90f), ("Watermelon", 2.35f, 0f, 25f, -90f),
-            ("Nazar", -2.92f, 2.0f, 26f, 90f), ("CopperJugs", -2.3f, 0f, 30f, 90f), ("BreadBasket", 2.45f, 0f, 33f, -90f),
-            ("CarvedPillar", -2.6f, 0f, 35.5f, 90f), ("Chest", 2.35f, 0f, 38f, -90f), ("RolledCarpet", -2.5f, 0f, 41f, 90f),
-            ("WallLantern", -2.9f, 2.6f, 44f, 90f), ("Ladder", 2.7f, 0f, 47f, -90f), ("CopperPlates", -2.45f, 0f, 50f, 90f),
-            ("Birdhouse", 2.45f, 0f, 52.5f, -90f), ("KebabCart", -2.1f, 0f, 56f, 90f), ("WallLantern", 2.9f, 2.6f, 58f, -90f),
+            ("Samovar", -4.45f, 0f, 6f, 90f), ("Crates", 4.2f, 0f, 9f, -90f), ("WallLantern", -4.9f, 2.6f, 4f, 90f),
+            ("WallLantern", 4.9f, 2.6f, 13f, -90f), ("KilimPile", -4.3f, 0f, 14f, 90f), ("FruitBasket", 4.45f, 0f, 16.5f, -90f),
+            ("IronGate", 4.95f, 0f, 21f, -90f), ("Sack", -4.45f, 0f, 22f, 90f), ("Watermelon", 4.35f, 0f, 25f, -90f),
+            ("Nazar", -4.92f, 2.0f, 26f, 90f), ("CopperJugs", -4.3f, 0f, 30f, 90f), ("BreadBasket", 4.45f, 0f, 33f, -90f),
+            ("CarvedPillar", -4.6f, 0f, 35.5f, 90f), ("Chest", 4.35f, 0f, 38f, -90f), ("RolledCarpet", -4.5f, 0f, 41f, 90f),
+            ("WallLantern", -4.9f, 2.6f, 44f, 90f), ("Ladder", 4.7f, 0f, 47f, -90f), ("CopperPlates", -4.45f, 0f, 50f, 90f),
+            ("Birdhouse", 4.45f, 0f, 52.5f, -90f), ("KebabCart", -4.1f, 0f, 56f, 90f), ("WallLantern", 4.9f, 2.6f, 58f, -90f),
         };
 
         private static void PlaceDecor(Transform segment)

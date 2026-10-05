@@ -22,7 +22,8 @@ FBX_PATH = os.path.join(ROOT, "Assets", "Art", "Environment", "Diyarbakir", "Diy
 BLEND_PATH = os.path.join(ROOT, "Blender", "source", "street.blend")
 
 SEGMENT = 60.0          # modül uzunluğu (m), Unity'de art arda dizilir
-STREET_HALF = 3.0       # cephe hattı |x|
+STREET_HALF = 5.0       # cephe hattı |x| (3 şerit + kaldırım)
+LANE_W = 2.2            # şerit genişliği; şerit merkezleri x = -LANE_W, 0, +LANE_W (Unity PlayerController.laneWidth)
 CURB_W, CURB_H = 0.6, 0.18
 FLOOR_H = 3.3
 TEX_M = 4.0             # 1 doku = 4 m
@@ -270,8 +271,8 @@ def cumba(b, s, yc, w, zf):
 def arch_bridge(b, yc):
     t = 1.4                       # kemer kalınlığı (y)
     span = 2 * STREET_HALF
-    open_h = 4.6
-    top = 6.3
+    open_h = 7.0                  # yan şeritte zıplayan karakter kemere değmesin
+    top = 8.6
     # kemer duvarı: dış dikdörtgen - kemer açıklığı (iki yan + üst)
     arch = arch_profile(span - 0.6, open_h, 16)
     r = (span - 0.6) / 2
@@ -301,6 +302,9 @@ def arch_bridge(b, yc):
 # ---------------------------------------------------------------------------
 def street_floor(b, y0, y1):
     b.box(-STREET_HALF + CURB_W, STREET_HALF - CURB_W, y0, y1, -0.2, 0.0, PAVING)
+    # 3 şerit: koyu bazalt şerit çizgileri (aralar ±LANE_W/2, kenarlar ±1.5*LANE_W)
+    for x in (-1.5 * LANE_W, -0.5 * LANE_W, 0.5 * LANE_W, 1.5 * LANE_W):
+        b.box(x - 0.08, x + 0.08, y0, y1, -0.2, 0.015, CURB)
     for s in (-1, 1):
         xa, xb = sorted((s * STREET_HALF, s * (STREET_HALF - CURB_W)))
         b.box(xa, xb, y0, y1, -0.2, CURB_H, CURB)

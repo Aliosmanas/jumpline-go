@@ -6,13 +6,13 @@ import bpy
 STREET = r"D:\Repolar\junpline\Blender\source\street.blend"
 DECOR = r"D:\Repolar\junpline\Blender\source\decor.blend"
 LAYOUT = [  # GameplaySceneBuilder.DecorLayout ile aynı (ad, x, y(yukarı), z(ileri), açı)
-    ("Samovar", -2.45, 0, 6, 90), ("Crates", 2.2, 0, 9, -90), ("WallLantern", -2.9, 2.6, 4, 90),
-    ("WallLantern", 2.9, 2.6, 13, -90), ("KilimPile", -2.3, 0, 14, 90), ("FruitBasket", 2.45, 0, 16.5, -90),
-    ("IronGate", 2.95, 0, 21, -90), ("Sack", -2.45, 0, 22, 90), ("Watermelon", 2.35, 0, 25, -90),
-    ("Nazar", -2.92, 2.0, 26, 90), ("CopperJugs", -2.3, 0, 30, 90), ("BreadBasket", 2.45, 0, 33, -90),
-    ("CarvedPillar", -2.6, 0, 35.5, 90), ("Chest", 2.35, 0, 38, -90), ("RolledCarpet", -2.5, 0, 41, 90),
-    ("WallLantern", -2.9, 2.6, 44, 90), ("Ladder", 2.7, 0, 47, -90), ("CopperPlates", -2.45, 0, 50, 90),
-    ("Birdhouse", 2.45, 0, 52.5, -90), ("KebabCart", -2.1, 0, 56, 90), ("WallLantern", 2.9, 2.6, 58, -90),
+    ("Samovar", -4.45, 0, 6, 90), ("Crates", 4.2, 0, 9, -90), ("WallLantern", -4.9, 2.6, 4, 90),
+    ("WallLantern", 4.9, 2.6, 13, -90), ("KilimPile", -4.3, 0, 14, 90), ("FruitBasket", 4.45, 0, 16.5, -90),
+    ("IronGate", 4.95, 0, 21, -90), ("Sack", -4.45, 0, 22, 90), ("Watermelon", 4.35, 0, 25, -90),
+    ("Nazar", -4.92, 2.0, 26, 90), ("CopperJugs", -4.3, 0, 30, 90), ("BreadBasket", 4.45, 0, 33, -90),
+    ("CarvedPillar", -4.6, 0, 35.5, 90), ("Chest", 4.35, 0, 38, -90), ("RolledCarpet", -4.5, 0, 41, 90),
+    ("WallLantern", -4.9, 2.6, 44, 90), ("Ladder", 4.7, 0, 47, -90), ("CopperPlates", -4.45, 0, 50, 90),
+    ("Birdhouse", 4.45, 0, 52.5, -90), ("KebabCart", -4.1, 0, 56, 90), ("WallLantern", 4.9, 2.6, 58, -90),
 ]
 
 bpy.ops.wm.open_mainfile(filepath=STREET)
