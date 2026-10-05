@@ -34,9 +34,12 @@ namespace Jumpline.EditorTools
             BuildRunner();
             BuildCameraAndEvents(false);
             var cam = Camera.main;
-            cam.transform.SetPositionAndRotation(new Vector3(0f, 5f, -9f), Quaternion.Euler(20f, 0f, 0f));
+            // Üçüncü şahıs: karakterin arkasında, ekranın alt-ortasında (brief)
+            cam.transform.SetPositionAndRotation(new Vector3(0f, 3.0f, -5.5f), Quaternion.Euler(14f, 0f, 0f));
+            cam.fieldOfView = 62f;
+            cam.farClipPlane = 220f;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = Hex("#20263A");
+            cam.backgroundColor = Hex("#C3CCD8");
 
             Transform canvas = BuildCanvas("GameplayCanvas", false);
             var safe = NewUI("SafeArea", canvas);
@@ -50,26 +53,82 @@ namespace Jumpline.EditorTools
             Debug.Log($"[Jumpline] Oyun sahnesi üretildi: {ScenePath}");
         }
 
+        // Diyarbakır sokağı — Blender/scripts/build_street.py (Desktop/Yeni klasör/genel map duruşu.mp4)
+        public const string StreetPath = "Assets/Art/Environment/Diyarbakir/DiyarbakirStreet.fbx";
+        private const string StreetMatDir = "Assets/Art/Environment/Diyarbakir/Materials";
+        private const float StreetSegment = 60f;   // build_street.py SEGMENT
+        private const int StreetCopies = 3;
+
         private static void BuildWorld()
         {
+            // Güneş: alçak açıdan, sokağa çapraz gölge (referanstaki gibi)
             var light = new GameObject("Directional Light", typeof(Light)).GetComponent<Light>();
             light.type = LightType.Directional;
-            light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+            light.transform.rotation = Quaternion.Euler(38f, -55f, 0f);
+            light.color = Hex("#FFF1DE");
+            light.intensity = 1.6f;
             light.shadows = LightShadows.Soft;
 
-            var mat = AssetDatabase.LoadAssetAtPath<Material>(GroundMaterialPath);
-            if (mat == null)
-            {
-                mat = new Material(GraphicsSettings.currentRenderPipeline.defaultMaterial) { name = "Ground" };
-                AssetDatabase.CreateAsset(mat, GroundMaterialPath);
-            }
-            mat.SetColor("_BaseColor", Hex("#5A1F33"));
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = Hex("#B9C6D8");
+            RenderSettings.ambientEquatorColor = Hex("#8A8F99");
+            RenderSettings.ambientGroundColor = Hex("#3A3A40");
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.Linear;
+            RenderSettings.fogColor = Hex("#C3CCD8");
+            RenderSettings.fogStartDistance = 25f;
+            RenderSettings.fogEndDistance = 150f;
 
-            var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            ground.name = "Ground";
-            ground.transform.position = new Vector3(0f, -0.25f, 55f);
-            ground.transform.localScale = new Vector3(6f, 0.5f, 120f);
-            ground.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            ConfigureStreetImport();
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(StreetPath);
+            var root = new GameObject("Street").transform;
+            for (int i = -1; i < StreetCopies; i++) // bir modül karakterin arkasında (kamera boşluk görmesin)
+            {
+                var seg = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root);
+                seg.name = $"StreetSegment_{i}";
+                seg.transform.SetPositionAndRotation(new Vector3(0f, 0f, i * StreetSegment), Quaternion.identity);
+                seg.isStatic = true;
+                foreach (Transform t in seg.GetComponentsInChildren<Transform>()) t.gameObject.isStatic = true;
+            }
+        }
+
+        /// <summary>Malzemeleri dışarı çıkarır, dokuları adlarına göre bağlar (FBX dokuları otomatik bağlanmıyor).</summary>
+        private static void ConfigureStreetImport()
+        {
+            EnsureFolder(StreetMatDir);
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(StreetPath))
+            {
+                if (o is not Material m) continue;
+                string dst = $"{StreetMatDir}/{m.name}.mat";
+                if (AssetDatabase.LoadAssetAtPath<Material>(dst) == null) AssetDatabase.ExtractAsset(m, dst);
+            }
+            AssetDatabase.WriteImportSettingsIfDirty(StreetPath);
+            AssetDatabase.ImportAsset(StreetPath, ImportAssetOptions.ForceUpdate);
+
+            string texDir = System.IO.Path.GetDirectoryName(StreetPath).Replace('\\', '/') + "/DiyarbakirStreet.fbm";
+            (string mat, string tex, string tint, float smooth)[] map =
+            {
+                ("S_Basalt", "basalt", "#FFFFFF", 0.12f), ("S_BasaltTrim", "basalt", "#BDB8AF", 0.15f),
+                ("S_Paving", "paving", "#FFFFFF", 0.2f), ("S_Curb", "curb", "#FFFFFF", 0.15f),
+                ("S_Wood", "wood", "#FFFFFF", 0.3f), ("S_WoodDark", "wood", "#7A6A60", 0.25f),
+                ("S_Glass", null, "#0E1218", 0.85f), ("S_Iron", null, "#1A1A1C", 0.5f),
+            };
+            foreach (var e in map)
+            {
+                var mat = AssetDatabase.LoadAssetAtPath<Material>($"{StreetMatDir}/{e.mat}.mat");
+                if (mat == null) continue;
+                mat.shader = Shader.Find("Universal Render Pipeline/Lit");
+                if (e.tex != null)
+                {
+                    var tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"{texDir}/{e.tex}.png");
+                    mat.SetTexture("_BaseMap", tex);
+                }
+                mat.SetColor("_BaseColor", Hex(e.tint));
+                mat.SetFloat("_Smoothness", e.smooth);
+                mat.SetFloat("_Metallic", e.mat == "S_Iron" ? 0.8f : 0f);
+                EditorUtility.SetDirty(mat);
+            }
+            AssetDatabase.SaveAssets();
         }
 
         /// <summary>Koşucu: başlangıç noktasında, koşu yönüne (+Z) bakar, giyili kostümle. Hareket sonraki adım.</summary>
