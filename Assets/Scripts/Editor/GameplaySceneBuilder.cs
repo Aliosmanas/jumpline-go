@@ -55,7 +55,8 @@ namespace Jumpline.EditorTools
             Image flash = BuildFlash(canvas);
             var switcher = BuildWorldSwitcher(runner, follow, cam, flash, rooftop);
             Set(switcher, "streetRoot", street);
-            BuildPortal(runner, switcher);
+            BuildPortal(runner, switcher, true, "PortalUp", null);                 // sokak → çatı (mavi)
+            BuildPortal(runner, switcher, false, "PortalDown", Hex("#FF3C8E"));    // çatı → sokak (pembe)
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             ScenesSetup.ApplyBuildSettings();
@@ -327,14 +328,14 @@ namespace Jumpline.EditorTools
             AssetDatabase.SaveAssets();
         }
 
-        /// <summary>Sokaktaki portal: taş sivri kemer + dönen girdap + parçacık + mavi ışık. Portal.cs yerleştirir.</summary>
-        private static void BuildPortal(Transform runner, WorldSwitcher switcher)
+        /// <summary>Portal: taş sivri kemer + dönen girdap + parçacık + ışık. Portal.cs yerleştirir (yukarı: sokakta, aşağı: çatıda).</summary>
+        private static void BuildPortal(Transform runner, WorldSwitcher switcher, bool leadsToRooftop, string name, Color? tint)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PortalPath);
             if (prefab == null) return;
             var portal = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            portal.name = "Portal";
-            portal.transform.SetPositionAndRotation(new Vector3(0f, 0f, 45f), Quaternion.identity);
+            portal.name = name;
+            portal.transform.SetPositionAndRotation(leadsToRooftop ? new Vector3(0f, 0f, 45f) : RooftopOrigin + new Vector3(0f, 0f, 30f), Quaternion.identity);
             PrefabUtility.UnpackPrefabInstance(portal, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
             var spinner = new GameObject("Spinner").transform;
             spinner.SetParent(portal.transform, false);
@@ -380,6 +381,10 @@ namespace Jumpline.EditorTools
             Set(comp, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
             Set(comp, "switcher", switcher);
             Set(comp, "spinner", spinner);
+            var so = new SerializedObject(comp);
+            so.FindProperty("leadsToRooftop").boolValue = leadsToRooftop;
+            if (tint.HasValue) so.FindProperty("tint").colorValue = tint.Value;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static WorldSwitcher BuildWorldSwitcher(Transform runner, Jumpline.CameraSystem.CameraFollow follow, Camera cam,

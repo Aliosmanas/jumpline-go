@@ -55,6 +55,20 @@ namespace Jumpline.Level
         public bool InStreet { get; private set; } = true;
         public float StreetOriginX => streetOriginX;
         public float StreetGround => streetGround;
+        public float RooftopOriginX => rooftopRoot != null ? rooftopRoot.position.x : 0f;
+        public float RooftopGround => rooftopRoot != null ? rooftopRoot.position.y : 0f;
+
+        /// <summary>Dünya değişti (true = sokak). Portallar kendi dünyalarında koşucunun önüne yerleşir.</summary>
+        public event System.Action<bool> WorldChanged;
+
+        /// <summary>Çatıda verilen z zipline boşluğuna denk geliyorsa karşı çatıya öteler.</summary>
+        public float SafeRooftopZ(float z)
+        {
+            float rootZ = rooftopRoot != null ? rooftopRoot.position.z : 0f;
+            float rel = Mathf.Repeat(z - rootZ, rooftopModuleLength);
+            if (rel > rooftopUnsafeZ.x && rel < rooftopUnsafeZ.y) z += rooftopUnsafeZ.y - rel;
+            return z;
+        }
 
         private void Start()
         {
@@ -98,15 +112,14 @@ namespace Jumpline.Level
             else
             {
                 Vector3 root = rooftopRoot.position;
-                float z = p.z;
-                float rel = Mathf.Repeat(z - root.z, rooftopModuleLength);
-                if (rel > rooftopUnsafeZ.x && rel < rooftopUnsafeZ.y) z += rooftopUnsafeZ.y - rel;
+                float z = SafeRooftopZ(p.z);
                 player.Teleport(new Vector3(root.x, root.y, z), root.y, root.x);
                 Apply(rooftopLook);
             }
             InStreet = toStreet;
             SetWorldActive(toStreet);   // görünmeyen dünya çizilmez, gölge hesaplamaz
             if (cameraFollow != null) cameraFollow.Snap();
+            WorldChanged?.Invoke(toStreet);
             yield return Fade(1f, 0f, flashOut);
             busy = false;
         }
