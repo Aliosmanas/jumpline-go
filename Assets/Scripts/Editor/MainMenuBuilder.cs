@@ -53,6 +53,7 @@ namespace Jumpline.EditorTools
             LoadData();
             var skins = RunnerStageBuilder.EnsureLibrary();
             RunnerStageBuilder.ConfigureImport();
+            RunnerStageBuilder.SetupAnimations();
             preview = RunnerStageBuilder.BuildStage(skins, out _, out var runner, out var stageCamera);
             thumbs = RunnerStageBuilder.RenderThumbnails(skins, runner, stageCamera);
             RunnerStageBuilder.FinishStage(runner, stageCamera); // podyum + kahraman duruşu

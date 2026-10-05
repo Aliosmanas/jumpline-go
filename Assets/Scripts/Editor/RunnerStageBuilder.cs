@@ -39,7 +39,7 @@ namespace Jumpline.EditorTools
             var imp = (ModelImporter)AssetImporter.GetAtPath(FbxPath);
             imp.animationType = ModelImporterAnimationType.Human;
             imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
-            imp.importAnimation = false;
+            imp.importAnimation = true;
             imp.humanDescription = BuildHumanDescription(imp.humanDescription);
             imp.SaveAndReimport();
 
@@ -149,6 +149,78 @@ namespace Jumpline.EditorTools
             return desc;
         }
 
+        // ---------------------------------------------------------------------
+        // Animasyonlar — Blender/scripts/build_anims.py (Desktop/Yeni klasör animasyon videoları)
+        // ---------------------------------------------------------------------
+        public const string MenuControllerPath = "Assets/Art/Characters/Runner/RunnerMenu.controller";
+        public const string GameControllerPath = "Assets/Art/Characters/Runner/RunnerGame.controller";
+        private static readonly string[] LoopClips = { "Idle", "Run", "Zipline" };
+        private static readonly string[] AllClips = { "Idle", "Run", "Crouch", "Jump", "Fall", "Land", "Zipline", "Death" };
+
+        /// <summary>FBX'teki action'ları adlandırır, döngüleri ayarlar, menü (Idle) ve oyun (Run) controller'larını kurar.</summary>
+        public static void SetupAnimations()
+        {
+            var imp = (ModelImporter)AssetImporter.GetAtPath(FbxPath);
+            var clips = new List<ModelImporterClipAnimation>();
+            foreach (ModelImporterClipAnimation c in imp.defaultClipAnimations)
+            {
+                string shortName = c.takeName.Contains("|") ? c.takeName.Substring(c.takeName.LastIndexOf('|') + 1) : c.takeName;
+                if (System.Array.IndexOf(AllClips, shortName) < 0) continue;
+                c.name = shortName;
+                c.loopTime = System.Array.IndexOf(LoopClips, shortName) >= 0;
+                c.lockRootRotation = c.lockRootHeightY = c.lockRootPositionXZ = true;
+                c.keepOriginalOrientation = c.keepOriginalPositionY = c.keepOriginalPositionXZ = true;
+                clips.Add(c);
+            }
+            imp.clipAnimations = clips.ToArray();
+            imp.SaveAndReimport();
+
+            var byName = new Dictionary<string, AnimationClip>();
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(FbxPath))
+                if (o is AnimationClip clip && !clip.name.StartsWith("__preview")) byName[clip.name] = clip;
+
+            BuildController(MenuControllerPath, byName, "Idle");
+            BuildController(GameControllerPath, byName, "Run");
+        }
+
+        private static void BuildController(string path, Dictionary<string, AnimationClip> clips, string defaultState)
+        {
+            AssetDatabase.DeleteAsset(path);
+            var ctrl = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(path);
+            var sm = ctrl.layers[0].stateMachine;
+            foreach (string name in AllClips)
+            {
+                if (!clips.TryGetValue(name, out AnimationClip clip)) continue;
+                var st = sm.AddState(name);
+                st.motion = clip;
+                if (name == defaultState) sm.defaultState = st;
+            }
+            // Oyun akışı için tetikleyiciler (oynanış kodu bunları çağıracak)
+            foreach (string trig in new[] { "Crouch", "Jump", "Fall", "Land", "Zipline", "Death", "Run", "Idle" })
+                ctrl.AddParameter(trig, AnimatorControllerParameterType.Trigger);
+            foreach (var st in sm.states)
+            {
+                var t = sm.AddAnyStateTransition(st.state);
+                t.AddCondition(UnityEditor.Animations.AnimatorConditionMode.If, 0, st.state.name);
+                t.duration = 0.12f;
+                t.canTransitionToSelf = false;
+            }
+            // Land → Run, Jump → Fall otomatik
+            void Auto(string from, string to)
+            {
+                var a = System.Array.Find(sm.states, x => x.state.name == from).state;
+                var b = System.Array.Find(sm.states, x => x.state.name == to).state;
+                if (a == null || b == null) return;
+                var t = a.AddTransition(b);
+                t.hasExitTime = true;
+                t.exitTime = 0.95f;
+                t.duration = 0.1f;
+            }
+            Auto("Land", defaultState);
+            Auto("Jump", "Fall");
+            AssetDatabase.SaveAssets();
+        }
+
         /// <summary>Açık sahneye vitrin kurar. Vitrin uzakta (y=-200) durur, menü kamerası görmez.</summary>
         public static RenderTexture BuildStage(SkinLibrary library, out Transform stage, out RunnerSkin runner, out Camera camera)
         {
@@ -186,7 +258,7 @@ namespace Jumpline.EditorTools
             model.name = "Runner";
             model.transform.localPosition = Vector3.zero;
             model.transform.localRotation = Quaternion.identity;
-            if (model.TryGetComponent(out Animator anim)) anim.enabled = false; // animasyonlar sonraki adım
+            if (model.TryGetComponent(out Animator anim)) anim.enabled = false; // kartlar statik duruşla çekilir; FinishStage açar
 
             ApplyDisplayPose(model.transform);
             GroundModel(model.transform, stage.position.y);
@@ -228,6 +300,14 @@ namespace Jumpline.EditorTools
 
             Transform model = runner.transform;
             model.localRotation = Quaternion.identity;
+            if (model.TryGetComponent(out Animator menuAnim))
+            {
+                // Menüde nefes alan bekleme animasyonu (docs: karakter nefes alma animasyonu)
+                menuAnim.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(MenuControllerPath);
+                menuAnim.applyRootMotion = false;
+                menuAnim.updateMode = AnimatorUpdateMode.UnscaledTime;
+                menuAnim.enabled = true;
+            }
             ApplyHeroPose(model);
             GroundModel(model, stage.position.y + PodiumTop);
             model.localRotation = Quaternion.Euler(0f, DisplayYaw, 0f);

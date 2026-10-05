@@ -217,8 +217,12 @@ namespace Jumpline.EditorTools
             var model = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(RunnerStageBuilder.FbxPath));
             model.name = "Runner";
             model.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            if (model.TryGetComponent(out Animator anim)) anim.enabled = false;
-            RunnerStageBuilder.ApplyDisplayPose(model.transform);
+            if (model.TryGetComponent(out Animator anim))
+            {
+                anim.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(RunnerStageBuilder.GameControllerPath);
+                anim.applyRootMotion = false;
+                anim.enabled = true;   // koşu animasyonu (oynanış kodu tetikleyicilerle zıplama/ölüm oynatacak)
+            }
 
             var skin = model.AddComponent<Jumpline.Player.RunnerSkin>();
             Set(skin, "library", library);
