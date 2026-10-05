@@ -30,8 +30,9 @@ namespace Jumpline.EditorTools
             LoadAssets();
             var config = GetOrCreateAsset<GameConfig>(MainMenuBuilder.ConfigPath, null);
 
-            BuildWorld();
-            BuildRunner();
+            Transform street = BuildWorld();
+            Transform runner = BuildRunner();
+            Set(street.gameObject.AddComponent<StreetRecycler>(), "player", runner);
             BuildCameraAndEvents(false);
             var cam = Camera.main;
             // Üçüncü şahıs: karakterin arkasında, ekranın alt-ortasında (brief)
@@ -40,6 +41,7 @@ namespace Jumpline.EditorTools
             cam.farClipPlane = 220f;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Hex("#C3CCD8");
+            Set(cam.gameObject.AddComponent<Jumpline.CameraSystem.CameraFollow>(), "target", runner);
 
             Transform canvas = BuildCanvas("GameplayCanvas", false);
             var safe = NewUI("SafeArea", canvas);
@@ -59,7 +61,7 @@ namespace Jumpline.EditorTools
         private const float StreetSegment = 60f;   // build_street.py SEGMENT
         private const int StreetCopies = 3;
 
-        private static void BuildWorld()
+        private static Transform BuildWorld()
         {
             // Güneş: alçak açıdan, sokağa çapraz gölge (referanstaki gibi)
             var light = new GameObject("Directional Light", typeof(Light)).GetComponent<Light>();
@@ -88,10 +90,9 @@ namespace Jumpline.EditorTools
                 var seg = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root);
                 seg.name = $"StreetSegment_{i}";
                 seg.transform.SetPositionAndRotation(new Vector3(0f, 0f, i * StreetSegment), Quaternion.identity);
-                seg.isStatic = true;
-                foreach (Transform t in seg.GetComponentsInChildren<Transform>()) t.gameObject.isStatic = true;
-                PlaceDecor(seg.transform);
+                PlaceDecor(seg.transform); // statik değil: StreetRecycler modülleri öne taşır
             }
+            return root;
         }
 
         // Dekorlar — Blender/scripts/build_decor.py (Desktop/Yeni klasör dekor videoları)
@@ -130,7 +131,6 @@ namespace Jumpline.EditorTools
                 go.transform.localPosition = new Vector3(d.x, d.y, d.z);
                 go.transform.localRotation = Quaternion.Euler(0f, d.rot, 0f) * src.localRotation;
                 go.transform.localScale = src.localScale;
-                go.isStatic = true;
             }
         }
 
@@ -210,8 +210,8 @@ namespace Jumpline.EditorTools
             AssetDatabase.SaveAssets();
         }
 
-        /// <summary>Koşucu: başlangıç noktasında, koşu yönüne (+Z) bakar, giyili kostümle. Hareket sonraki adım.</summary>
-        private static void BuildRunner()
+        /// <summary>Koşucu: başlangıç noktasında, koşu yönüne (+Z) bakar, giyili kostümle. PlayerController koşturur/zıplatır.</summary>
+        private static Transform BuildRunner()
         {
             var library = RunnerStageBuilder.EnsureLibrary();
             var model = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(RunnerStageBuilder.FbxPath));
@@ -230,6 +230,9 @@ namespace Jumpline.EditorTools
             Set(display, "runner", skin);
             Set(display, "library", library);
             SetFloat(display, "swayAngle", 0f);
+            var player = model.AddComponent<Jumpline.Player.PlayerController>();
+            Set(player, "animator", anim);
+            return model.transform;
         }
 
         private static void BuildUI(Transform safe, LevelFlowController flow, GameConfig config)
