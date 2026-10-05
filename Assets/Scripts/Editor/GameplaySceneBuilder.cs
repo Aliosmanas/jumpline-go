@@ -80,6 +80,7 @@ namespace Jumpline.EditorTools
             RenderSettings.fogEndDistance = 150f;
 
             ConfigureStreetImport();
+            decorPrefab = null;
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(StreetPath);
             var root = new GameObject("Street").transform;
             for (int i = -1; i < StreetCopies; i++) // bir modül karakterin arkasında (kamera boşluk görmesin)
@@ -89,7 +90,85 @@ namespace Jumpline.EditorTools
                 seg.transform.SetPositionAndRotation(new Vector3(0f, 0f, i * StreetSegment), Quaternion.identity);
                 seg.isStatic = true;
                 foreach (Transform t in seg.GetComponentsInChildren<Transform>()) t.gameObject.isStatic = true;
+                PlaceDecor(seg.transform);
             }
+        }
+
+        // Dekorlar — Blender/scripts/build_decor.py (Desktop/Yeni klasör dekor videoları)
+        public const string DecorPath = "Assets/Art/Environment/Diyarbakir/DiyarbakirDecor.fbx";
+        private const string DecorMatDir = "Assets/Art/Environment/Diyarbakir/DecorMaterials";
+        private static GameObject decorPrefab;
+
+        /// <summary>Segment içi yerleşim (yerel x, y, z, Y açısı). Hepsi duvar dibinde / kaldırımda; koşu şeridi boş.</summary>
+        private static readonly (string name, float x, float y, float z, float rot)[] DecorLayout =
+        {
+            ("Samovar", -2.45f, 0f, 6f, 90f), ("Crates", 2.2f, 0f, 9f, -90f), ("WallLantern", -2.9f, 2.6f, 4f, 90f),
+            ("WallLantern", 2.9f, 2.6f, 13f, -90f), ("KilimPile", -2.3f, 0f, 14f, 90f), ("FruitBasket", 2.45f, 0f, 16.5f, -90f),
+            ("IronGate", 2.95f, 0f, 21f, -90f), ("Sack", -2.45f, 0f, 22f, 90f), ("Watermelon", 2.35f, 0f, 25f, -90f),
+            ("Nazar", -2.92f, 2.0f, 26f, 90f), ("CopperJugs", -2.3f, 0f, 30f, 90f), ("BreadBasket", 2.45f, 0f, 33f, -90f),
+            ("CarvedPillar", -2.6f, 0f, 35.5f, 90f), ("Chest", 2.35f, 0f, 38f, -90f), ("RolledCarpet", -2.5f, 0f, 41f, 90f),
+            ("WallLantern", -2.9f, 2.6f, 44f, 90f), ("Ladder", 2.7f, 0f, 47f, -90f), ("CopperPlates", -2.45f, 0f, 50f, 90f),
+            ("Birdhouse", 2.45f, 0f, 52.5f, -90f), ("KebabCart", -2.1f, 0f, 56f, 90f), ("WallLantern", 2.9f, 2.6f, 58f, -90f),
+        };
+
+        private static void PlaceDecor(Transform segment)
+        {
+            if (decorPrefab == null)
+            {
+                ConfigureDecorImport();
+                decorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DecorPath);
+                if (decorPrefab == null) return;
+            }
+            var root = new GameObject("Decor").transform;
+            root.SetParent(segment, false);
+            foreach (var d in DecorLayout)
+            {
+                Transform src = decorPrefab.transform.Find("Decor_" + d.name);
+                if (src == null) continue;
+                var go = Object.Instantiate(src.gameObject, root);
+                go.name = d.name;
+                go.transform.localPosition = new Vector3(d.x, d.y, d.z);
+                go.transform.localRotation = Quaternion.Euler(0f, d.rot, 0f) * src.localRotation;
+                go.transform.localScale = src.localScale;
+                go.isStatic = true;
+            }
+        }
+
+        private static void ConfigureDecorImport()
+        {
+            EnsureFolder(DecorMatDir);
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(DecorPath))
+            {
+                if (o is not Material m) continue;
+                string dst = $"{DecorMatDir}/{m.name}.mat";
+                if (AssetDatabase.LoadAssetAtPath<Material>(dst) == null) AssetDatabase.ExtractAsset(m, dst);
+            }
+            AssetDatabase.WriteImportSettingsIfDirty(DecorPath);
+            AssetDatabase.ImportAsset(DecorPath, ImportAssetOptions.ForceUpdate);
+            string texDir = "Assets/Art/Environment/Diyarbakir/DiyarbakirDecor.fbm";
+            foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { DecorMatDir }))
+            {
+                var mat = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                Color c = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : mat.color;
+                mat.shader = Shader.Find("Universal Render Pipeline/Lit");
+                mat.SetColor("_BaseColor", c);
+                if (mat.name.StartsWith("D_Wood") || mat.name == "D_Stone")
+                {
+                    var tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"{texDir}/{(mat.name == "D_Stone" ? "basalt" : "wood")}.png");
+                    if (tex != null) { mat.SetTexture("_BaseMap", tex); mat.SetColor("_BaseColor", mat.name == "D_WoodDark" ? Hex("#6A5446") : Color.white); }
+                }
+                bool glow = mat.name.StartsWith("D_Glow");
+                if (glow)
+                {
+                    mat.EnableKeyword("_EMISSION");
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    mat.SetColor("_EmissionColor", c * 4f);
+                }
+                mat.SetFloat("_Metallic", mat.name == "D_Copper" || mat.name == "D_Iron" ? 0.85f : 0f);
+                mat.SetFloat("_Smoothness", mat.name == "D_Copper" ? 0.65f : 0.25f);
+                EditorUtility.SetDirty(mat);
+            }
+            AssetDatabase.SaveAssets();
         }
 
         /// <summary>Malzemeleri dışarı çıkarır, dokuları adlarına göre bağlar (FBX dokuları otomatik bağlanmıyor).</summary>
