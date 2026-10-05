@@ -13,7 +13,7 @@ Tam tasarım isteği: `docs/BRIEF.md`. Kullanıcı Türkçe konuşur, Türkçe c
 | Render | URP 17.6 (şablon `urp-blank`), `Assets/Settings/Mobile_RPAsset` + `PC_RPAsset` |
 | Input | Yeni Input System 1.20 (`activeInputHandler: 1`, eski Input Manager kapalı) |
 | Test | Unity Test Framework 1.8 (`Assets/Tests/EditMode`, `PlayMode`) |
-| Android | Modül kurulu (5 Eki 2026, Hub'sız: modules.json URL'leri, `D:\Repolar\_android_dl\install_android.ps1`). APK: menü Jumpline → Build Android APK → `Builds/Android/JumplineGo.apk`. **Gradle için TEMP/TMP=D:	mp ve JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=D:	mp şart** (kullanıcı adındaki boşluk "Unable to establish loopback connection" yapar). adb: `...\AndroidPlayer\SDK\platform-toolsdb.exe`. Telefon: Galaxy S23 (SM-S911B) |
+| Android | Modül kurulu (5 Eki 2026, Hub'sız: modules.json URL'leri, `D:\Repolar\_android_dl\install_android.ps1`). APK: menü Jumpline → Build Android APK → `Builds/Android/JumplineGo.apk`. **Gradle için TEMP/TMP=D:\tmp ve JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=D:\tmp şart** (kullanıcı adındaki boşluk "Unable to establish loopback connection" yapar). adb: `...\AndroidPlayer\SDK\platform-tools\adb.exe`. Telefon: Galaxy S23 (SM-S911B) |
 | Blender | 5.2.2 LTS — `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe` (4.5 de kurulu) |
 
 ## MCP (canlı kontrol, `.mcp.json`)
