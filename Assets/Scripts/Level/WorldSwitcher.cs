@@ -37,6 +37,9 @@ namespace Jumpline.Level
         [SerializeField] private float streetGround = 0f;
         [Tooltip("Sokak modüllerinin kökü — çatıdayken kapatılır (performans).")]
         [SerializeField] private Transform streetRoot;
+        [Tooltip("Dünyayla birlikte açılıp kapanan ek kökler (engeller).")]
+        [SerializeField] private GameObject[] streetExtras;
+        [SerializeField] private GameObject[] rooftopExtras;
         [Tooltip("Çatı modüllerinin kökü (x = orta şerit, y = çatı yüzeyi, z = modül hizası).")]
         [SerializeField] private Transform rooftopRoot;
         [SerializeField, Min(1f)] private float rooftopModuleLength = 80f;
@@ -57,6 +60,8 @@ namespace Jumpline.Level
         public float StreetGround => streetGround;
         public float RooftopOriginX => rooftopRoot != null ? rooftopRoot.position.x : 0f;
         public float RooftopGround => rooftopRoot != null ? rooftopRoot.position.y : 0f;
+        public float RooftopRootZ => rooftopRoot != null ? rooftopRoot.position.z : 0f;
+        public float RooftopModuleLength => rooftopModuleLength;
 
         /// <summary>Dünya değişti (true = sokak). Portallar kendi dünyalarında koşucunun önüne yerleşir.</summary>
         public event System.Action<bool> WorldChanged;
@@ -89,13 +94,13 @@ namespace Jumpline.Level
 
         public void EnterRooftop()
         {
-            if (busy || !InStreet || rooftopRoot == null) return;
+            if (busy || !InStreet || rooftopRoot == null || player.IsDead) return;
             StartCoroutine(Switch(false));
         }
 
         public void ExitToStreet()
         {
-            if (busy || InStreet) return;
+            if (busy || InStreet || player.IsDead) return;
             StartCoroutine(Switch(true));
         }
 
@@ -128,6 +133,8 @@ namespace Jumpline.Level
         {
             if (streetRoot != null) streetRoot.gameObject.SetActive(street);
             if (rooftopRoot != null) rooftopRoot.gameObject.SetActive(!street);
+            if (streetExtras != null) foreach (var g in streetExtras) if (g != null) g.SetActive(street);
+            if (rooftopExtras != null) foreach (var g in rooftopExtras) if (g != null) g.SetActive(!street);
         }
 
         private IEnumerator Fade(float from, float to, float time)

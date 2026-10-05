@@ -55,8 +55,13 @@ namespace Jumpline.EditorTools
             Image flash = BuildFlash(canvas);
             var switcher = BuildWorldSwitcher(runner, follow, cam, flash, rooftop);
             Set(switcher, "streetRoot", street);
-            BuildPortal(runner, switcher, true, "PortalUp", null);                 // sokak → çatı (mavi)
-            BuildPortal(runner, switcher, false, "PortalDown", Hex("#FF3C8E"));    // çatı → sokak (pembe)
+            Portal up = BuildPortal(runner, switcher, true, "PortalUp", null);                 // sokak → çatı (mavi)
+            Portal down = BuildPortal(runner, switcher, false, "PortalDown", Hex("#FF3C8E"));  // çatı → sokak (pembe)
+            var (streetObs, roofObs) = BuildObstacles(runner, switcher, new[] { up, down });
+            SetArray(switcher, "streetExtras", new Object[] { streetObs });
+            SetArray(switcher, "rooftopExtras", new Object[] { roofObs });
+            // ölünce oyun bitti paneli (LevelFlowController.FailLevel)
+            Set(canvas.GetComponent<LevelFlowController>(), "player", runner.GetComponent<Jumpline.Player.PlayerController>());
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             ScenesSetup.ApplyBuildSettings();
@@ -256,6 +261,8 @@ namespace Jumpline.EditorTools
                 mod.transform.localPosition = new Vector3(0f, 0f, i * RooftopModule);
                 mod.transform.localRotation = Quaternion.identity;
                 Set(mod.AddComponent<Zipline>(), "player", player);
+                var hole = mod.AddComponent<Obstacle>();   // build_rooftops.py: çatı z 45–62 arası boş, ara sokak 14 m aşağıda
+                hole.Configure(Obstacle.Kind.Hole, 6f, new[] { new Obstacle.Segment { z0 = 45f, z1 = 62f, h0 = -14f, h1 = -14f } });
                 PlaceDecor(mod.transform, RoofDecorLayout);
                 // performans: gece sahnesinde yalnızca rota binası gölge düşürür
                 foreach (var r in mod.GetComponentsInChildren<Renderer>(true))
@@ -329,10 +336,10 @@ namespace Jumpline.EditorTools
         }
 
         /// <summary>Portal: taş sivri kemer + dönen girdap + parçacık + ışık. Portal.cs yerleştirir (yukarı: sokakta, aşağı: çatıda).</summary>
-        private static void BuildPortal(Transform runner, WorldSwitcher switcher, bool leadsToRooftop, string name, Color? tint)
+        private static Portal BuildPortal(Transform runner, WorldSwitcher switcher, bool leadsToRooftop, string name, Color? tint)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PortalPath);
-            if (prefab == null) return;
+            if (prefab == null) return null;
             var portal = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             portal.name = name;
             portal.transform.SetPositionAndRotation(leadsToRooftop ? new Vector3(0f, 0f, 45f) : RooftopOrigin + new Vector3(0f, 0f, 30f), Quaternion.identity);
@@ -385,6 +392,7 @@ namespace Jumpline.EditorTools
             so.FindProperty("leadsToRooftop").boolValue = leadsToRooftop;
             if (tint.HasValue) so.FindProperty("tint").colorValue = tint.Value;
             so.ApplyModifiedPropertiesWithoutUndo();
+            return comp;
         }
 
         private static WorldSwitcher BuildWorldSwitcher(Transform runner, Jumpline.CameraSystem.CameraFollow follow, Camera cam,
@@ -506,6 +514,147 @@ namespace Jumpline.EditorTools
             return mat;
         }
 
+        // ---------------------------------------------------------------------
+        // Engeller — dosyadaki dekorlar (zıpla / şerit değiştir) + rampalı kamyonet (Blender/scripts/build_obstacles.py)
+        // ---------------------------------------------------------------------
+        public const string TruckPath = "Assets/Art/Environment/Obstacles/RampTruck.fbx";
+        private const string TruckMatDir = "Assets/Art/Environment/Obstacles/Materials";
+        private static readonly string[] LowObstacles = { "Crates", "Chest", "CopperJugs", "Sack", "Watermelon", "RolledCarpet" };
+        private static readonly string[] HighObstacles = { "KebabCart", "Samovar" };
+        private static readonly string[] WallObstacles = { "IronGate", "CarvedPillar", "Fountain" };
+
+        /// <summary>build_obstacles.py yüzey profili: rampa → kasa tavanı → kabin → kaput.</summary>
+        private static readonly Obstacle.Segment[] RampTruckSegments =
+        {
+            new Obstacle.Segment { z0 = 0f, z1 = 4f, h0 = 0.05f, h1 = 2.35f },
+            new Obstacle.Segment { z0 = 4f, z1 = 9.5f, h0 = 2.35f, h1 = 2.35f },
+            new Obstacle.Segment { z0 = 9.5f, z1 = 10.8f, h0 = 1.9f, h1 = 1.9f },
+            new Obstacle.Segment { z0 = 10.8f, z1 = 11.6f, h0 = 1.25f, h1 = 1.25f },
+        };
+
+        /// <summary>Şablonlar + sokak/çatı engel üreticileri. Döndürür: (sokak engel kökü, çatı engel kökü).</summary>
+        private static (GameObject street, GameObject roof) BuildObstacles(Transform runner, WorldSwitcher switcher, Portal[] portals)
+        {
+            var templates = new GameObject("ObstacleTemplates");
+            templates.transform.position = new Vector3(0f, -50f, 0f);   // sınırlar ölçülürken görünmesin
+            Obstacle[] Make(string[] names, float minHeight)
+            {
+                var list = new System.Collections.Generic.List<Obstacle>();
+                foreach (string n in names)
+                {
+                    var o = DecorObstacle(n, templates.transform, minHeight);
+                    if (o != null) list.Add(o);
+                }
+                return list.ToArray();
+            }
+            // duvarlar: çarpışma yüksekliği en yüksek zıplamanın üstünde → şerit değiştirmek şart
+            Obstacle[] low = Make(LowObstacles, 0f), high = Make(HighObstacles, 0f), walls = Make(WallObstacles, 4f);
+            Obstacle truck = TruckObstacle(templates.transform);
+            templates.SetActive(false);   // şablonlar kayıt olmaz; üretici kopyalar (sınırlar açıkken ölçüldü)
+            var player = runner.GetComponent<Jumpline.Player.PlayerController>();
+
+            GameObject Spawner(string name, bool rooftop)
+            {
+                var go = new GameObject(name);
+                var sp = go.AddComponent<ObstacleSpawner>();
+                Set(sp, "player", player);
+                Set(sp, "switcher", switcher);
+                var so = new SerializedObject(sp);
+                so.FindProperty("rooftop").boolValue = rooftop;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                SetArray(sp, "portals", portals);
+                SetArray(sp, "low", low);
+                SetArray(sp, "high", high);
+                SetArray(sp, "walls", walls);
+                SetArray(sp, "ramps", rooftop || truck == null ? new Object[0] : new Object[] { truck });
+                return go;
+            }
+            return (Spawner("StreetObstacles", false), Spawner("RooftopObstacles", true));
+        }
+
+        /// <summary>Dekoru engel şablonu yapar: taban/yükseklik dekorun sınırlarından.</summary>
+        private static Obstacle DecorObstacle(string name, Transform parent, float minHeight)
+        {
+            if (decorPrefab == null) decorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DecorPath);
+            Transform src = decorPrefab != null ? decorPrefab.transform.Find("Decor_" + name) : null;
+            if (src == null) return null;
+            var root = new GameObject("Obs_" + name);
+            root.transform.SetParent(parent, false);
+            var vis = Object.Instantiate(src.gameObject, root.transform);
+            vis.name = name;
+            vis.transform.localPosition = Vector3.zero;
+            vis.transform.localRotation = src.localRotation;
+            vis.transform.localScale = src.localScale;
+            var rs = vis.GetComponentsInChildren<Renderer>();
+            Bounds b = rs[0].bounds;
+            foreach (var r in rs) b.Encapsulate(r.bounds);
+            Vector3 c = b.center - root.transform.position;
+            float halfW = Mathf.Clamp(b.extents.x, 0.45f, 1.0f);   // şeritten taşmasın
+            float halfD = Mathf.Max(b.extents.z, 0.35f);          // ince engeller (kapı) atlanmasın
+            float h = Mathf.Max(b.max.y - root.transform.position.y, minHeight);
+            var obs = root.AddComponent<Obstacle>();
+            obs.Configure(Obstacle.Kind.Solid, halfW, new[] { new Obstacle.Segment { z0 = c.z - halfD, z1 = c.z + halfD, h0 = h, h1 = h } });
+            EditorUtility.SetDirty(obs);
+            return obs;
+        }
+
+        private static Obstacle TruckObstacle(Transform parent)
+        {
+            ConfigureTruckImport();
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TruckPath);
+            if (prefab == null) { Debug.LogError("[Jumpline] RampTruck.fbx yok — Blender/scripts/build_obstacles.py çalıştır"); return null; }
+            var root = new GameObject("Obs_RampTruck");
+            root.transform.SetParent(parent, false);
+            var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root.transform);
+            vis.transform.localPosition = Vector3.zero;
+            vis.transform.localRotation = Quaternion.identity;
+            var obs = root.AddComponent<Obstacle>();
+            obs.Configure(Obstacle.Kind.Solid, 0.95f, RampTruckSegments);
+            EditorUtility.SetDirty(obs);
+            return obs;
+        }
+
+        private static void ConfigureTruckImport()
+        {
+            if (AssetImporter.GetAtPath(TruckPath) is not ModelImporter imp) return;
+            EnsureFolder(TruckMatDir);
+            imp.importCameras = imp.importLights = imp.importAnimation = false;
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(TruckPath))
+            {
+                if (o is not Material m) continue;
+                string dst = $"{TruckMatDir}/{m.name}.mat";
+                if (AssetDatabase.LoadAssetAtPath<Material>(dst) == null) AssetDatabase.ExtractAsset(m, dst);
+            }
+            AssetDatabase.WriteImportSettingsIfDirty(TruckPath);
+            AssetDatabase.ImportAsset(TruckPath, ImportAssetOptions.ForceUpdate);
+            var wood = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Environment/Diyarbakir/DiyarbakirStreet.fbm/wood.png");
+            (string name, string color, float glow, float smooth, float metal)[] defs =
+            {
+                ("T_Paint", "#3F7F7A", 0f, 0.45f, 0.2f), ("T_PaintRed", "#8E1748", 0f, 0.45f, 0.2f), ("T_Wood", "#FFFFFF", 0f, 0.25f, 0f),
+                ("T_Metal", "#2A2C30", 0f, 0.5f, 0.8f), ("T_Glass", "#0E1620", 0f, 0.9f, 0.3f), ("T_Neon", "#2AA6FF", 3.2f, 0.5f, 0f),
+                ("T_Tire", "#141414", 0f, 0.2f, 0f), ("T_Lamp", "#FFE6A0", 3f, 0.5f, 0f), ("T_Rust", "#7A4A32", 0f, 0.3f, 0.4f),
+            };
+            foreach (var d in defs)
+            {
+                var mat = AssetDatabase.LoadAssetAtPath<Material>($"{TruckMatDir}/{d.name}.mat");
+                if (mat == null) continue;
+                mat.shader = Shader.Find("Universal Render Pipeline/Lit");
+                Color c = Hex(d.color);
+                mat.SetColor("_BaseColor", c);
+                mat.SetFloat("_Smoothness", d.smooth);
+                mat.SetFloat("_Metallic", d.metal);
+                if (d.name == "T_Wood" && wood != null) mat.SetTexture("_BaseMap", wood);
+                if (d.glow > 0f)
+                {
+                    mat.EnableKeyword("_EMISSION");
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    mat.SetColor("_EmissionColor", c * d.glow);
+                }
+                EditorUtility.SetDirty(mat);
+            }
+            AssetDatabase.SaveAssets();
+        }
+
         /// <summary>Koşucu: başlangıç noktasında, koşu yönüne (+Z) bakar, giyili kostümle. PlayerController koşturur/zıplatır.</summary>
         private static Transform BuildRunner()
         {
@@ -553,10 +702,10 @@ namespace Jumpline.EditorTools
             Icon(pausePanel, "player-pause", new Rect(975f, 62f, 79f, 79f), Color.white);
             Button pause = MakeButton(pausePanel, pausePanel.rt.GetComponent<Image>());
 
-            Txt(mid, "PlaceholderInfo", "The runner and obstacles come next.\nUse the test buttons to try the flow.",
-                new Rect(108f, 820f, 900f, 160f), fMedium, 34f, C.TextSoft, wrap: true);
             Button win = PillButton(bot, "TestWin", new Rect(118f, 1780f, 420f, 90f), "WIN (TEST)", 34f, Color.white, 1f);
             Button fail = PillButton(bot, "TestFail", new Rect(578f, 1780f, 420f, 90f), "FAIL (TEST)", 34f, Color.white, 1f, Hex("#E2B45A"), Hex("#F2C366"));
+            win.gameObject.SetActive(false);    // test butonları: oynanış gerçek (ölüm → oyun bitti)
+            fail.gameObject.SetActive(false);
 
             // Paneller
             CanvasGroup pauseGroup = Overlay(safe, "PausePanel", "PAUSED", 640f, out Box pauseBox);

@@ -16,6 +16,8 @@ namespace Jumpline.Level
         private enum State { Playing, Paused, Finished }
 
         [SerializeField] private GameConfig config;
+        [Tooltip("Koşucu öldüğünde (ölme animasyonundan sonra) oyun bitti paneli açılır.")]
+        [SerializeField] private Jumpline.Player.PlayerController player;
 
         [Header("HUD")]
         [SerializeField] private TMP_Text levelLabel;
@@ -47,6 +49,7 @@ namespace Jumpline.Level
             foreach (Button b in mainMenuButtons) b.onClick.AddListener(() => SceneLoader.LoadMainMenu(config));
             testWinButton.onClick.AddListener(CompleteLevel);
             testFailButton.onClick.AddListener(FailLevel);
+            if (player != null) player.Died += FailLevel;
         }
 
         private void Start()
