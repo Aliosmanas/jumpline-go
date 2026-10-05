@@ -8,10 +8,12 @@ namespace Jumpline.Player
     /// Koşucu: sürekli ileri (+Z) koşar. Basılı tut = zıplama şarjı, bırak = zıpla; basma süresi zıplama gücünü belirler.
     /// 3 şerit (Subway Surfers gibi): sağa/sola kaydır ya da A/D, ←/→ ile şerit değiştirir; havadayken de olur.
     /// Kaydırma o basışın şarjını iptal eder (zıplatmaz). Girdi: dokunma (Android), fare sol tuş + Boşluk (editör).
+    /// Zipline (Level/Zipline.cs başlatır): halata zıplayıp tutunur → kayar → bırakır, düşer, iner.
+    /// Dünya geçişi (Level/WorldSwitcher.cs): Teleport ile sokak ↔ çatı.
     /// </summary>
     public class PlayerController : MonoBehaviour
     {
-        private enum State { Running, Charging, Airborne }
+        private enum State { Running, Charging, Airborne, ZipGrab, ZipSlide }
 
         [Header("Koşu")]
         [SerializeField, Min(0f)] private float runSpeed = 7f;
@@ -34,6 +36,13 @@ namespace Jumpline.Player
         [SerializeField, Range(0f, 1f)] private float chargeSpeedMultiplier = 0.85f;
         [SerializeField] private float groundHeight = 0f;
 
+        [Header("Zipline")]
+        [Tooltip("Halat üzerinde ileri hız (m/sn).")]
+        [SerializeField, Min(0.1f)] private float ziplineSpeed = 13f;
+        [Tooltip("Halattan bırakınca aşağı başlangıç hızı.")]
+        [SerializeField] private float ziplineReleaseVelocity = 1.5f;
+        [SerializeField] private ParticleSystem ziplineSparks;
+
         [Header("Görsel")]
         [SerializeField] private Animator animator;
 
@@ -44,21 +53,36 @@ namespace Jumpline.Player
         private int lane;                 // -1 sol, 0 orta, +1 sağ
         private Vector2 pressStart;
         private bool pressConsumed;       // bu basışta kaydırma yapıldı → bırakınca zıplama yok
+        private float laneOriginX;        // orta şeridin dünya x'i (sokak 0, çatı dünyası başka x)
+
+        // zipline: kök (ayak) yolu
+        private Vector3 zipA, zipB;
+        private float zipSag;
+        private float grabStartY, grabStartZ;
 
         private const int LaneCount = 3;
         private const int MaxLane = LaneCount / 2;
 
         public float Charge01 { get; private set; }
         public float RunSpeed => runSpeed;
+        public int Lane => lane;
+        public float LaneWidth => laneWidth;
+        public float LaneOriginX => laneOriginX;
+        public float GroundHeight => groundHeight;
+        public bool OnZipline => state == State.ZipGrab || state == State.ZipSlide;
 
         private static readonly int RunTrigger = Animator.StringToHash("Run");
         private static readonly int CrouchTrigger = Animator.StringToHash("Crouch");
         private static readonly int JumpTrigger = Animator.StringToHash("Jump");
+        private static readonly int FallTrigger = Animator.StringToHash("Fall");
         private static readonly int LandTrigger = Animator.StringToHash("Land");
+        private static readonly int ZiplineTrigger = Animator.StringToHash("Zipline");
+        private static readonly int[] AllTriggers = { RunTrigger, CrouchTrigger, JumpTrigger, FallTrigger, LandTrigger, ZiplineTrigger };
 
         private void Awake()
         {
             if (animator == null) animator = GetComponentInChildren<Animator>();
+            laneOriginX = transform.position.x;
         }
 
         private void Update()
@@ -88,6 +112,10 @@ namespace Jumpline.Player
             }
             ReadLaneKeys();
 
+            Vector3 p = transform.position;
+            float laneX = laneOriginX + lane * laneWidth;
+            float laneK = 1f - Mathf.Exp(-laneChangeSharpness * dt);
+
             switch (state)
             {
                 case State.Running:
@@ -100,12 +128,32 @@ namespace Jumpline.Player
                 case State.Airborne:
                     verticalVelocity -= gravity * dt;
                     break;
+                case State.ZipGrab:
+                {
+                    // halata doğru sıçrama: z ilerlerken yükseklik yumuşakça halat başına çıkar
+                    p.z += runSpeed * dt;
+                    float t = Mathf.InverseLerp(grabStartZ, zipA.z, p.z);
+                    p.y = Mathf.Lerp(grabStartY, zipA.y, Mathf.SmoothStep(0f, 1f, t));
+                    p.x = Mathf.Lerp(p.x, laneX, laneK);
+                    transform.position = p;
+                    if (t >= 1f) BeginSlide();
+                    return;
+                }
+                case State.ZipSlide:
+                {
+                    p.z += ziplineSpeed * dt;
+                    float t = Mathf.InverseLerp(zipA.z, zipB.z, p.z);
+                    p.y = Mathf.Lerp(zipA.y, zipB.y, t) - zipSag * 4f * t * (1f - t);
+                    p.x = Mathf.Lerp(p.x, laneX, laneK);
+                    transform.position = p;
+                    if (t >= 1f) ReleaseZipline();
+                    return;
+                }
             }
 
             float speed = runSpeed * (state == State.Charging ? chargeSpeedMultiplier : 1f);
-            Vector3 p = transform.position;
             p.z += speed * dt;
-            p.x = Mathf.Lerp(p.x, lane * laneWidth, 1f - Mathf.Exp(-laneChangeSharpness * dt));
+            p.x = Mathf.Lerp(p.x, laneX, laneK);
             p.y += verticalVelocity * dt;
             if (state == State.Airborne && p.y <= groundHeight && verticalVelocity < 0f)
             {
@@ -115,6 +163,64 @@ namespace Jumpline.Player
                 Trigger(LandTrigger);
             }
             transform.position = p;
+        }
+
+        // ------------------------------------------------------------------
+        // Dışarıdan çağrılanlar
+        // ------------------------------------------------------------------
+
+        /// <summary>Zipline başlat: halat başı/sonu (orta şerit, dünya), sarkma, el yüksekliği (ayaktan ele).</summary>
+        public void BeginZipline(Vector3 ropeStart, Vector3 ropeEnd, float sag, float handHeight)
+        {
+            if (OnZipline) return;
+            zipA = ropeStart - Vector3.up * handHeight;
+            zipB = ropeEnd - Vector3.up * handHeight;
+            zipSag = sag;
+            grabStartY = transform.position.y;
+            grabStartZ = Mathf.Min(transform.position.z, zipA.z - 0.05f);
+            state = State.ZipGrab;
+            Charge01 = 0f;
+            verticalVelocity = 0f;
+            Trigger(JumpTrigger);
+        }
+
+        /// <summary>Başka dünyaya ışınla (sokak ↔ çatı). Şerit korunur.</summary>
+        public void Teleport(Vector3 position, float ground, float originX)
+        {
+            laneOriginX = originX;
+            groundHeight = ground;
+            position.x = originX + lane * laneWidth;
+            transform.position = position;
+            verticalVelocity = 0f;
+            Charge01 = 0f;
+            if (ziplineSparks != null) ziplineSparks.Stop();
+            if (position.y > ground + 0.01f)
+            {
+                state = State.Airborne;
+                Trigger(FallTrigger);
+            }
+            else
+            {
+                state = State.Running;
+                Trigger(RunTrigger);
+            }
+        }
+
+        // ------------------------------------------------------------------
+
+        private void BeginSlide()
+        {
+            state = State.ZipSlide;
+            Trigger(ZiplineTrigger);
+            if (ziplineSparks != null) ziplineSparks.Play();
+        }
+
+        private void ReleaseZipline()
+        {
+            state = State.Airborne;
+            verticalVelocity = -ziplineReleaseVelocity;
+            Trigger(FallTrigger);
+            if (ziplineSparks != null) ziplineSparks.Stop();
         }
 
         private void BeginCharge()
@@ -134,6 +240,7 @@ namespace Jumpline.Player
 
         private void ChangeLane(int dir)
         {
+            if (OnZipline) return; // halattayken şerit sabit
             lane = Mathf.Clamp(lane + dir, -MaxLane, MaxLane); // en kenarda bir şey olmaz (çarpma yok)
         }
 
@@ -158,7 +265,8 @@ namespace Jumpline.Player
         private void Trigger(int id)
         {
             if (animator == null || animator.runtimeAnimatorController == null) return;
-            if (id != RunTrigger) animator.ResetTrigger(RunTrigger);
+            foreach (int other in AllTriggers)
+                if (other != id) animator.ResetTrigger(other);
             animator.SetTrigger(id);
         }
 

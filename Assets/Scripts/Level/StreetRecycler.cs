@@ -2,7 +2,10 @@ using UnityEngine;
 
 namespace Jumpline.Level
 {
-    /// <summary>Sonsuz sokak: koşucunun gerisinde kalan modülü en öne taşır.</summary>
+    /// <summary>
+    /// Sonsuz yol: koşucunun gerisinde kalan modülü en öne taşır. Işınlanma gibi büyük sıçramalarda modüller
+    /// koşucuya yetişene kadar art arda taşınır (dünya kapalıyken geride kalmış olabilir).
+    /// </summary>
     public class StreetRecycler : MonoBehaviour
     {
         [SerializeField] private Transform player;
@@ -10,18 +13,29 @@ namespace Jumpline.Level
         [Tooltip("Modül, bu kadar geride kalınca öne taşınır.")]
         [SerializeField, Min(0f)] private float behindMargin = 15f;
 
-        private void LateUpdate()
+        private void OnEnable() => Recycle();
+
+        private void LateUpdate() => Recycle();
+
+        /// <summary>Gerideki modülleri öne alır (ayırma yapmaz: her karede çalışır).</summary>
+        public void Recycle()
         {
-            if (player == null || transform.childCount == 0) return;
-            float maxZ = float.MinValue;
-            foreach (Transform t in transform) maxZ = Mathf.Max(maxZ, t.position.z);
-            foreach (Transform t in transform)
+            if (player == null) return;
+            int count = transform.childCount;
+            if (count == 0) return;
+            float limit = player.position.z - behindMargin - segmentLength;
+            for (int guard = 0; guard < 4096; guard++)
             {
-                if (t.position.z + segmentLength < player.position.z - behindMargin)
+                Transform back = null, front = null;
+                for (int i = 0; i < count; i++)
                 {
-                    t.position = new Vector3(t.position.x, t.position.y, maxZ + segmentLength);
-                    maxZ = t.position.z;
+                    Transform t = transform.GetChild(i);
+                    if (back == null || t.position.z < back.position.z) back = t;
+                    if (front == null || t.position.z > front.position.z) front = t;
                 }
+                if (back.position.z >= limit) return;
+                Vector3 p = back.position;
+                back.position = new Vector3(p.x, p.y, front.position.z + segmentLength);
             }
         }
     }

@@ -349,6 +349,7 @@ def export(objs):
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH, copy=True)
 
 
-_objs = build()
-export(_objs)
-print("STREET_OK", [(o.name, len(o.data.polygons)) for o in _objs])
+if __name__ == "__main__":   # build_rooftops.py yardımcıları içe aktarır
+    _objs = build()
+    export(_objs)
+    print("STREET_OK", [(o.name, len(o.data.polygons)) for o in _objs])
