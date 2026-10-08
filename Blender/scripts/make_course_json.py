@@ -1,5 +1,6 @@
 """Onaylanan parkur önizlemesinden (claude.ai/artifact/SrMVSvKMysrSdDjrvqA3RM) Unity bölüm dosyası üretir.
 Çıktı: Assets/Data/Course_SurIci.json — ObstacleSpawner (sokak) sırayla okur, sonra karıştırıp aynalar.
+Kural: araç trenlerinde bile yerde her zaman en az bir açık şerit kalır (tavandan düşen sıkışmasın).
 Satır: z = bölüm başından metre (engelin koşucuya bakan ön kenarı), lane = -1 sol / 0 orta / 1 sağ, id = engel kümesi."""
 import json
 import os
@@ -17,8 +18,8 @@ SECTIONS = [
         [318,-1,"busstop"],[316,0,"taxi"],[316,1,"taxi"],[334,0,"bus"],[334,-1,"bar"],[334,1,"low"],
         [352,-1,"bus"],[352,1,"bus"],[354,0,"taxi"],[374,-1,"bar"],[374,1,"low"],
         [392,-1,"taxi"],[392,0,"taxi"],[390,1,"bus"]]),
-    ("Karpuz Kamyonu Treni", 410, 580, [[420,-1,"melon"],[421,0,"bus"],[427.2,0,"bus"],[421,1,"bus"],[427.2,1,"bus"],
-        [434.5,-1,"citybus"],[436,0,"citybus"],[440,1,"citybus"],[446,-1,"gate"],
+    ("Karpuz Kamyonu Treni", 410, 580, [[420,-1,"melon"],[421,0,"bus"],[426.9,0,"bus"],[421,1,"bus"],[426.9,1,"bus"],
+        [434.5,-1,"citybus"],[438,0,"low"],[444,1,"bar"],[446,-1,"gate"],
         [446.5,-1,"bus"],[464,1,"low"],[464,0,"low"],
         [482,0,"tractor"],[482,-1,"citybus"],[482,1,"citybus"],[494,0,"bus"],
         [522,-1,"patpat"],[522,0,"low"],[522,1,"bar"],
@@ -31,7 +32,7 @@ SECTIONS = [
         [752,-1,"copper"],[752,0,"low"],[752,1,"copper"],[770,-1,"potrack"],[770,0,"potrack"],[770,1,"grill"],
         [790,0,"taxi"],[790,-1,"copper"],[790,1,"bar"],[808,-1,"low"],[808,0,"grill"],[808,1,"copper"]]),
     ("Belediye Otobüsü Kavşağı", 830, 970, [[840,-1,"citybus"],[840,1,"citybus"],[844,0,"bar"],[862,-1,"low"],[862,0,"patpat"],
-        [878,0,"truck"],[878,-1,"citybus"],[878,1,"citybus"],[887.2,-1,"bus"],[887.2,1,"bus"],
+        [878,0,"truck"],[878,-1,"citybus"],[878,1,"citybus"],[893,-1,"low"],[893,1,"bar"],
         [892,0,"citybus"],[898,0,"gate"],[903.5,0,"bus"],
         [922,-1,"patpat"],[922,1,"patpat"],[922,0,"low"],[940,-1,"taxi"],[940,0,"bus"],[940,1,"taxi"],[958,-1,"low"],[958,0,"low"],[958,1,"low"]]),
     ("Portal Meydanı", 970, 1100, [[996,-1,"low"],[996,1,"low"],[1018,-1,"wall"],[1018,1,"wall"],[1036,0,"portal"]]),

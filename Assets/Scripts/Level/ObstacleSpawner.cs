@@ -29,6 +29,7 @@ namespace Jumpline.Level
             [Tooltip("Parkur dosyasındaki engel kimliği (low, bus, melon…).")] public string id;
             [Tooltip("Engelin koşucuya bakan ön kenarından kökene mesafe (m).")] public float frontToOrigin;
             [Tooltip("Tüm şeritleri kaplar (sur kapısı): şerit yok sayılır.")] public bool spansLanes;
+            [Tooltip("Boy (m). >0 ise araç sayılır: aynı şeritte arka arkaya (≤ chainGap) araçlar tren olur, esnemez.")] public float length;
             public Obstacle[] variants;
         }
 
@@ -37,6 +38,8 @@ namespace Jumpline.Level
         [SerializeField] private AssetSet[] assets;
         [Tooltip("Hız çarpanındaki her +1 için satır aralıklarının esneme oranı.")]
         [SerializeField, Min(0f)] private float stretchPerSpeed = 0.35f;
+        [Tooltip("Aynı şeritte bu kadar yakın araçlar tek tren sayılır (esnemez; atlama boşlukları korunur).")]
+        [SerializeField, Min(0f)] private float chainGap = 3.5f;
         [Tooltip("Parkurdaki 'portal' satırını yerleştiren portal (sokak → çatı).")]
         [SerializeField] private Portal coursePortal;
 
@@ -126,9 +129,33 @@ namespace Jumpline.Level
             CourseSection sec = courseData.sections[order[orderIndex++]];
             float stretch = 1f + stretchPerSpeed * (speedScale - 1f);
             bool mirror = loop % 2 == 1;
+            // trenler: aynı şeritte art arda araçlar tek blok (iç boşluklar sabit); blok aralığındaki diğer satırlar da bloğa bağlı
+            var chainStartRaw = new float[3];
+            var chainEndRaw = new float[3];
+            var chainStartZ = new float[3];
+            for (int i = 0; i < 3; i++) chainEndRaw[i] = float.NegativeInfinity;
             foreach (CourseRow row in sec.rows)
             {
+                int li = Mathf.Clamp(row.lane, -1, 1) + 1;
+                bool isVehicle = TryGetSet(row.id, out AssetSet probe) && probe.length > 0f;
                 float rz = z + row.z * stretch;
+                if (isVehicle)
+                {
+                    if (row.z - chainEndRaw[li] <= chainGap) rz = chainStartZ[li] + (row.z - chainStartRaw[li]);   // trene eklendi
+                    else
+                    {
+                        for (int k = 0; k < 3; k++)   // yan şeritte bir trenin boyunca başlıyorsa ona hizalı kalsın
+                            if (k != li && row.z >= chainStartRaw[k] && row.z <= chainEndRaw[k]) { rz = chainStartZ[k] + (row.z - chainStartRaw[k]); break; }
+                        chainStartRaw[li] = row.z;
+                        chainStartZ[li] = rz;
+                    }
+                    chainEndRaw[li] = Mathf.Max(chainEndRaw[li], row.z + probe.length);
+                }
+                else
+                {
+                    for (int k = 0; k < 3; k++)   // bir trenin boyunca duran satır (sur kapısı, yan engel) trenle birlikte taşınır
+                        if (row.z >= chainStartRaw[k] && row.z <= chainEndRaw[k]) { rz = chainStartZ[k] + (row.z - chainStartRaw[k]); break; }
+                }
                 int lane = mirror ? -row.lane : row.lane;
                 if (row.id == "portal")
                 {

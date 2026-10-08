@@ -819,6 +819,11 @@ namespace Jumpline.EditorTools
             Obstacle Named(Obstacle[] set, string n) => System.Array.Find(set, o => o != null && o.name == "Obs_" + n);
             Obstacle[] Arr(params Obstacle[] xs) => System.Array.FindAll(xs, o => o != null);
             Obstacle crates = Named(low, "CrateStack");
+            // araç boyları (tren zinciri için; Blender build_obstacles / build_vehicles / build_course_assets)
+            var lengths = new System.Collections.Generic.Dictionary<string, float>
+            {
+                { "bus", 5.9f }, { "citybus", 9.2f }, { "taxi", 4.5f }, { "truck", 11.6f }, { "melon", 12f }, { "tractor", 9.5f },
+            };
             var sets = new (string id, float front, bool span, Obstacle[] v)[]
             {
                 ("low", 0.45f, false, low), ("crates", 0.45f, false, Arr(crates)), ("copper", 0.45f, false, Arr(Named(low, "CopperJugs"), Named(low, "CopperPlates"))),
@@ -840,6 +845,7 @@ namespace Jumpline.EditorTools
                 e.FindPropertyRelative("id").stringValue = sets[i].id;
                 e.FindPropertyRelative("frontToOrigin").floatValue = sets[i].front;
                 e.FindPropertyRelative("spansLanes").boolValue = sets[i].span;
+                e.FindPropertyRelative("length").floatValue = lengths.TryGetValue(sets[i].id, out float len) ? len : 0f;
                 var v = e.FindPropertyRelative("variants");
                 v.arraySize = sets[i].v.Length;
                 for (int k = 0; k < sets[i].v.Length; k++) v.GetArrayElementAtIndex(k).objectReferenceValue = sets[i].v[k];
