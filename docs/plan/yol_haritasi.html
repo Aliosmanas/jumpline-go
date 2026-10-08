@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>JUMPLINE GO — Yol Haritası</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+:root { --ink: #1c1a1f; --muted: #6b6570; --line: #d9d4cc; --accent: #0b7fae; --gold: #b07a12; --red: #b8322e; --bg2: #f6f3ee; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI", system-ui, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; margin: 0; }
+h1 { font-family: "Arial Black", "Segoe UI Black", sans-serif; font-size: 34pt; margin: 0 0 4px; letter-spacing: -.5px; }
+h2 { font-family: "Arial Black", "Segoe UI Black", sans-serif; font-size: 15pt; margin: 22px 0 8px; break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 0; }
+p { margin: 4px 0; }
+.stripe { height: 7px; background: repeating-linear-gradient(90deg, #1c1a1f 0 22px, #e8e2d6 22px 44px); margin: 10px 0 14px; }
+.eyebrow { font-family: Consolas, monospace; font-size: 9pt; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+.cover { break-after: page; }
+.box { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin: 8px 0; background: var(--bg2); }
+.phase { border: 1px solid var(--line); border-left: 5px solid var(--accent); border-radius: 6px; padding: 10px 12px 8px; margin: 10px 0; break-inside: avoid; }
+.phase.done { border-left-color: #3c9a5a; }
+.phase.user { border-left-color: var(--gold); }
+.ph { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.num { font-family: "Arial Black", sans-serif; color: var(--accent); margin-right: 6px; }
+.who { font-family: Consolas, monospace; font-size: 8.5pt; color: var(--muted); white-space: nowrap; }
+ul.todo { list-style: none; margin: 6px 0 4px; padding: 0; }
+ul.todo li { padding-left: 20px; position: relative; margin: 2px 0; }
+ul.todo li::before { content: ""; position: absolute; left: 0; top: 3px; width: 10px; height: 10px; border: 1.3px solid var(--ink); border-radius: 2px; }
+ul.todo li.ok::before { background: #3c9a5a; border-color: #3c9a5a; }
+ul.todo li.you::before { border-color: var(--gold); border-width: 2px; }
+.dod { font-size: 9.5pt; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 4px; margin-top: 4px; }
+.dod b { color: var(--ink); }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin: 6px 0; }
+th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 5px 6px; vertical-align: top; }
+th { font-family: Consolas, monospace; font-size: 8.5pt; text-transform: uppercase; color: var(--muted); background: var(--bg2); }
+.legend span { margin-right: 16px; }
+.part { break-before: page; }
+.tag { display: inline-block; font-family: Consolas, monospace; font-size: 8pt; padding: 1px 6px; border-radius: 3px; background: var(--ink); color: #fff; margin-left: 6px; }
+.tag.gold { background: var(--gold); }
+.small { font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <span class="eyebrow">Mobil koşu oyunu · Android · Unity 6 · 9 Ekim 2026</span>
+  <h1>JUMPLINE GO</h1>
+  <p style="font-size:14pt;margin:0">Yol Haritası ve Yapılacaklar</p>
+  <div class="stripe"></div>
+
+  <div class="box">
+    <h3>Oyun tek cümlede</h3>
+    <p>Diyarbakır Sur içinde geçen, oyuncunun efsaneler kitabından kaçan canavarı kovaladığı, karpuz ve bakır testi fırlatarak canavarın 4 kalbini düşürdüğü, her bölümü bir Anadolu şehri ve bir efsane olan 3D koşu oyunu.</p>
+  </div>
+
+  <h2>Kesinleşen ana kararlar</h2>
+  <table>
+    <tr><th style="width:24%">Konu</th><th>Karar</th></tr>
+    <tr><td>Kontroller</td><td>Yukarı kaydır = zıpla, aşağı = kay / havadan hızlı in, sağ-sol = şerit. Atma düğmesi yalnız elinde nesne varken sağ altta.</td></tr>
+    <tr><td>Oynanış</td><td>Kovalayan oyuncu. Canavarın 4 kalbi var; 2. kalpten sonra uyararak kaçınır; çok uzaklaşırsa kaçar (50 elmasla devam). Fazlar: engel fırlatma → portaldan çatıya kaçış → son hızlanma. Final On Gözlü Köprü: en fazla 2 kaçış, sonra sinematik zafer.</td></tr>
+    <tr><td>Hikâye</td><td><b>D — Efsaneler Kitabı:</b> Hasan Paşa Hanı'ndaki eski kitapçıda kitap açılır, yaratıklar Anadolu'ya dağılır. Her yenilen boss kitaba bir sayfa olarak döner.</td></tr>
+    <tr><td>Açılış</td><td><b>Portreli konuşma sahnesi</b> (atlanabilir, 10–15 sn). Öğretici: çaycı amca, her hareket bir kez yavaşlatılıp parmakla gösterilir.</td></tr>
+    <tr><td>Bölümler</td><td>1 Diyarbakır/Tepegöz · Mardin/Şahmeran · Hasankeyf/Humbaba · Urfa/taş bekçi · Van Gölü Canavarı · Kars/Karakoncolos · Lamassu · final Ejderha.</td></tr>
+    <tr><td>Yayın</td><td><b>1. bölüm + Hızlı Yarış + günlük görevle yayın</b>; diğer bölümler güncellemeyle (yaklaşık her 3–5 haftada bir).</td></tr>
+    <tr><td>Görsel ton</td><td>Stilize, renkli, kaliteli; korkutucu ama iç karartıcı değil; oyuncak gibi durmayacak. Boyut sınırı yok, kalite önce.</td></tr>
+    <tr><td>Karakter</td><td>Erkek parkurcu: dağınık siyah saç, kolsuz siyah kapüşonlu yelek + kırmızı detay, kırmızı parmaksız eldiven, beyaz kısa paça pantolon, bacak çantası, kırmızı spor ayakkabı.</td></tr>
+    <tr><td>Arayüz</td><td>Supercell tombulluğu + Diyarbakır dokunuşları (bakır çerçeve, almaşık şerit). Güç ikonları aynı kalır. "Sezon 4" kalkar.</td></tr>
+    <tr><td>Gelir</td><td>Zorunlu reklam yok. Yalnız oyuncunun istediği ödüllü video + elmas paketleri.</td></tr>
+    <tr><td>Kaynaklar</td><td>Ücretli üretim şimdilik yok. Yalnız ticari kullanıma açık lisanslar (Pixabay, CC0, CC-BY). Krediler listesi tutulur.</td></tr>
+    <tr><td>Yedek</td><td>github.com/Aliosmanas/jumpline-go (özel). Her önemli işten sonra gönderilir.</td></tr>
+  </table>
+
+  <h2>Nasıl okunur</h2>
+  <p class="legend small"><span>☐ yapılacak</span><span style="color:#3c9a5a">■ bitti</span><span style="color:var(--gold)">☐ kalın sarı = senin işin</span></p>
+  <p class="small muted">Her aşamanın altında "bitti sayılır" ölçütü var: o ölçüt sağlanmadan sonraki aşamaya geçilmez. Her aşama sonunda yeni APK telefona yüklenir, GitHub'a yedeklenir.</p>
+</section>
+
+<h2>Bölüm A — Çekirdek oyun (1. bölüm oynanır hâle gelir)</h2>
+
+<div class="phase done">
+  <div class="ph"><h3><span class="num">00</span>Hazır olanlar</h3><span class="who">bitti</span></div>
+  <ul class="todo">
+    <li class="ok">3 şeritli Diyarbakır sokağı, çatı dünyası, zipline, portallar</li>
+    <li class="ok">Subway kontrolleri, sendeleme, geri savrulmalı ölüm</li>
+    <li class="ok">Araçlar (taksi, dolmuş, kamyonet, karpuz kamyonu, otobüs, pat-pat, traktör) ve engeller</li>
+    <li class="ok">Elle dizilmiş 1,1 km parkur + geçilebilirlik kontrolü</li>
+    <li class="ok">Ulaşılabilir paralar, sayaç, puan, doyan hız eğrisi</li>
+    <li class="ok">Elmasla 3-2-1 devam, baştan oyna; menüde altın/elmas çubuğu; market, kostümler</li>
+    <li class="ok">Android APK + telefon; GitHub özel yedek</li>
+  </ul>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">01</span>Canavar kovalama — kaba prototip</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>Geçici canavar (kutu gövde), önde koşar, şerit değiştirir</li>
+    <li>4 kalp göstergesi + mesafe göstergesi (üstte)</li>
+    <li>Atılacak nesneler: karpuz, bakır testi — rastgele ama dengeli yerleşim</li>
+    <li>Atma düğmesi: yalnız nesne varken sağ altta; nesne kendi şeridine gider</li>
+    <li>2. kalpten sonra ≈0,4 sn uyarıyla kaçınma</li>
+    <li>Faz 1: canavar arkasına engel fırlatır · Faz 2: portaldan çatıya kaçar · Faz 3: hızlanır</li>
+    <li>Çok uzaklaşırsa kaçar → bölüm biter (50 elmasla devam)</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> telefonda baştan sona oynanan, 4 kalbi düşürülebilen, kaybedilebilen bir bölüm.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">02</span>Tepegöz — model ve animasyon</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>Referansa göre model: kaslı kiklop, mor yırtık peştemal, ip sargılı kollar, göğüs dövmesi, tek göz</li>
+    <li>Kemik yapısı + animasyonlar: koşu, kükreme, kaçınma, engel fırlatma, isabet alma, düşüş (bir kısmı elle)</li>
+    <li>360° önizleme videosu → senin onayın</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> önizlemeyi onayladın, oyunda geçici kutunun yerini aldı.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">03</span>On Gözlü Köprü finali + bölüm sonu</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>On Gözlü Köprü arenası (Dicle, 10 kemer)</li>
+    <li>Final: en fazla 2 kaydırarak kaçış, sonra kontrol gider, sinematik zafer kamerası</li>
+    <li>Bölüm sonu ödül ekranı: altın, elmas, yıldız; Efsaneler Kitabı'na sayfa döner</li>
+    <li>Bölümün süresi ve zorluğu ayarı (≈2–3 dk)</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> bölüm bir başı ve sonu olan, bitince ödül veren bir bölüm.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">04</span>Oyun hissi ve görsel efektler</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>Karpuz patlaması, testi kırılması, isabette canavar parlaması</li>
+    <li>Kalp kırılma efekti, para pırıltısı, toz, kayma kıvılcımı, portal parıltısı</li>
+    <li>Ekran sarsıntısı, kısa yavaşlatma anları, titreşim (çarpma, para, kalp)</li>
+    <li>Arayüz animasyonları: sayaç zıplaması, buton basılma, ödül sayma</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> her önemli olayın görüntüsü, sesi ve titreşimi var.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">05</span>Güçler + yükseltme ekranı</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>Yolda kutu olarak: mıknatıs, kalkan, 2x altın, hız</li>
+    <li>Yükseltme ekranı güç sürelerine dönüşür (5 kademe, her kademe +2 sn)</li>
+    <li>Ekranda kalan süre göstergesi</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> güçler gerçekten çalışıyor, yükseltmeler süreyi uzatıyor.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">06</span>Ses ve müzik</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>Seçtiğin 20 ses + 5 müzik indirilir (Pixabay, Freesound CC0), kaynak listesi tutulur</li>
+    <li>Sokak "Rojê Nû", çatı ve menü "Moon Over Fez", boss "Kingdom Ancient", zafer "Anthem of Victory"</li>
+    <li>Saz döngüsü sokak müziğinin altında kısık katman</li>
+    <li>Ses karıştırma: müzik efektlerin altında; boss yaklaşınca müzik geçişi</li>
+    <li class="you">Adım sesini telefonda dinleyip onayla</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> sessiz olay kalmadı, müzik rahatsız etmiyor.</p>
+</div>
+
+<h2 class="part">Bölüm B — İçerik ve kimlik</h2>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">07</span>Ana karakter yenileme</h3><span class="who">Claude + sen</span></div>
+  <ul class="todo">
+    <li>1. Gövde: MakeHuman tabanı, atletik, stilize oran → önizleme</li>
+    <li>2. Kıyafet: yelek, eldiven, pantolon, bacak çantası, ayakkabı → önizleme</li>
+    <li>3. Saç ve yüz → önizleme</li>
+    <li>4. Malzeme ve ışık (kumaş, deri; plastik görünüm yok)</li>
+    <li class="you">Ücretsiz Adobe hesabı aç; Mixamo'ya tarayıcıda kendin giriş yap</li>
+    <li>5. Mixamo hareket kaydı animasyonları: koşu, zıplama, kayma, atış, sendeleme, ölüm, zafer</li>
+    <li>Kostüm sistemi yeni karaktere uyarlanır</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> her adımı onayladın; oyuncak gibi durmuyor. Beğenmezsen ücretli seçeneği konuşuruz.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">08</span>Hikâye, açılış, öğretici</h3><span class="who">Claude + sen</span></div>
+  <ul class="todo">
+    <li>Hikâye metni: kitapçı, kitabın açılması, Tepegöz'ün kaçışı, çaycı amcanın rolü</li>
+    <li>Portreli konuşma sistemi (açılış + günlük görev + bölüm girişleri aynı sistem)</li>
+    <li class="you">Portre çizimlerini bulabilirsen getir (yoksa 3D modellerden portre çekilir)</li>
+    <li>Öğretici: Sur kapısı → çaycı amca → zıpla → kay → şerit → ilk atış → serbest</li>
+    <li>Atla düğmesi; ilk açılıştan sonra açılış bir daha gösterilmez</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> oyunu hiç bilmeyen biri açılıştan sonra yardımsız oynayabiliyor.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">09</span>Hızlı Yarış + günlük görev</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>Hızlı Yarış: sonsuz, canavarsız, 2x para, 50 elmasla devam</li>
+    <li>Çaycı amca modeli/portresi: kalpaklı, gri sakallı, pirinç tepsi; "Çay verek mi yeğen?"</li>
+    <li>Hırsızlar: Sur kedisi ve maskeli kapkaççı (dönüşümlü)</li>
+    <li>İlk görev: düşen 5 keseyi topla → elmas + altın; görev havuzu (tepsi, karpuz, mektup)</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> her gün yeni görev geliyor, Hızlı Yarış para kasmak için işe yarıyor.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">10</span>Arayüz, market, bölüm haritası</h3><span class="who">Claude + sen</span></div>
+  <ul class="todo">
+    <li>Yeni buton ve kart dili: tombul, kalın kontur, basınca çöken; bakır çerçeve, almaşık şerit</li>
+    <li>Ana menü, market, envanter, ölüm ve ödül ekranları baştan; "Sezon 4" kalkar</li>
+    <li><b>Bölüm haritası:</b> Anadolu haritası, şehirler, kilitli/açık, bölüm başına yıldız; yayında Mardin "yakında"</li>
+    <li class="you">Efsaneler Kitabı ekranı için referans görsel gönder (zamanı gelince hatırlatacağım)</li>
+    <li>Efsaneler Kitabı koleksiyon ekranı</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> tüm ekranlar aynı dili konuşuyor, referanslara uygun.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">11</span>Bağlılık sistemleri</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>Oyuncu seviyesi + tecrübe puanı, seviye ödülleri</li>
+    <li>Günlük 3 görev + kalıcı başarımlar</li>
+    <li>7 günlük giriş takvimi (kaçırınca sıfırlanmaz)</li>
+    <li>Liderlik tablosu (Google Play Games)</li>
+    <li>Pass: plan olarak bekler</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> oyuncunun her gün açması için bir sebebi var.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">12</span>Ayarlar ve sistem işleri</h3><span class="who">Claude</span></div>
+  <ul class="todo">
+    <li>Müzik / efekt sesi ayrı; titreşim; kaydırma hassasiyeti; solak modu; kontrastlı mod; grafik kalitesi; dil (TR/EN)</li>
+    <li>Telefon çalınca / arka plana geçince duraklatma; Android geri tuşu</li>
+    <li>İlk açılış akışı: dil, reklam izni penceresi</li>
+    <li>Kayıt sürümü: yeni sürüm eski kayıtları bozmaz; basit hile koruması</li>
+    <li>Yükleme ekranı + ipuçları; krediler ekranı</li>
+    <li>İngilizce çeviri (oyun + mağaza)</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> hiçbir durumda oyun takılmıyor ya da ilerleme kaybolmuyor.</p>
+</div>
+
+<h2 class="part">Bölüm C — Cila, test, yayın</h2>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">13</span>Ekonomi dengeleme</h3><span class="who">Claude + sen</span></div>
+  <ul class="todo">
+    <li>Kazanç/harcama tablosu oyuna işlenir (taslak Ana Plan sayfasında)</li>
+    <li>Kostüm, yükseltme, devam fiyatları oynayarak ayarlanır</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> ödeme yapmayan oyuncu da ilerleyebiliyor, sıkılmadan.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">14</span>Optimizasyon ve cihaz testi</h3><span class="who">Claude + sen</span></div>
+  <ul class="todo">
+    <li>Uzaktaki nesneleri sadeleştirme, doku sıkıştırma, ışık pişirme, nesne havuzu kontrolü</li>
+    <li>Kalite seviyeleri: düşük / orta / yüksek (telefona göre otomatik)</li>
+    <li>Büyük dosyalar için Play ek indirme paketleri (boyut sınırsız olabilir)</li>
+    <li class="you">Orta ve düşük seviye bir Android telefonda dene (arkadaşlardan)</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> orta seviye telefonda akıcı (hedef 60, en az 30 kare/sn).</p>
+</div>
+
+<div class="phase user">
+  <div class="ph"><h3><span class="num">15</span>Gerçek oyuncu testi</h3><span class="who">sen</span></div>
+  <ul class="todo">
+    <li class="you">5–10 arkadaşa APK ver, oynarken izle (yardım etme)</li>
+    <li class="you">Not al: nerede öldüler, nerede sıkıldılar, neyi anlamadılar</li>
+    <li>Notlara göre düzeltme turu (Claude)</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> testçilerin çoğu "bir daha oynarım" diyor.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">16</span>Gelir</h3><span class="who">Claude + sen</span></div>
+  <ul class="todo">
+    <li>Ödüllü video: devam, 2x para, günlük ekstra ödül (yalnız oyuncu isterse)</li>
+    <li>Reklam ağı seçimi + reklam izni penceresi</li>
+    <li>Google Play satın alma: elmas paketleri, başlangıç paketi</li>
+    <li class="you">Hedef yaş kararı (önerim 13+; çocuklar dahilse reklam kuralları sıkılaşır)</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> test modunda reklam ve satın alma çalışıyor.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">17</span>Yayın hazırlığı</h3><span class="who">sen + Claude</span></div>
+  <ul class="todo">
+    <li class="you">Play Console: geliştirici adını kontrol et / değiştir</li>
+    <li class="you">İmza anahtarını oluştur ve şifresini sakla (Claude girmez)</li>
+    <li>AAB paketi (Play'in istediği biçim)</li>
+    <li>Gizlilik politikası sayfası (KVKK + GDPR) → sen yayınlarsın</li>
+    <li>Yaş sınıfı anketi (IARC), veri güvenliği formu</li>
+    <li>"JUMPLINE GO" marka adı kontrolü</li>
+    <li>Mağaza: ikon, ekran görüntüleri, tanıtım videosu, açıklama (TR + EN)</li>
+    <li>Bulut kayıt, analitik, çökme raporu</li>
+    <li class="you">Kapalı test: yeni kişisel hesaplarda Play, yayından önce 12 testçiyle 14 günlük kapalı test istiyor — hesabın eskiyse gerekmeyebilir</li>
+  </ul>
+  <p class="dod"><b>Bitti sayılır:</b> Play Console her şeyi yeşil gösteriyor.</p>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">18</span>Pazarlama</h3><span class="who">sen + Claude</span></div>
+  <ul class="todo">
+    <li>Oyun içinden kısa video çekimleri (TikTok, Reels, Shorts)</li>
+    <li>Mağaza arama kelimeleri (Türkçe + İngilizce)</li>
+    <li class="you">Sosyal medya hesabı ve paylaşımlar</li>
+    <li>İlk olarak Türkiye'de yayın, verilere bakıp genişleme</li>
+  </ul>
+</div>
+
+<div class="phase">
+  <div class="ph"><h3><span class="num">19</span>Yayın ve sonrası</h3><span class="who">ikimiz</span></div>
+  <ul class="todo">
+    <li>1. bölüm + Hızlı Yarış + günlük görevle yayın</li>
+    <li>Çökme ve yorum takibi, hızlı düzeltme güncellemeleri</li>
+    <li>Bölüm üretim kalıbı: yeni şehir = sokak + dekor + araçlar + boss + boss mekaniği + parkur + kitap sayfası</li>
+    <li>Güncelleme 1: Mardin / Şahmeran → sonra Hasankeyf, Urfa, Van, Kars, Lamassu, Ejderha</li>
+    <li>Özel gün etkinlikleri (Nevruz, bayramlar)</li>
+  </ul>
+</div>
+
+<h2 class="part">Ek — Seçilen sesler</h2>
+<table class="small">
+  <tr><th>Kullanım</th><th>Kaynak (Pixabay ad / bağlantı)</th></tr>
+  <tr><td>Sokak müziği</td><td>Rojê Nû (New Day) — pixabay.com/music/world-rojê-nû-new-day-400064</td></tr>
+  <tr><td>Çatı + menü müziği</td><td>Moon Over Fez — pixabay.com/music/world-moon-over-fez-422839</td></tr>
+  <tr><td>Boss gerilimi</td><td>String Quartet Kingdom Ancient — …-450558</td></tr>
+  <tr><td>Zafer</td><td>Anthem of Victory — …-111206</td></tr>
+  <tr><td>Saz katmanı</td><td>saz-riff.wav (Freesound, lopopopooo, CC0) — freesound.org/people/lopopopooo/sounds/558938</td></tr>
+  <tr><td>Adım</td><td>stone-footsteps-2-455133 (telefonda denenecek)</td></tr>
+  <tr><td>Zıplama</td><td>jumplanding-398256</td></tr>
+  <tr><td>Kayma</td><td>paper-slide-89980</td></tr>
+  <tr><td>Para</td><td>drop-coin-384921</td></tr>
+  <tr><td>Çarpma / ölüm</td><td>powerful-impact-hit-567212</td></tr>
+  <tr><td>Sendeleme</td><td>people-colliding-43479</td></tr>
+  <tr><td>Atış</td><td>complex-movements-whoosh-6-239357</td></tr>
+  <tr><td>Karpuz isabeti</td><td>cartoon-splat-310479</td></tr>
+  <tr><td>Kalp düşmesi</td><td>power-down-7103</td></tr>
+  <tr><td>Tepegöz kükremesi</td><td>monster-roar-ps-o12-311138</td></tr>
+  <tr><td>Çay bardağı</td><td>glass-clink-10-188127</td></tr>
+  <tr><td>Portal</td><td>sci-fi-portal-jump-05-416165</td></tr>
+  <tr><td>Zipline</td><td>ropemvmt-rope-zip-slow-mp-6-96318</td></tr>
+  <tr><td>Kasa kırılması</td><td>wooden-crate-smash-4-387903</td></tr>
+  <tr><td>Buton</td><td>ui-click-43196</td></tr>
+  <tr><td>Satın alma</td><td>buton + para sesi üst üste</td></tr>
+</table>
+
+<h2>Ek — Senin yapacakların (özet)</h2>
+<ul class="todo">
+  <li class="you">Adım sesini telefonda onayla (aşama 06)</li>
+  <li class="you">Ücretsiz Adobe hesabı + Mixamo girişi (aşama 07)</li>
+  <li class="you">Karakter ve Tepegöz önizlemelerini onayla (02, 07)</li>
+  <li class="you">Portre çizimleri bulabilirsen (08)</li>
+  <li class="you">Efsaneler Kitabı referansı (10)</li>
+  <li class="you">Zayıf telefonda deneme (14), arkadaşlarla oyuncu testi (15)</li>
+  <li class="you">Hedef yaş kararı (16)</li>
+  <li class="you">Play Console adı, imza anahtarı, gizlilik sayfası yayını, kapalı test (17)</li>
+  <li class="you">Sosyal medya (18)</li>
+</ul>
+
+<h2>Ek — Önceki sayfalar</h2>
+<p class="small">Ana Plan (seçenekler, ekonomi taslağı): claude.ai/artifact/VSjnivwWqongwHC13yuwqn<br>
+Canavar kovalama planı: claude.ai/artifact/RYXQVvApZjXH3zwDyEqmSf<br>
+Referans panosu: claude.ai/artifact/L9p1KHxZUjhqBK51ew56qG<br>
+Tasarım yönleri: claude.ai/artifact/1FuRcXoxiDHyLr7NSo2byV<br>
+Parkur önizlemesi: claude.ai/artifact/SrMVSvKMysrSdDjrvqA3RM</p>
+
+</body>
+</html>
