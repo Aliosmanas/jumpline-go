@@ -27,10 +27,10 @@ namespace Jumpline.Player
         [Tooltip("Başlangıç koşu hızı (m/sn).")]
         [SerializeField, Min(0f)] private float runSpeed = 11f;
         [Tooltip("Her kademede eklenen hız.")]
-        [SerializeField, Min(0f)] private float speedStep = 1.6f;
+        [SerializeField, Min(0f)] private float speedStep = 1.8f;
         [Tooltip("Kaç saniyede bir hızlanır.")]
-        [SerializeField, Min(1f)] private float speedInterval = 20f;
-        [SerializeField, Min(0f)] private float maxSpeed = 24f;
+        [SerializeField, Min(1f)] private float speedInterval = 15f;
+        [SerializeField, Min(0f)] private float maxSpeed = 26f;
         [Tooltip("Yeni hıza geçiş süresi (yumuşak).")]
         [SerializeField, Min(0.01f)] private float speedRampTime = 1.2f;
         [Tooltip("Koşu animasyonunun bu hızda 1x oynadığı varsayılır; üstünde hızlanır.")]

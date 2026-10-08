@@ -67,8 +67,33 @@ def main():
                 reported = False
             reach = nxt
             z += STEP
-    print("KONTROL", "TEMIZ" if traps == 0 else f"{traps} tuzak")
+    traps += blind_landings(data)
+    print("KONTROL", "TEMIZ" if traps == 0 else f"{traps} sorun")
     sys.exit(1 if traps else 0)
+
+
+VEHICLES = {"bus", "citybus", "taxi", "truck", "melon", "tractor", "patpat"}
+LANDING_CLEAR = 9.0
+
+
+def blind_landings(data):
+    """İniş bölgesi: aracın tavanından inen oyuncu önünü göremez. Araç bittikten sonraki LANDING_CLEAR metrede,
+    aynı ve komşu şeritlerde araç olmayan engel olmamalı (tren devamı olan araçlar serbest)."""
+    bad = 0
+    for sec in data["sections"]:
+        rows = [r for r in sec["rows"] if r["id"] in SPEC]
+        for v in rows:
+            if v["id"] not in VEHICLES:
+                continue
+            end = v["z"] + SPEC[v["id"]][0]
+            for r in rows:
+                if r["id"] in VEHICLES or r["id"] == "gate":
+                    continue
+                if abs(r["lane"] - v["lane"]) <= 1 and end < r["z"] <= end + LANDING_CLEAR:
+                    print(f"KÖR İNİŞ  {sec['name']}  {r['id']} z={r['z']} şerit {r['lane']}: "
+                          f"{v['id']} (şerit {v['lane']}) bitişinden {r['z'] - end:.1f} m sonra")
+                    bad += 1
+    return bad
 
 
 main()
