@@ -66,6 +66,19 @@ namespace Jumpline.EditorTools
             Portal up = BuildPortal(runner, switcher, true, "PortalUp", null);                 // sokak → çatı (mavi)
             Portal down = BuildPortal(runner, switcher, false, "PortalDown", Hex("#FF3C8E"));  // çatı → sokak (pembe)
             var (streetObs, roofObs) = BuildObstacles(runner, switcher, new[] { up, down });
+            var coins = BuildCoins(runner);
+            Set(streetObs.GetComponent<ObstacleSpawner>(), "coins", coins);
+            Set(roofObs.GetComponent<ObstacleSpawner>(), "coins", coins);
+            if (coinLabel != null)
+            {
+                var counter = coinLabel.gameObject.AddComponent<Jumpline.UI.CoinCounter>();
+                Set(counter, "field", coins);
+                Set(counter, "label", coinLabel);
+                Set(counter, "icon", coinIcon.rectTransform);
+                var score = scoreLabel.gameObject.AddComponent<Jumpline.UI.ScoreCounter>();
+                Set(score, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
+                Set(score, "label", scoreLabel);
+            }
             SetArray(switcher, "streetExtras", new Object[] { streetObs });
             SetArray(switcher, "rooftopExtras", new Object[] { roofObs });
             // ölünce oyun bitti paneli (LevelFlowController.FailLevel)
@@ -598,6 +611,70 @@ namespace Jumpline.EditorTools
             var rend = ps.GetComponent<ParticleSystemRenderer>();
             rend.renderMode = ParticleSystemRenderMode.Billboard;
             ps.Play();
+        }
+
+        // ---------------------------------------------------------------------
+        // Paralar — Blender/scripts/build_coin.py (coin.png ikonunun 3D hâli), CoinField diziler halinde dağıtır
+        // ---------------------------------------------------------------------
+        public const string CoinPath = "Assets/Art/Pickups/Coin.fbx";
+        private const string CoinMatDir = "Assets/Art/Pickups/Materials";
+
+        private static CoinField BuildCoins(Transform runner)
+        {
+            EnsureFolder(CoinMatDir);
+            if (AssetImporter.GetAtPath(CoinPath) is ModelImporter imp)
+            {
+                imp.importCameras = imp.importLights = imp.importAnimation = false;
+                imp.SaveAndReimport();
+                foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(CoinPath))
+                {
+                    if (o is not Material m) continue;
+                    string dst = $"{CoinMatDir}/{m.name}.mat";
+                    if (AssetDatabase.LoadAssetAtPath<Material>(dst) == null) AssetDatabase.ExtractAsset(m, dst);
+                }
+                AssetDatabase.WriteImportSettingsIfDirty(CoinPath);
+                AssetDatabase.ImportAsset(CoinPath, ImportAssetOptions.ForceUpdate);
+            }
+            foreach (var (name, hex, metal, smooth, glow) in new[] { ("C_Gold", "#E8B95B", 0.9f, 0.75f, 0.35f), ("C_Face", "#5E1634", 0.2f, 0.55f, 0f) })
+            {
+                var mat = AssetDatabase.LoadAssetAtPath<Material>($"{CoinMatDir}/{name}.mat");
+                if (mat == null) continue;
+                mat.shader = Shader.Find("Universal Render Pipeline/Lit");
+                mat.SetColor("_BaseColor", Hex(hex));
+                mat.SetFloat("_Metallic", metal);
+                mat.SetFloat("_Smoothness", smooth);
+                if (glow > 0f)
+                {
+                    mat.EnableKeyword("_EMISSION");
+                    mat.SetColor("_EmissionColor", Hex(hex) * glow);   // gölgede de parlasın
+                }
+                EditorUtility.SetDirty(mat);
+            }
+            AssetDatabase.SaveAssets();
+
+            var go = new GameObject("Coins");
+            var field = go.AddComponent<CoinField>();
+            Set(field, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CoinPath);
+            if (prefab != null)
+            {
+                var tpl = (GameObject)PrefabUtility.InstantiatePrefab(prefab, go.transform);
+                tpl.name = "CoinTemplate";
+                foreach (var r in tpl.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                tpl.SetActive(false);
+                Set(field, "coinTemplate", tpl);
+            }
+            // toplama pırıltısı: altın kıvılcımlar
+            var fx = MakeSparks(go.transform, "CoinPickupFx");
+            var main = fx.main;
+            main.loop = false;
+            main.startColor = new ParticleSystem.MinMaxGradient(Hex("#FFE08A"), Hex("#E8B95B"));
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 3.5f);
+            main.gravityModifier = 0.6f;
+            var em = fx.emission;
+            em.rateOverTime = 0f;
+            Set(field, "pickupFx", fx);
+            return field;
         }
 
         /// <summary>Neon ışıklar için bloom (URP Volume).</summary>
@@ -1170,7 +1247,8 @@ namespace Jumpline.EditorTools
             return model.transform;
         }
 
-        private static TextMeshProUGUI speedLabel;
+        private static TextMeshProUGUI speedLabel, coinLabel, scoreLabel;
+        private static Image coinIcon;
 
         private static void BuildUI(Transform safe, LevelFlowController flow, GameConfig config)
         {
@@ -1188,6 +1266,12 @@ namespace Jumpline.EditorTools
             var pausePanel = Panel(top, "PauseButton", new Rect(953f, 40f, 123f, 123f), Hex("#4F1B2E"), Hex("#2E3A5E"), 18f, Hex("#7C8DB8"));
             Icon(pausePanel, "player-pause", new Rect(975f, 62f, 79f, 79f), Color.white);
             Button pause = MakeButton(pausePanel, pausePanel.rt.GetComponent<Image>());
+
+            // para sayacı (duraklat butonunun altında) + puan (metre başına 10)
+            coinIcon = Icon(top, "coin", new Rect(1000f, 186f, 62f, 62f), Color.white);
+            coinLabel = Txt(top, "CoinCount", "0", new Rect(760f, 186f, 228f, 62f), fExtra, 44f, C.Gold, TextAlignmentOptions.MidlineRight, localize: false);
+            scoreLabel = Txt(top, "Score", "0", new Rect(700f, 252f, 362f, 46f), fBold, 32f, Color.white, TextAlignmentOptions.MidlineRight, localize: false);
+            coinLabel.raycastTarget = scoreLabel.raycastTarget = coinIcon.raycastTarget = false;
 
             Button win = PillButton(bot, "TestWin", new Rect(118f, 1780f, 420f, 90f), "WIN (TEST)", 34f, Color.white, 1f);
             Button fail = PillButton(bot, "TestFail", new Rect(578f, 1780f, 420f, 90f), "FAIL (TEST)", 34f, Color.white, 1f, Hex("#E2B45A"), Hex("#F2C366"));

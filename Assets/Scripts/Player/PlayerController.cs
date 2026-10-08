@@ -16,7 +16,7 @@ namespace Jumpline.Player
     /// Zipline (Level/Zipline.cs): halatın önünde ZIPLAYAN koşucu tutunur; zıplamayan boşluğa düşer.
     /// Ölüm: önden çarpınca geriye savrulur (ağır çekim + kamera sarsıntısı), sırtüstü düşer → <see cref="Died"/>.
     /// Yandan çarpma (şerit değiştirirken engelin yanına): ölmez — sarsılır, eski şeridine seker, koşmaya devam eder.
-    /// Hız: her <c>speedInterval</c> saniyede bir kademe artar (<see cref="SpeedLevelChanged"/>).
+    /// Hız: doyan eğri (taban → tavan, τ sn); her %10 artışta <see cref="SpeedLevelChanged"/>. Puan için <see cref="Distance"/>.
     /// Dünya geçişi (Level/WorldSwitcher.cs): Teleport ile sokak ↔ çatı.
     /// </summary>
     public class PlayerController : MonoBehaviour
@@ -26,13 +26,13 @@ namespace Jumpline.Player
         [Header("Koşu / hız")]
         [Tooltip("Başlangıç koşu hızı (m/sn).")]
         [SerializeField, Min(0f)] private float runSpeed = 11f;
-        [Tooltip("Her kademede eklenen hız.")]
-        [SerializeField, Min(0f)] private float speedStep = 1.8f;
-        [Tooltip("Kaç saniyede bir hızlanır.")]
-        [SerializeField, Min(1f)] private float speedInterval = 15f;
-        [SerializeField, Min(0f)] private float maxSpeed = 26f;
-        [Tooltip("Yeni hıza geçiş süresi (yumuşak).")]
-        [SerializeField, Min(0.01f)] private float speedRampTime = 1.2f;
+        [Tooltip("Ulaşılabilecek en yüksek hız (m/sn). 18 ≈ başlangıcın 1.6 katı — herkese hitap eden tavan.")]
+        [SerializeField, Min(0f)] private float maxSpeed = 18f;
+        [Tooltip("Hız eğrisi zaman sabiti (sn): hız = taban + (tavan − taban)·(1 − e^(−t/τ)). " +
+                 "τ=110 → 30 sn 1.15x, 1 dk 1.27x, 2 dk 1.42x, 5 dk 1.6x. İlk dakikalar hızlı, sonra yavaşça doyar.")]
+        [SerializeField, Min(1f)] private float speedTimeConstant = 110f;
+        [Tooltip("\"HIZLANDI\" yazısı hız çarpanı her bu kadar arttığında çıkar (0.1 = %10).")]
+        [SerializeField, Min(0.01f)] private float speedBannerStep = 0.1f;
         [Tooltip("Koşu animasyonunun bu hızda 1x oynadığı varsayılır; üstünde hızlanır.")]
         [SerializeField, Min(0.1f)] private float animReferenceSpeed = 9f;
         [SerializeField, Min(1f)] private float maxAnimSpeed = 1.8f;
@@ -123,6 +123,7 @@ namespace Jumpline.Player
         private float aliveTime;
         private int speedLevel;
         private float slideEnd;
+        private float distance;          // koşulan yol (m) — puan: metre başına 10
         private bool slideQueued;         // havada aşağı kaydırıldı: inince kay
         private float jumpQueuedUntil = -1f;
         private int laneFrom;            // son şerit değişiminden önceki şerit (yandan çarpınca geri dönülür)
@@ -147,6 +148,8 @@ namespace Jumpline.Player
 
         public float Charge01 => 0f;      // eski HUD uyumluluğu (şarj yok)
         public float RunSpeed => currentSpeed;
+        /// <summary>Bu koşuda katedilen yol (m).</summary>
+        public float Distance => distance;
         public float SpeedFactor => runSpeed > 0f ? currentSpeed / runSpeed : 1f;
         public int Lane => lane;
         public float LaneWidth => laneWidth;
@@ -426,14 +429,15 @@ namespace Jumpline.Player
         private void UpdateSpeed(float dt)
         {
             aliveTime += dt;
-            int level = Mathf.FloorToInt(aliveTime / speedInterval);
-            if (level != speedLevel)
+            distance += currentSpeed * dt;
+            // doyan hız eğrisi: başta belirgin, sonra yavaş artar; tavan maxSpeed (ani 2x yok)
+            currentSpeed = runSpeed + (Mathf.Max(runSpeed, maxSpeed) - runSpeed) * (1f - Mathf.Exp(-aliveTime / speedTimeConstant));
+            int level = Mathf.FloorToInt((SpeedFactor - 1f) / speedBannerStep + 0.0001f);
+            if (level > speedLevel)
             {
                 speedLevel = level;
                 SpeedLevelChanged?.Invoke(level);
             }
-            float target = Mathf.Min(maxSpeed, runSpeed + speedLevel * speedStep);
-            currentSpeed = Mathf.MoveTowards(currentSpeed, target, Mathf.Max(speedStep, 0.01f) / speedRampTime * dt);
             if (animator != null && state != State.Sliding)
                 animator.speed = state == State.Running ? Mathf.Clamp(currentSpeed / animReferenceSpeed, 1f, maxAnimSpeed) : 1f;
         }

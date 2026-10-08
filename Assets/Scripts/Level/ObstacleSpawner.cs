@@ -22,6 +22,8 @@ namespace Jumpline.Level
         [Tooltip("true: çatı dünyası (araç/kapı yok, zipline bölgesi boş).")]
         [SerializeField] private bool rooftop;
         [SerializeField] private Portal[] portals;
+        [Tooltip("Sıraların arasına para dizileri koyar (Subway tarzı).")]
+        [SerializeField] private CoinField coins;
 
         [System.Serializable]
         public struct AssetSet
@@ -102,6 +104,7 @@ namespace Jumpline.Level
             for (int i = active.Count - 1; i >= 0; i--) Release(active[i]);
             active.Clear();
             nextZ = float.NaN;
+            if (coins != null) coins.Clear();
         }
 
         private void Update()
@@ -113,7 +116,11 @@ namespace Jumpline.Level
             int guard = 0;
             bool useCourse = !rooftop && courseData != null && courseData.sections != null && courseData.sections.Length > 0;
             while (nextZ < pz + spawnAhead * scale && guard++ < 16)
+            {
+                float from = nextZ;
                 nextZ += useCourse ? SpawnSection(nextZ, scale) : SpawnPattern(nextZ) + Random.Range(gap.x, gap.y) * scale;
+                if (coins != null) coins.Populate(from, nextZ, OriginX, Ground, player.LaneWidth);   // engeller yerleşti, paraları diz
+            }
             for (int i = active.Count - 1; i >= 0; i--)
             {
                 if (active[i].MaxZ >= pz - despawnBehind) continue;
