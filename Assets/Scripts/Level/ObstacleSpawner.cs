@@ -5,16 +5,13 @@ using UnityEngine;
 namespace Jumpline.Level
 {
     /// <summary>
-    /// Koşucunun önüne engel desenleri dizer, gerideki engelleri havuza geri alır (her dünya için bir tane).
-    /// Desenler her zaman geçilebilir: en az bir şerit ya boştur, ya zıplanabilir, ya da üstüne çıkılabilir.
-    ///  • Alçak (zıpla, çarpınca savrulur): sandık yığını, sandık, testiler, çuval, karpuz, halı…
-    ///  • Yüksek (tam şarjla zıpla): kebap arabası, semaver
-    ///  • Duvar (şerit değiştir): demir kapı, oymalı sütun, şadırvan
-    ///  • Taksi (zıplayıp üstüne çıkılabilir) · Dolmuş (çıkılmaz, şerit değiştir)
-    ///  • Rampalı kamyon: rampadan çık, tavanda koş — sur kapısı gelirse yana kaç (kafa çarpar)
-    ///  • Sur kapısı (tavan): yerdeki koşucu altından geçer, tam güçle zıplayan ya da araç tavanındaki çarpar
-    ///  • Kalas bariyer: altından KAY (aşağı kaydır) ya da üstünden zıpla
-    /// Aralar hızla birlikte açılır (aynı tepki süresi). Çatıda yalnız dekor engeller; zipline bölgesi ve portal önü boş.
+    /// Koşucunun önüne Subway Surfers mantığında engel sıraları dizer; gerideki engelleri havuza geri alır (dünya başına bir tane).
+    /// Her sıra bir HAREKET ister ve her zaman en az bir çözümü vardır (zıpla / kay / şerit değiştir / rampaya çık):
+    ///  • Tren: bir şeritte rampalı kamyon, diğer iki şerit dolmuşlarla kapalı → rampaya çıkmak zorunlu; kamyondan
+    ///    öndeki dolmuşların tavanına atlanır (araçtan araca). Bazen kamyonun üstünde sur kapısı → tavanda KAY.
+    ///  • Alçak sıra (zıpla), bariyer sırası (kay), duvar + bariyer + alçak karışık, taksi sırası (üstüne zıpla),
+    ///    sur kapısı altında engeller, zikzak (şerit değiştirerek ilerle).
+    /// Aralar hızla birlikte açılır (tepki süresi sabit). Çatıda araç/kapı yok: aynı mantık dekor, bariyer ve duvarla.
     /// </summary>
     public class ObstacleSpawner : MonoBehaviour
     {
@@ -33,16 +30,22 @@ namespace Jumpline.Level
         [SerializeField] private Obstacle[] buses;
         [SerializeField] private Obstacle[] gates;
         [SerializeField] private Obstacle[] bars;
-        [Tooltip("Rampalı aracın boyu (z, m).")]
+
+        [Header("Araç ölçüleri (Blender build_obstacles / build_vehicles)")]
+        [Tooltip("Rampalı kamyon boyu (z, m; rampa başı = 0).")]
         [SerializeField, Min(1f)] private float rampLength = 11.6f;
-        [Tooltip("Kamyon başından sur kapısına mesafe (kamyon tavanının ortası).")]
+        [Tooltip("Dolmuş yarı boyu (merkezden, m).")]
+        [SerializeField, Min(0.5f)] private float busHalfLength = 2.95f;
+        [Tooltip("Kamyondan sonraki dolmuşa atlama boşluğu (m).")]
+        [SerializeField, Min(0f)] private float trainGap = 2.5f;
+        [Tooltip("Kamyon başından sur kapısına (kamyon tavanının ortası; tavanda kayarak geçilir).")]
         [SerializeField] private float gateOverTruck = 7f;
 
         [Header("Yerleşim")]
-        [SerializeField, Min(5f)] private float startDistance = 28f;
-        [SerializeField, Min(20f)] private float spawnAhead = 130f;
+        [SerializeField, Min(5f)] private float startDistance = 30f;
+        [SerializeField, Min(20f)] private float spawnAhead = 140f;
         [SerializeField, Min(2f)] private float despawnBehind = 15f;
-        [Tooltip("Desenler arası mesafe (taban hızda); hızla orantılı açılır.")]
+        [Tooltip("Sıralar arası mesafe (taban hızda); hızla orantılı açılır.")]
         [SerializeField] private Vector2 gap = new Vector2(11f, 17f);
         [Tooltip("Portalın bu kadar önü/arkası boş kalır.")]
         [SerializeField, Min(0f)] private float portalClearance = 10f;
@@ -59,7 +62,7 @@ namespace Jumpline.Level
 
         private void OnEnable()
         {
-            // dünyaya (yeniden) girildi: eski engelleri topla, ilk desen koşucunun biraz önünde
+            // dünyaya (yeniden) girildi: eski engelleri topla, ilk sıra koşucunun biraz önünde
             for (int i = active.Count - 1; i >= 0; i--) Release(active[i]);
             active.Clear();
             nextZ = float.NaN;
@@ -82,66 +85,79 @@ namespace Jumpline.Level
             }
         }
 
-        /// <summary>z'ye bir desen koyar; desenin kapladığı ek uzunluğu döndürür.</summary>
+        /// <summary>z'ye bir sıra koyar; sıranın kapladığı ek uzunluğu döndürür.</summary>
         private float SpawnPattern(float z)
         {
             int a = Random.Range(-1, 2);
             int b = (a + Random.Range(1, 3) + 1) % 3 - 1;      // a'dan farklı şerit
             int c = -a - b;                                   // üçüncü şerit
             float roll = Random.value;
+            return rooftop ? RooftopPattern(z, a, b, c, roll) : StreetPattern(z, a, b, c, roll);
+        }
 
-            if (rooftop)
+        private float StreetPattern(float z, int a, int b, int c, float roll)
+        {
+            if (roll < 0.22f && Has(ramps) && Has(buses)) return Train(z, a, b, c);
+            if (roll < 0.34f) { Place(buses, a, z + busHalfLength); Place(bars, b, z); Place(low, c, z); return 2 * busHalfLength; }   // kay ya da zıpla
+            if (roll < 0.46f) { Place(low, a, z); Place(low, b, z); Place(low, c, z); return 0f; }                                    // zıpla
+            if (roll < 0.56f) { Place(bars, a, z); Place(bars, b, z); Place(buses, c, z + busHalfLength); return 2 * busHalfLength; } // kay
+            if (roll < 0.66f && Has(cars)) { Place(cars, a, z + 2.3f); Place(cars, b, z + 2.3f); Place(low, c, z); return 4.6f; }     // taksiye zıpla
+            if (roll < 0.76f && Has(gates))
             {
-                if (switcher != null)
-                {
-                    float rel = Mathf.Repeat(z - switcher.RooftopRootZ, switcher.RooftopModuleLength);
-                    if (rel > rooftopNoSpawn.x && rel < rooftopNoSpawn.y) return rooftopNoSpawn.y - rel;
-                }
-                if (roll < 0.18f && Has(bars)) { Place(bars, a, z); Place(bars, b, z); if (Random.value < 0.5f) Place(low, c, z); return 0f; }
-                if (roll < 0.36f) { Place(low, a, z); Place(low, b, z); return 0f; }
-                if (roll < 0.55f) { Place(walls, a, z); Place(low, b, z); return 0f; }
-                if (roll < 0.75f) { Place(high, a, z); Place(walls, b, z); return 0f; }
-                if (roll < 0.88f) { Place(low, a, z); Place(low, b, z); Place(low, c, z); return 0f; }
-                Place(low, a, z); Place(high, b, z + 6f);
-                return 6f;
+                PlaceCenter(gates, z);                                                     // sur kapısı altında: zıpla / kay
+                Place(low, a, z); Place(bars, b, z); Place(Random.value < 0.5f ? low : bars, c, z);
+                return 1f;
             }
+            if (roll < 0.86f)
+            {
+                Place(walls, a, z); Place(buses, b, z + busHalfLength);                     // kapalı iki şerit → geç, sonra zıpla
+                Place(low, c, z + 7f);
+                return 2 * busHalfLength + 1f;
+            }
+            if (roll < 0.94f) { Place(low, a, z); Place(bars, b, z + 6f); Place(low, c, z + 12f); return 12f; }   // zikzak
+            Place(buses, a, z + busHalfLength); Place(buses, b, z + busHalfLength); Place(cars, c, z + 2.3f);     // taksiye çık
+            return 2 * busHalfLength;
+        }
 
-            if (roll < 0.17f && Has(ramps))
+        /// <summary>
+        /// Tren: a şeridinde rampalı kamyon + önünde 1-2 dolmuş (tavandan tavana atla); b ve c şeritleri kamyon boyunca
+        /// dolmuşlarla kapalı → rampa tek yol. %35 kamyon tavanında sur kapısı (tavanda kay).
+        /// </summary>
+        private float Train(float z, int a, int b, int c)
+        {
+            Place(ramps, a, z);
+            float bus2 = 2f * busHalfLength + 0.15f;
+            foreach (int side in new[] { b, c })
             {
-                Place(ramps, a, z);                                                    // kamyon: rampadan çık
-                if (Has(gates) && Random.value < 0.55f) PlaceCenter(gates, z + gateOverTruck);   // tavandayken kaç!
-                if (Random.value < 0.6f) Place(Random.value < 0.5f ? buses : walls, b, z + 4f);
-                if (Random.value < 0.4f) Place(low, c, z + 2f);
-                return rampLength;
+                Place(buses, side, z + busHalfLength + 0.1f);
+                Place(buses, side, z + busHalfLength + 0.1f + bus2);
             }
-            if (roll < 0.31f && Has(buses))
+            float end = z + rampLength;
+            int chain = Random.Range(1, 3);                          // kamyondan sonra dolmuşlara atla
+            for (int i = 0; i < chain; i++)
             {
-                Place(buses, a, z);                                                    // dolmuş (çıkılmaz)
-                Place(Has(cars) ? cars : high, b, z);                                  // taksi (üstüne zıpla)
-                if (Random.value < 0.5f) Place(low, c, z - 2f);
-                return 6f;
+                float center = end + trainGap + busHalfLength;
+                Place(buses, a, center);
+                end = center + busHalfLength;
             }
-            if (roll < 0.40f && Has(gates))
+            if (Has(gates) && Random.value < 0.35f) PlaceCenter(gates, z + gateOverTruck);
+            return end - z;
+        }
+
+        private float RooftopPattern(float z, int a, int b, int c, float roll)
+        {
+            if (switcher != null)
             {
-                PlaceCenter(gates, z);                                                 // sur kapısı + altında alçak engel
-                Place(low, a, z + 1.5f);
-                if (Random.value < 0.6f) Place(low, b, z + 1.5f);
-                return 2f;
+                float rel = Mathf.Repeat(z - switcher.RooftopRootZ, switcher.RooftopModuleLength);
+                if (rel > rooftopNoSpawn.x && rel < rooftopNoSpawn.y) return rooftopNoSpawn.y - rel;
+                if (rel + 13f > rooftopNoSpawn.x && rel < rooftopNoSpawn.x) return rooftopNoSpawn.y - rel;   // zikzak sığmaz
             }
-            if (roll < 0.50f && Has(bars))
-            {
-                Place(bars, a, z);                                                     // bariyer: kay ya da zıpla
-                Place(Random.value < 0.6f ? bars : low, b, z);
-                if (Random.value < 0.4f) Place(walls, c, z);
-                return 0f;
-            }
-            if (roll < 0.56f) { Place(low, a, z); Place(Has(cars) ? cars : low, b, z + 1f); return 4f; }
-            if (roll < 0.64f) { Place(low, a, z); Place(low, b, z); return 0f; }
-            if (roll < 0.74f) { Place(walls, a, z); Place(low, b, z); if (Random.value < 0.35f) Place(cars, c, z + 1f); return 3f; }
-            if (roll < 0.82f) { Place(high, a, z); Place(Has(buses) ? buses : walls, b, z); return 5f; }
-            if (roll < 0.90f && Has(buses)) { Place(buses, a, z); Place(buses, b, z + 1f); return 6f; }
-            Place(low, a, z); Place(low, b, z); Place(low, c, z);                       // üç şerit: zıpla
-            return 0f;
+            if (roll < 0.22f) { Place(low, a, z); Place(low, b, z); Place(low, c, z); return 0f; }                 // zıpla
+            if (roll < 0.42f) { Place(bars, a, z); Place(bars, b, z); Place(walls, c, z); return 0f; }            // kay
+            if (roll < 0.62f) { Place(walls, a, z); Place(bars, b, z); Place(low, c, z); return 0f; }             // kay / zıpla
+            if (roll < 0.80f) { Place(low, a, z); Place(bars, b, z + 6f); Place(low, c, z + 12f); return 12f; }   // zikzak
+            Place(walls, a, z); Place(high, b, z); Place(low, c, z + 6f);                                         // geç + zıpla
+            return 6f;
         }
 
         private static bool Has(Obstacle[] set) => set != null && set.Length > 0;

@@ -742,7 +742,11 @@ namespace Jumpline.EditorTools
             Obstacle truck = TruckObstacle(templates.transform);
             Obstacle taxi = VehicleObstacle(TaxiPath, "Obs_Taxi", templates.transform, Obstacle.Kind.Solid, 0.86f, TaxiSegments);
             Obstacle bus = VehicleObstacle(MinibusPath, "Obs_Minibus", templates.transform, Obstacle.Kind.Solid, 1.0f,
-                new[] { new Obstacle.Segment { z0 = -2.95f, z1 = 2.92f, h0 = 4f, h1 = 4f } });   // çıkılmaz (zıplamanın üstünde)
+                new[]
+                {   // kaput 1.15 + tavan 2.35: yerden çıkılmaz (zıplama 1.9), kamyon tavanından atlanıp üstünde koşulur
+                    new Obstacle.Segment { z0 = -2.95f, z1 = -2.2f, h0 = 1.15f, h1 = 1.15f },
+                    new Obstacle.Segment { z0 = -2.2f, z1 = 2.92f, h0 = 2.35f, h1 = 2.35f },
+                });
             Obstacle gate = VehicleObstacle(SurGatePath, "Obs_SurGate", templates.transform, Obstacle.Kind.Ceiling, 3.65f,
                 new[] { new Obstacle.Segment { z0 = -0.8f, z1 = 0.8f, h0 = 3.7f, h1 = 3.7f } });   // alt kenar 3.7 m
             // kalas bariyer: alt kenar 1.15, kalınlık 0.35 (üstü 1.5) → kayarak altından ya da zıplayarak üstünden

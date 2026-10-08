@@ -3,7 +3,7 @@ Yeni engeller (Diyarbakır sokağı): araçlar, sur kapısı, dağılan kasa yı
 ve dolu görünsün diye.
 
   Taxi.fbx      sarı Şahin taksi (üstüne zıplanabilir: kaput 0.95, tavan 1.45, bagaj 0.95)
-  Minibus.fbx   beyaz-mavi dolmuş (yüksek, üstüne çıkılmaz → şerit değiştir)
+  Minibus.fbx   beyaz-mavi dolmuş (yerden çıkılmaz; kamyon tavanından atlanıp tavanında koşulur: tavan 2.35)
   SurGate.fbx   bazalt sur kapısı: iki burç + yolun üstünde alçak geçit (alt kenar 3.7 m, kırmızı neon uyarı şeridi)
                 → kamyon tavanındaki koşucu kafasını çarpar
   SlideBar.fbx  kalas bariyer: iki taş direk + kırmızı-beyaz kalas (alt kenar 1.15, üst 1.5, mavi neon alt şerit)
@@ -185,10 +185,10 @@ def minibus():
             box(p, s * W, s * (W + 0.015), 1.35, 2.02, z, z + 0.78, "T_Glass")
         box(p, s * (W + 0.02), s * (W + 0.18), 1.35, 1.6, -2.3, -2.15, "T_Black")    # ayna
     box(p, -0.62, 0.62, 2.35, 2.62, -2.1, -1.6, "T_Lamp", 0.03)               # DOLMUŞ tabelası
-    for s in (-1, 1):                                                          # tavan bagajı
-        box(p, s * 0.82, s * 0.88, 2.35, 2.5, -1.2, 2.5, "T_Chrome")
-    for z, c, h in ((-0.8, "T_PaintRed", 0.35), (0.2, "T_Blue", 0.45), (1.3, "T_Rust", 0.3)):
-        box(p, -0.6, 0.55, 2.38, 2.38 + h, z, z + 0.8, c, 0.06)               # yükler
+    # tavan: üstünde koşulur (araçtan araca atlama) — alçak krom raylar + neon kenar
+    for s in (-1, 1):
+        box(p, s * 0.86, s * 0.92, 2.35, 2.45, -2.0, 2.6, "T_Chrome")
+        box(p, s * W, s * (W + 0.015), 2.28, 2.34, -2.2, 2.8, "T_Neon")
     box(p, -W - 0.02, W + 0.02, 0.3, 0.5, -2.95, -2.82, "T_Chrome", 0.03)
     box(p, -W - 0.02, W + 0.02, 0.3, 0.5, 2.78, 2.9, "T_Chrome", 0.03)
     box(p, -0.55, 0.55, 0.6, 0.95, -2.86, -2.84, "T_Metal")                    # ızgara

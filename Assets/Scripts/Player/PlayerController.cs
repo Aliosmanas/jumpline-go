@@ -14,7 +14,8 @@ namespace Jumpline.Player
     /// Yüzey: <see cref="ObstacleField"/> — rampaya/araca çıkar, kenardan düşer; aşamadığı engele çarparsa ölür.
     /// Tavan / bariyer: gövde (ayak..kafa) kalınlığıyla çakışırsa çarpar; kayarken kafa alçalır.
     /// Zipline (Level/Zipline.cs): halatın önünde ZIPLAYAN koşucu tutunur; zıplamayan boşluğa düşer.
-    /// Ölüm: çarpınca geriye savrulur (ağır çekim + kamera sarsıntısı), sırtüstü düşer → <see cref="Died"/>.
+    /// Ölüm: önden çarpınca geriye savrulur (ağır çekim + kamera sarsıntısı), sırtüstü düşer → <see cref="Died"/>.
+    /// Yandan çarpma (şerit değiştirirken engelin yanına): ölmez — sarsılır, eski şeridine seker, koşmaya devam eder.
     /// Hız: her <c>speedInterval</c> saniyede bir kademe artar (<see cref="SpeedLevelChanged"/>).
     /// Dünya geçişi (Level/WorldSwitcher.cs): Teleport ile sokak ↔ çatı.
     /// </summary>
@@ -82,9 +83,15 @@ namespace Jumpline.Player
 
         [Header("Ölüm (geriye savrulma)")]
         [Tooltip("Çarpınca geriye savrulma hızı (m/sn).")]
-        [SerializeField, Min(0f)] private float knockbackSpeed = 5.5f;
+        [SerializeField, Min(0f)] private float knockbackSpeed = 4.5f;
         [Tooltip("Çarpınca yukarı savrulma hızı (m/sn).")]
-        [SerializeField, Min(0f)] private float knockbackUp = 5f;
+        [SerializeField, Min(0f)] private float knockbackUp = 3.2f;
+
+        [Header("Yandan çarpma (sendeleme)")]
+        [Tooltip("Yandan çarpınca hız bu oranla düşer (kısa süre sonra toparlanır).")]
+        [SerializeField, Range(0.3f, 1f)] private float stumbleSlow = 0.8f;
+        [Tooltip("Sendeleme sonrası yeniden yandan çarpma için bekleme (sn).")]
+        [SerializeField, Min(0f)] private float stumbleCooldown = 0.35f;
         [Tooltip("Yerde sürtünmeyle duruş (m/sn²).")]
         [SerializeField, Min(0f)] private float groundFriction = 14f;
         [Tooltip("Çarpma anında ağır çekim (zaman ölçeği) ve süresi (gerçek sn).")]
@@ -118,6 +125,8 @@ namespace Jumpline.Player
         private float slideEnd;
         private bool slideQueued;         // havada aşağı kaydırıldı: inince kay
         private float jumpQueuedUntil = -1f;
+        private int laneFrom;            // son şerit değişiminden önceki şerit (yandan çarpınca geri dönülür)
+        private float lastStumble = -10f;
 
         // zipline: kök (ayak) yolu
         private Vector3 zipA, zipB;
@@ -131,6 +140,8 @@ namespace Jumpline.Player
         public event System.Action Died;
         /// <summary>Çarpma anı (kamera sarsıntısı vb.).</summary>
         public event System.Action Crashed;
+        /// <summary>Yandan çarpıp sendeledi (hafif sarsıntı).</summary>
+        public event System.Action Stumbled;
         /// <summary>Hız kademesi arttı (1, 2, 3…).</summary>
         public event System.Action<int> SpeedLevelChanged;
 
@@ -228,9 +239,17 @@ namespace Jumpline.Player
             }
 
             float prevY = p.y;
+            float oldX = p.x;
             p.z += currentSpeed * dt;
             p.x = Mathf.Lerp(p.x, laneX, laneK);
             p.y += verticalVelocity * dt;
+
+            // yandan çarpma: yeni x engelin içine giriyor ama eski x'te yol açıksa → sendele, eski şeride dön (ölüm yok)
+            if (Mathf.Abs(p.x - oldX) > 0.0005f && Blocked(p.x, p.z, p.y) && !Blocked(oldX, p.z, p.y))
+            {
+                p.x = oldX;
+                Stumble();
+            }
 
             float surface = ObstacleField.SurfaceAt(p.x, p.z, groundHeight);
             if (state == State.Airborne)
@@ -380,7 +399,28 @@ namespace Jumpline.Player
         private void ChangeLane(int dir)
         {
             if (OnZipline || IsDead) return; // halattayken şerit sabit
-            lane = Mathf.Clamp(lane + dir, -MaxLane, MaxLane); // en kenarda bir şey olmaz (çarpma yok)
+            int next = Mathf.Clamp(lane + dir, -MaxLane, MaxLane); // en kenarda bir şey olmaz (çarpma yok)
+            if (next == lane) return;
+            laneFrom = lane;
+            lane = next;
+        }
+
+        /// <summary>Bu noktada gövde bir engelle çakışıyor mu (yüzey basamaktan yüksek ya da tavan/bariyer).</summary>
+        private bool Blocked(float x, float z, float y)
+        {
+            float head = state == State.Sliding ? slideHeadHeight : headHeight;
+            return ObstacleField.SurfaceAt(x, z, groundHeight) > y + stepUp || ObstacleField.HitsCeiling(x, z, y, y + head);
+        }
+
+        /// <summary>Yandan çarpma: eski şeride sek, kısa yavaşla, kamerayı hafif salla.</summary>
+        private void Stumble()
+        {
+            lane = laneFrom;
+            if (Time.time - lastStumble < stumbleCooldown) return;
+            lastStumble = Time.time;
+            currentSpeed *= stumbleSlow;    // UpdateSpeed hedef hıza yumuşakça geri çıkarır
+            if (state == State.Running) Trigger(LandTrigger);   // kısa sendeleme (diz kırma)
+            Stumbled?.Invoke();
         }
 
         private void UpdateSpeed(float dt)
@@ -451,7 +491,7 @@ namespace Jumpline.Player
         {
             Obstacle hit = ObstacleField.SolidAt(p.x, p.z);
             if (hit != null && hit.TryGetComponent(out Breakable breakable)) breakable.Break(currentSpeed);
-            p.y = Mathf.Max(prevY, ObstacleField.SurfaceAt(p.x, p.z - 0.6f, groundHeight));
+            p.y = prevY;    // yüksekliği koru (yan şeridin araç tavanına ışınlanma hatası düzeltildi)
             p.z -= 0.25f;   // engelin içine girmesin
             transform.position = p;
             state = State.Dead;

@@ -43,7 +43,11 @@ namespace Jumpline.CameraSystem
             player = target.GetComponent<PlayerController>();
             cam = GetComponent<Camera>();
             if (cam != null) baseFov = cam.fieldOfView;
-            if (player != null) player.Crashed += () => impulse = crashShake;
+            if (player != null)
+            {
+                player.Crashed += () => impulse = crashShake;
+                player.Stumbled += () => impulse = Mathf.Max(impulse, crashShake * 0.4f);
+            }
             Snap();
         }
 
