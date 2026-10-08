@@ -57,8 +57,8 @@ EXTRA = [("R_Neon", "#55CFFF", 12.0), ("R_NeonRed", "#FF3048", 8.0), ("R_Cloth",
 for _n, _c, _e in EXTRA:
     if _n not in bs.ORDER:
         bs.ORDER.append(_n)
-(BASALT, TRIM, PAVING, CURB, WOOD, WOODDARK, GLASS, IRON,
- NEON, NEONRED, CLOTH, LAMP, PORTALCORE) = range(13)
+BASALT, TRIM, PAVING, CURB, WOOD, WOODDARK, GLASS, IRON = range(8)
+NEON, NEONRED, CLOTH, LAMP, PORTALCORE = [bs.ORDER.index(_n) for _n, _c, _e in EXTRA]   # sokak malzemeleri eklense de kaymasın
 
 
 def make_materials():

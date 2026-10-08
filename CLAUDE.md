@@ -1,7 +1,7 @@
 # JUMPLINE GO — proje notları (Claude için)
 
-3D hyper-casual mobil koşu oyunu (Android). Tek kontrol: **basılı tut = şarj, bırak = zıpla**; basma süresi zıplama gücünü belirler.
-Döngü: RUN → CHARGE → RELEASE → JUMP → LAND → RUN. Bölüm tabanlı (ilk hedef 10 bölüm).
+3D hyper-casual mobil koşu oyunu (Android), Diyarbakır Sur içi teması. Kontroller (8 Eki 2026 kullanıcı kararı, Subway Surfers mantığı): **yukarı kaydır = zıpla, aşağı kaydır = kay / havadan hızlı in, sağa-sola = şerit**. Eski "basılı tut = şarj" kaldırıldı.
+Bölüm tabanlı (ilk hedef 10 bölüm).
 Oyun adı **JUMPLINE GO** (brief'teki "JUNPLINE" yazım hatasıydı; klasör adı `junpline` kaldı). Android paket adı `com.aliosmankeskin.jumplinego` — Play'e ilk yüklemeden sonra DEĞİŞTİRİLEMEZ.
 Tam tasarım isteği: `docs/BRIEF.md`. Kullanıcı Türkçe konuşur, Türkçe cevap ister.
 

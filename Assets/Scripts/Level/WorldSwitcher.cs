@@ -24,6 +24,8 @@ namespace Jumpline.Level
             public Color sunColor;
             public float sunIntensity;
             public Vector3 sunEuler;
+            [Tooltip("Gökyüzü: true = RenderSettings.skybox (gün batımı), false = düz renk (gece).")]
+            public bool skybox;
         }
 
         [SerializeField] private PlayerController player;
@@ -150,7 +152,11 @@ namespace Jumpline.Level
 
         private void Apply(WorldLook look)
         {
-            if (cam != null) cam.backgroundColor = look.sky;
+            if (cam != null)
+            {
+                cam.backgroundColor = look.sky;
+                cam.clearFlags = look.skybox && RenderSettings.skybox != null ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
+            }
             RenderSettings.fogColor = look.fog;
             RenderSettings.fogStartDistance = look.fogStart;
             RenderSettings.fogEndDistance = look.fogEnd;

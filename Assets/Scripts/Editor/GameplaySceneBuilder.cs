@@ -39,13 +39,19 @@ namespace Jumpline.EditorTools
             BuildCameraAndEvents(false);
             var cam = Camera.main;
             // Üçüncü şahıs: karakterin arkasında, ekranın alt-ortasında (brief)
-            cam.transform.SetPositionAndRotation(new Vector3(0f, 4f, -7f), Quaternion.Euler(18f, 0f, 0f)); // 3 şerit ekrana sığsın
-            cam.fieldOfView = 66f;
-            cam.farClipPlane = 220f;
-            cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = Hex("#C3CCD8");
+            // alçak ve yakın takip + geniş açı: zemin hızla akar (koşu hissi), 3 şerit yine ekranda
+            cam.transform.SetPositionAndRotation(new Vector3(0f, 3.3f, -6.2f), Quaternion.Euler(16f, 0f, 0f));
+            cam.fieldOfView = 70f;
+            cam.farClipPlane = 260f;
+            cam.clearFlags = CameraClearFlags.Skybox;
+            cam.backgroundColor = Hex("#E6CFAE");
+            RenderSettings.skybox = SunsetSky();
             var follow = cam.gameObject.AddComponent<Jumpline.CameraSystem.CameraFollow>();
             Set(follow, "target", runner);
+            var fso = new SerializedObject(follow);
+            fso.FindProperty("offset").vector3Value = new Vector3(0f, 3.3f, -6.2f);
+            fso.ApplyModifiedPropertiesWithoutUndo();
+            BuildDust(cam);
             BuildPostFX(cam);
             BuildSpeedLines(cam, runner);
 
@@ -88,9 +94,9 @@ namespace Jumpline.EditorTools
             // Güneş: alçak açıdan, sokağa çapraz gölge (referanstaki gibi)
             var light = new GameObject("Directional Light", typeof(Light)).GetComponent<Light>();
             light.type = LightType.Directional;
-            light.transform.rotation = Quaternion.Euler(38f, -55f, 0f);
-            light.color = Hex("#FFF1DE");
-            light.intensity = 1.6f;
+            light.transform.rotation = Quaternion.Euler(26f, -35f, 0f);   // altın saat: uzun gölgeler
+            light.color = Hex("#FFD9A6");
+            light.intensity = 2.0f;
             light.shadows = LightShadows.Soft;
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
@@ -114,6 +120,9 @@ namespace Jumpline.EditorTools
                 seg.transform.SetPositionAndRotation(new Vector3(0f, 0f, i * StreetSegment), Quaternion.identity);
                 PlaceDecor(seg.transform, DecorLayout); // statik değil: StreetRecycler modülleri öne taşır
                 PlaceDecor(seg.transform, MirroredDecor());
+                PlaceSigns(seg.transform);
+                if (i == 0) PlaceLandmark(seg.transform, "Landmark_DortAyakliMinare", new Vector3(14f, 0f, 28f));
+                if (i == 2) PlaceLandmark(seg.transform, "Landmark_UluCamiMinaret", new Vector3(-16f, 0f, 40f));
             }
             return root;
         }
@@ -226,6 +235,10 @@ namespace Jumpline.EditorTools
                 ("S_Paving", "paving", "#FFFFFF", 0.2f), ("S_Curb", "curb", "#FFFFFF", 0.15f),
                 ("S_Wood", "wood", "#FFFFFF", 0.3f), ("S_WoodDark", "wood", "#7A6A60", 0.25f),
                 ("S_Glass", null, "#0E1218", 0.85f), ("S_Iron", null, "#1A1A1C", 0.5f),
+                ("S_Lime", null, "#D9CDB2", 0.12f), ("S_Bulb", null, "#FFC46B", 0.4f),
+                ("S_AwnRed", null, "#B3262E", 0.2f), ("S_AwnGreen", null, "#1F6B4A", 0.2f), ("S_AwnWhite", null, "#EFE7D6", 0.2f),
+                ("S_Board", null, "#20352C", 0.4f), ("S_KilimA", null, "#9B2335", 0.1f), ("S_KilimB", null, "#D9A441", 0.1f),
+                ("S_KilimC", null, "#2C4A7A", 0.1f),
             };
             foreach (var e in map)
             {
@@ -240,6 +253,12 @@ namespace Jumpline.EditorTools
                 mat.SetColor("_BaseColor", Hex(e.tint));
                 mat.SetFloat("_Smoothness", e.smooth);
                 mat.SetFloat("_Metallic", e.mat == "S_Iron" ? 0.8f : 0f);
+                if (e.mat == "S_Bulb")
+                {
+                    mat.EnableKeyword("_EMISSION");
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    mat.SetColor("_EmissionColor", Hex(e.tint) * 3.5f);
+                }
                 EditorUtility.SetDirty(mat);
             }
             AssetDatabase.SaveAssets();
@@ -433,14 +452,16 @@ namespace Jumpline.EditorTools
             Set(sw, "rooftopRoot", rooftop);
             SetFloat(sw, "rooftopModuleLength", RooftopModule);
             // sokak: BuildWorld değerleri (gündüz)
-            SetLook(sw, "streetLook", "#C3CCD8", "#C3CCD8", 25f, 150f, "#B9C6D8", "#8A8F99", "#3A3A40", "#FFF1DE", 1.6f, new Vector3(38f, -55f, 0f));
+            // sokak: Sur içi ikindi/gün batımı — sıcak güneş, bal rengi pus, prosedürel gökyüzü
+            SetLook(sw, "streetLook", "#E6CFAE", "#E3C9A4", 30f, 190f, "#C9D6EA", "#A8968A", "#4A3F38", "#FFD9A6", 2.0f, new Vector3(26f, -35f, 0f), true);
             // çatı: fırtınalı gece (üst map.mp4) — lacivert gök, ay ışığı, koyu mavi pus
-            SetLook(sw, "rooftopLook", "#1B2536", "#1E2939", 18f, 130f, "#5A6E92", "#2E3A52", "#12151C", "#A9BEFF", 0.7f, new Vector3(42f, 35f, 0f));
+            SetLook(sw, "rooftopLook", "#1B2536", "#1E2939", 18f, 130f, "#5A6E92", "#2E3A52", "#12151C", "#A9BEFF", 0.7f, new Vector3(42f, 35f, 0f), false);
             return sw;
         }
 
         private static void SetLook(Object target, string field, string sky, string fog, float fogStart, float fogEnd,
-                                    string ambSky, string ambEq, string ambGround, string sunColor, float sunIntensity, Vector3 sunEuler)
+                                    string ambSky, string ambEq, string ambGround, string sunColor, float sunIntensity, Vector3 sunEuler,
+                                    bool skybox)
         {
             var so = new SerializedObject(target);
             var p = so.FindProperty(field);
@@ -454,6 +475,7 @@ namespace Jumpline.EditorTools
             p.FindPropertyRelative("sunColor").colorValue = Hex(sunColor);
             p.FindPropertyRelative("sunIntensity").floatValue = sunIntensity;
             p.FindPropertyRelative("sunEuler").vector3Value = sunEuler;
+            p.FindPropertyRelative("skybox").boolValue = skybox;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -469,6 +491,115 @@ namespace Jumpline.EditorTools
             return img;
         }
 
+        // ---------------------------------------------------------------------
+        // Diyarbakır kimliği: çarşı tabelaları (street_signs.json, build_street.py), Dört Ayaklı Minare, Ulu Cami minaresi
+        // ---------------------------------------------------------------------
+        private const string SignsJson = "Assets/Art/Environment/Diyarbakir/street_signs.json";
+        public const string LandmarkPath = "Assets/Art/Environment/Diyarbakir/DiyarbakirLandmarks.fbx";
+
+        [System.Serializable] private class SignList { public SignData[] signs; }
+        [System.Serializable] private class SignData { public string text; public float x, y, z; public int side; }
+
+        private static void PlaceSigns(Transform segment)
+        {
+            var json = AssetDatabase.LoadAssetAtPath<TextAsset>(SignsJson);
+            if (json == null) return;
+            var list = JsonUtility.FromJson<SignList>(json.text);
+            var root = new GameObject("Signs").transform;
+            root.SetParent(segment, false);
+            foreach (var d in list.signs)
+            {
+                var go = new GameObject("Sign_" + d.text);
+                go.transform.SetParent(root, false);
+                // tabela panosunun sokağa bakan yüzü; yazı sokaktan okunur
+                float toward = d.x > 0f ? -1f : 1f;
+                go.transform.localPosition = new Vector3(d.x + toward * 0.02f, d.y, d.z);
+                go.transform.localRotation = Quaternion.Euler(0f, d.x > 0f ? 90f : -90f, 0f);
+                var t = go.AddComponent<TextMeshPro>();
+                t.font = fExtra != null ? fExtra : fBold;
+                t.text = d.text;
+                t.alignment = TextAlignmentOptions.Center;
+                t.enableAutoSizing = true;
+                t.fontSizeMin = 0.5f;
+                t.fontSizeMax = 4.5f;
+                t.color = Hex("#F2D27A");
+                t.rectTransform.sizeDelta = new Vector2(2.1f, 0.48f);
+            }
+        }
+
+        private static GameObject landmarkPrefab;
+
+        private static void PlaceLandmark(Transform segment, string name, Vector3 local)
+        {
+            if (landmarkPrefab == null)
+            {
+                if (AssetImporter.GetAtPath(LandmarkPath) is ModelImporter imp)
+                {
+                    foreach (string n in new[] { "S_Basalt", "S_BasaltTrim", "S_Glass", "S_Lime" })
+                    {
+                        var m = AssetDatabase.LoadAssetAtPath<Material>($"{StreetMatDir}/{n}.mat");
+                        if (m != null) imp.AddRemap(new AssetImporter.SourceAssetIdentifier(typeof(Material), n), m);
+                    }
+                    imp.importCameras = imp.importLights = imp.importAnimation = false;
+                    imp.SaveAndReimport();
+                }
+                landmarkPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(LandmarkPath);
+                if (landmarkPrefab == null) return;
+            }
+            Transform src = landmarkPrefab.transform.Find(name);
+            if (src == null) return;
+            var go = Object.Instantiate(src.gameObject, segment);
+            go.name = name;
+            go.transform.localPosition = local;
+            go.transform.localRotation = src.localRotation;
+            go.transform.localScale = src.localScale;
+        }
+
+        /// <summary>Gün batımı prosedürel gökyüzü (Mezopotamya ikindisi: sıcak ufuk, açık mavi zenit).</summary>
+        private static Material SunsetSky()
+        {
+            const string path = "Assets/Settings/SkyDiyarbakir.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("Skybox/Procedural"));
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.SetFloat("_SunSize", 0.05f);
+            mat.SetFloat("_SunSizeConvergence", 4f);
+            mat.SetFloat("_AtmosphereThickness", 1.35f);
+            mat.SetColor("_SkyTint", Hex("#8FA9D6"));
+            mat.SetColor("_GroundColor", Hex("#6B5848"));
+            mat.SetFloat("_Exposure", 1.15f);
+            EditorUtility.SetDirty(mat);
+            return mat;
+        }
+
+        /// <summary>Güneşte uçuşan toz zerreleri (kameranın etrafında, dünya uzayında) — ambiyans.</summary>
+        private static void BuildDust(Camera cam)
+        {
+            var ps = MakeSparks(cam.transform, "DustMotes");
+            ps.transform.localPosition = new Vector3(0f, 0f, 9f);
+            var main = ps.main;
+            main.playOnAwake = true;
+            main.loop = true;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(2.5f, 4.5f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.05f, 0.25f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.07f);
+            main.startColor = new Color(1f, 0.86f, 0.62f, 0.45f);
+            main.gravityModifier = -0.01f;
+            main.maxParticles = 220;
+            var em = ps.emission;
+            em.rateOverTime = 45f;
+            var sh = ps.shape;
+            sh.shapeType = ParticleSystemShapeType.Box;
+            sh.scale = new Vector3(12f, 7f, 18f);
+            var rend = ps.GetComponent<ParticleSystemRenderer>();
+            rend.renderMode = ParticleSystemRenderMode.Billboard;
+            ps.Play();
+        }
+
         /// <summary>Neon ışıklar için bloom (URP Volume).</summary>
         private static void BuildPostFX(Camera cam)
         {
@@ -477,11 +608,27 @@ namespace Jumpline.EditorTools
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, PostFxPath);
             var bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(1.1f);
-            bloom.intensity.Override(1.2f);
-            bloom.scatter.Override(0.65f);
-            bloom.name = "Bloom";
-            AssetDatabase.AddObjectToAsset(bloom, profile);
+            bloom.threshold.Override(1.0f);
+            bloom.intensity.Override(0.9f);
+            bloom.scatter.Override(0.7f);
+            var tone = profile.Add<Tonemapping>(true);
+            tone.mode.Override(TonemappingMode.ACES);
+            var color = profile.Add<ColorAdjustments>(true);   // sıcak, doygun Mezopotamya ikindisi
+            color.postExposure.Override(0.05f);
+            color.contrast.Override(14f);
+            color.saturation.Override(14f);
+            color.colorFilter.Override(Hex("#FFF0DC"));
+            var vignette = profile.Add<Vignette>(true);
+            vignette.intensity.Override(0.26f);
+            vignette.smoothness.Override(0.45f);
+            var blur = profile.Add<MotionBlur>(true);          // kamera hızı → zemin/duvar akışı (koşu hissi)
+            blur.intensity.Override(0.22f);
+            blur.quality.Override(MotionBlurQuality.Low);
+            foreach (VolumeComponent c in new VolumeComponent[] { bloom, tone, color, vignette, blur })
+            {
+                c.name = c.GetType().Name;
+                AssetDatabase.AddObjectToAsset(c, profile);
+            }
             AssetDatabase.SaveAssets();
             var vol = new GameObject("PostFX").AddComponent<Volume>();
             vol.isGlobal = true;
@@ -587,7 +734,7 @@ namespace Jumpline.EditorTools
                 return list.ToArray();
             }
             // duvarlar: çarpışma yüksekliği en yüksek zıplamanın üstünde → şerit değiştirmek şart
-            Obstacle[] low = Make(LowObstacles, 0f), high = Make(HighObstacles, 0f), walls = Make(WallObstacles, 4f);
+            Obstacle[] low = Make(LowObstacles, 0f), high = Make(HighObstacles, 4f), walls = Make(WallObstacles, 4f);   // high: yanından geç
             foreach (var o in low) o.gameObject.AddComponent<Breakable>();    // çarpınca savrulur
             foreach (var o in high) o.gameObject.AddComponent<Breakable>();
             Obstacle crates = CrateStackObstacle(templates.transform);
@@ -799,6 +946,8 @@ namespace Jumpline.EditorTools
             rend.velocityScale = 0.06f;
             rend.lengthScale = 2f;
             var lines = ps.gameObject.AddComponent<Jumpline.CameraSystem.SpeedLines>();
+            SetFloat(lines, "baseRate", 30f);
+            SetFloat(lines, "ratePerSpeed", 110f);
             Set(lines, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
             ps.Play();
         }
@@ -897,6 +1046,9 @@ namespace Jumpline.EditorTools
             Button fail = PillButton(bot, "TestFail", new Rect(578f, 1780f, 420f, 90f), "FAIL (TEST)", 34f, Color.white, 1f, Hex("#E2B45A"), Hex("#F2C366"));
             speedLabel = Txt(mid, "SpeedBanner", "", new Rect(60f, 380f, 960f, 140f), fExtra, 76f, Hex("#55CFFF"), localize: false);
             speedLabel.raycastTarget = false;
+            var hint = Txt(mid, "ControlsHint", "SWIPE UP: JUMP   ·   DOWN: SLIDE\nLEFT / RIGHT: CHANGE LANE", new Rect(40f, 1180f, 1000f, 160f), fBold, 40f, Color.white);
+            hint.raycastTarget = false;
+            Set(hint.gameObject.AddComponent<Jumpline.UI.TutorialHint>(), "label", hint);
             win.gameObject.SetActive(false);    // test butonları: oynanış gerçek (ölüm → oyun bitti)
             fail.gameObject.SetActive(false);
 

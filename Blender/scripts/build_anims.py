@@ -122,6 +122,25 @@ SLIDE = P(
 )
 SLIDE_B = P(SLIDE, spine_02=V(0, 0.64, 0.77), upperarm_r=V(-0.5, -0.55, 0.3), head=V(0, 0.0, 1), pelvis_z=-0.72)
 
+# Ölüm (çarpma → geriye savrulma → sırtüstü düşüş → sekme → yerde kalma). root: (X dönüşü rad, y kayma, z)
+# X dönüşü negatif: baş +Y'ye (karakterin arkasına) devrilir → sırtüstü.
+IMPACT = P(spine_01=V(0, 0.22, 1), spine_02=V(0, 0.32, 0.95), spine_03=V(0, 0.38, 0.92), neck_01=V(0, 0.45, 0.9), head=V(0, 0.6, 0.8),
+           upperarm_l=V(0.5, -0.6, 0.6), lowerarm_l=V(0.4, -0.75, 0.55), upperarm_r=V(-0.5, -0.6, 0.6), lowerarm_r=V(-0.4, -0.75, 0.55),
+           thigh_l=V(0.08, -0.45, -0.9), calf_l=V(0.04, -0.1, -1), thigh_r=V(-0.06, 0.12, -1), calf_r=V(-0.03, 0.2, -1),
+           foot_l=V(0, -0.6, 0.8), pelvis_z=0.03)
+BACK_AIR = P(IMPACT, root=(-0.75, 0.15, 0.35),
+             upperarm_l=V(0.9, -0.25, 0.4), lowerarm_l=V(0.8, -0.4, 0.45), upperarm_r=V(-0.9, -0.25, 0.4), lowerarm_r=V(-0.8, -0.4, 0.45),
+             thigh_l=V(0.12, -0.65, -0.75), calf_l=V(0.05, -0.2, -1), thigh_r=V(-0.1, -0.5, -0.86), calf_r=V(-0.05, 0.1, -1),
+             head=V(0, 0.45, 0.9))
+BACK_GROUND = P(STAND, root=(-1.5, 0.45, 0.12),
+                upperarm_l=V(0.92, 0.1, 0.38), lowerarm_l=V(0.85, 0.3, 0.4), upperarm_r=V(-0.92, 0.1, 0.38), lowerarm_r=V(-0.85, 0.3, 0.4),
+                thigh_l=V(0.16, -0.25, -0.95), calf_l=V(0.05, 0.15, -1), thigh_r=V(-0.14, -0.15, -1), calf_r=V(-0.05, 0.2, -1),
+                foot_l=V(0.3, -0.6, -0.7), foot_r=V(-0.3, -0.6, -0.7), head=V(0, 0.15, 1), pelvis_z=0.0)
+BACK_BOUNCE = P(BACK_GROUND, root=(-1.36, 0.5, 0.2), head=V(0, -0.05, 1),
+                upperarm_l=V(0.85, -0.1, 0.5), upperarm_r=V(-0.85, -0.1, 0.5), thigh_l=V(0.18, -0.45, -0.88))
+BACK_SETTLE = P(BACK_GROUND, root=(-1.53, 0.55, 0.11), head=V(0.45, 0.1, 0.9),
+                upperarm_l=V(0.95, 0.25, 0.2), upperarm_r=V(-0.9, 0.0, 0.42), thigh_r=V(-0.2, -0.1, -0.98))
+
 BREATH_IN = P(spine_03=V(0, 0.07, 1), upperarm_l=V(0.23, 0.02, -1), upperarm_r=V(-0.23, 0.02, -1), pelvis_z=0.006)
 
 ACTIONS = {
@@ -133,7 +152,7 @@ ACTIONS = {
     "Fall": ([(0, TUCK), (12, FALL)], False),
     "Land": ([(0, CROUCH), (8, CROUCH_LIGHT), (16, STAND)], False),
     "Zipline": ([(0, ZIP), (30, P(ZIP, spine_01=V(-0.05, 0.08, 1), thigh_l=V(0.08, -0.35, -0.94))), (60, ZIP)], True),
-    "Death": ([(0, STAND), (8, STAGGER), (22, KNEEL), (34, KNEEL), (48, DOWN)], False),
+    "Death": ([(0, STAND), (3, IMPACT), (11, BACK_AIR), (20, BACK_GROUND), (25, BACK_BOUNCE), (32, BACK_GROUND), (48, BACK_SETTLE)], False),
     # Unity: PlayerController.slideDuration ile senkron (SlideSpeed = 0.8 sn / kayma süresi)
     "Slide": ([(0, CROUCH), (4, SLIDE), (12, SLIDE_B), (19, SLIDE), (24, CROUCH_LIGHT)], False),
 }

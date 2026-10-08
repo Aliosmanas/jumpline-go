@@ -23,12 +23,16 @@ namespace Jumpline.CameraSystem
         [SerializeField, Min(0f)] private float maxFovBoost = 12f;
         [Tooltip("Koşarken hafif sarsıntı (m), hızla artar.")]
         [SerializeField, Min(0f)] private float shake = 0.025f;
+        [Tooltip("Çarpma anında kamera sarsıntısı (m) ve sönüm hızı.")]
+        [SerializeField, Min(0f)] private float crashShake = 0.45f;
+        [SerializeField, Min(0.1f)] private float crashShakeDecay = 5f;
 
         private PlayerController player;
         private Camera cam;
         private float baseFov;
         private float smoothedY;
         private float smoothedX;
+        private float impulse;
 
         private float BaseX => player != null ? player.LaneOriginX : 0f;
         private float BaseY => player != null ? player.GroundHeight : 0f;
@@ -39,6 +43,7 @@ namespace Jumpline.CameraSystem
             player = target.GetComponent<PlayerController>();
             cam = GetComponent<Camera>();
             if (cam != null) baseFov = cam.fieldOfView;
+            if (player != null) player.Crashed += () => impulse = crashShake;
             Snap();
         }
 
@@ -62,6 +67,12 @@ namespace Jumpline.CameraSystem
             float factor = player.IsDead ? 1f : player.SpeedFactor;
             if (cam != null)
                 cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, baseFov + Mathf.Min(maxFovBoost, (factor - 1f) * fovPerSpeed), 1f - Mathf.Exp(-3f * dt));
+            if (impulse > 0.001f)
+            {
+                float u = Time.unscaledTime * 40f;
+                transform.position += new Vector3((Mathf.PerlinNoise(u, 1.3f) - 0.5f), (Mathf.PerlinNoise(2.1f, u) - 0.5f), 0f) * (2f * impulse);
+                impulse = Mathf.MoveTowards(impulse, 0f, crashShakeDecay * impulse * Time.unscaledDeltaTime + 0.01f * Time.unscaledDeltaTime);
+            }
             if (!player.IsDead && !player.OnZipline)
             {
                 float a = shake * factor, t = Time.time * 18f;

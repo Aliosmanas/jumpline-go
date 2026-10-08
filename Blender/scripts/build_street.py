@@ -8,6 +8,7 @@ Blender'da sokak -Y yönünde uzanır (Unity'de +Z = koşu yönü). x: sokak gen
 Çıktı: Assets/Art/Environment/Diyarbakir/DiyarbakirStreet.fbx (+ Blender/source/street.blend)
 Malzemeler: S_Basalt, S_BasaltTrim, S_Paving, S_Curb, S_Wood, S_WoodDark, S_Glass, S_Iron
 """
+import json
 import math
 import os
 import random
@@ -20,6 +21,12 @@ ROOT = r"D:\Repolar\junpline"
 TEX = os.path.join(ROOT, "Blender", "textures")
 FBX_PATH = os.path.join(ROOT, "Assets", "Art", "Environment", "Diyarbakir", "DiyarbakirStreet.fbx")
 BLEND_PATH = os.path.join(ROOT, "Blender", "source", "street.blend")
+SIGNS_PATH = os.path.join(ROOT, "Assets", "Art", "Environment", "Diyarbakir", "street_signs.json")
+LANDMARK_FBX = os.path.join(ROOT, "Assets", "Art", "Environment", "Diyarbakir", "DiyarbakirLandmarks.fbx")
+# Sur içi çarşı tabelaları (Unity TextMeshPro ile yazılır) — ciğerci, çay ocağı, bakırcılar, kilimciler…
+SHOP_NAMES = ["CİĞERCİ", "ÇAY OCAĞI", "BAKIRCI", "KEBAP SALONU", "KİLİM & HALI", "BAHARATÇI", "KAHVEHANE",
+              "LAVAŞ FIRINI", "MENENGİÇ KAHVESİ", "SURİÇİ BÜFE", "KUYUMCU", "BURMA KADAYIF"]
+SIGNS = []
 
 SEGMENT = 60.0          # modül uzunluğu (m), Unity'de art arda dizilir
 STREET_HALF = 5.0       # cephe hattı |x| (3 şerit + kaldırım)
@@ -67,10 +74,25 @@ def make_materials():
     material("S_WoodDark", "wood.png", "#7A6A60", rough=0.75)
     material("S_Glass", None, "#0E1218", rough=0.2, metal=0.3)
     material("S_Iron", None, "#1A1A1C", rough=0.5, metal=0.8)
+    # Diyarbakır kimliği: almaşık (siyah bazalt + açık kireç taşı) bantlar, çarşı tenteleri, ışık zinciri, kilimler
+    material("S_Lime", "basalt.png", "#E9DFC8", rough=0.85)
+    m = material("S_Bulb", None, "#FFC46B", rough=0.4)
+    bsdf = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    bsdf.inputs["Emission Color"].default_value = srgb("#FFC46B")
+    bsdf.inputs["Emission Strength"].default_value = 8.0
+    material("S_AwnRed", None, "#B3262E", rough=0.8)
+    material("S_AwnGreen", None, "#1F6B4A", rough=0.8)
+    material("S_AwnWhite", None, "#EFE7D6", rough=0.8)
+    material("S_Board", None, "#20352C", rough=0.6)
+    material("S_KilimA", None, "#9B2335", rough=0.9)
+    material("S_KilimB", None, "#D9A441", rough=0.9)
+    material("S_KilimC", None, "#2C4A7A", rough=0.9)
 
 
-ORDER = ["S_Basalt", "S_BasaltTrim", "S_Paving", "S_Curb", "S_Wood", "S_WoodDark", "S_Glass", "S_Iron"]
-BASALT, TRIM, PAVING, CURB, WOOD, WOODDARK, GLASS, IRON = range(8)
+ORDER = ["S_Basalt", "S_BasaltTrim", "S_Paving", "S_Curb", "S_Wood", "S_WoodDark", "S_Glass", "S_Iron",
+         "S_Lime", "S_Bulb", "S_AwnRed", "S_AwnGreen", "S_AwnWhite", "S_Board", "S_KilimA", "S_KilimB", "S_KilimC"]
+(BASALT, TRIM, PAVING, CURB, WOOD, WOODDARK, GLASS, IRON,
+ LIME, BULB, AWNRED, AWNGREEN, AWNWHITE, BOARD, KILIMA, KILIMB, KILIMC) = range(17)
 
 
 # ---------------------------------------------------------------------------
@@ -166,13 +188,47 @@ def facade_point(s, off):
     return lambda yc, z0: (lambda u, v: (s * (STREET_HALF - off), yc + u, z0 + v))
 
 
-def house(b, s, y0, y1, floors, has_cumba, door_pos):
+def house(b, s, y0, y1, floors, has_cumba, door_pos, striped=False, shop=False):
     xi, xo = s * STREET_HALF, s * (STREET_HALF + 7.0)
     H = floors * FLOOR_H + 0.7
     b.box(min(xi, xo), max(xi, xo), min(y0, y1), max(y0, y1), 0.0, H, BASALT)
     width = abs(y1 - y0)
     ymid = (y0 + y1) / 2
     toward = Vector((-s, 0, 0))
+    ya, yb = min(y0, y1), max(y0, y1)
+
+    if striped:
+        # almaşık duvar: bazalt arasında açık kireç taşı sıraları (Hasan Paşa Hanı / Ulu Cami çevresi)
+        xa, xb = sorted((s * (STREET_HALF - 0.025), s * (STREET_HALF + 0.01)))
+        z = 0.45
+        while z < H - 0.5:
+            b.box(xa, xb, ya + 0.02, yb - 0.02, z, z + 0.3, LIME)
+            z += 0.75
+
+    if shop:
+        # çarşı dükkânı: geniş açıklık, kepenk üstü, çizgili tente, tabela (yazısı Unity'de)
+        yc = ymid
+        sw = min(width - 1.0, 3.0)
+        xa, xb = sorted((s * (STREET_HALF - 0.02), s * (STREET_HALF + 0.3)))
+        b.box(xa, xb, yc - sw / 2, yc + sw / 2, 0.15, 2.45, GLASS)
+        xa2, xb2 = sorted((s * (STREET_HALF - 0.06), s * (STREET_HALF + 0.02)))
+        b.box(xa2, xb2, yc - sw / 2 - 0.15, yc + sw / 2 + 0.15, 2.45, 2.62, TRIM)
+        b.box(xa2, xb2, yc - sw / 2 - 0.15, yc - sw / 2, 0.0, 2.45, TRIM)
+        b.box(xa2, xb2, yc + sw / 2, yc + sw / 2 + 0.15, 0.0, 2.45, TRIM)
+        b.box(*sorted((s * (STREET_HALF - 0.05), s * (STREET_HALF - 0.1))), yc - sw / 2, yc + sw / 2, 2.2, 2.45, IRON)
+        col = rng.choice((AWNRED, AWNGREEN))
+        n = max(4, int(sw / 0.32))
+        for k in range(n):
+            u0 = yc - sw / 2 - 0.2 + (sw + 0.4) * k / n
+            u1 = yc - sw / 2 - 0.2 + (sw + 0.4) * (k + 1) / n
+            mat = col if k % 2 == 0 else AWNWHITE
+            to3 = lambda uu, v, u0=u0: (s * (STREET_HALF - uu), u0, v)
+            b.prism([(0.0, 2.95), (1.15, 2.55), (1.15, 2.48), (0.0, 2.88)], to3, Vector((0, u1 - u0, 0)), mat)
+        xa3, xb3 = sorted((s * (STREET_HALF - 0.05), s * (STREET_HALF - 0.12)))
+        b.box(xa3, xb3, yc - 1.15, yc + 1.15, 3.0, 3.55, BOARD)
+        b.box(*sorted((s * (STREET_HALF - 0.04), s * (STREET_HALF - 0.13))), yc - 1.2, yc + 1.2, 2.95, 3.0, TRIM)
+        # Unity koordinatı: x = -Blender x, z = -Blender y; side = Blender cephe işareti
+        SIGNS.append({"text": rng.choice(SHOP_NAMES), "x": -s * (STREET_HALF - 0.135), "y": 3.275, "z": -yc, "side": s})
 
     # Kat bantları ve saçak (açık taş)
     for f in range(1, floors + 1):
@@ -180,18 +236,31 @@ def house(b, s, y0, y1, floors, has_cumba, door_pos):
         x0, x1 = sorted((s * (STREET_HALF - 0.08), s * (STREET_HALF + 0.05)))
         b.box(x0, x1, min(y0, y1), max(y0, y1), z - 0.12, z + 0.06 if f < floors else z + 0.25, TRIM)
 
-    # Zemin kat: kemerli kapı + taş söve + basamak
-    yd = ymid + door_pos * width * 0.25
-    to3 = facade_point(s, 0.03)(yd, 0.0)
-    b.prism(arch_profile(1.15, 2.45), to3, toward * 0.06, WOOD)
-    b.prism(ring_profile(1.15, 2.45, 0.18), facade_point(s, 0.0)(yd, 0.0), toward * 0.14, TRIM)
-    sx0, sx1 = sorted((s * STREET_HALF, s * (STREET_HALF - 0.45)))
-    b.box(sx0, sx1, yd - 0.85, yd + 0.85, 0.0, CURB_H + 0.14, TRIM)
+    # Zemin kat: kemerli kapı + taş söve + basamak (dükkânda kapı yana kayar)
+    yd = ymid + door_pos * width * (0.38 if shop else 0.25)
+    if shop and width < 5.2:
+        yd = None
+    if yd is not None:
+        to3 = facade_point(s, 0.03)(yd, 0.0)
+        b.prism(arch_profile(1.15, 2.45), to3, toward * 0.06, WOOD)
+        b.prism(ring_profile(1.15, 2.45, 0.18), facade_point(s, 0.0)(yd, 0.0), toward * 0.14, LIME if striped else TRIM)
+        sx0, sx1 = sorted((s * STREET_HALF, s * (STREET_HALF - 0.45)))
+        b.box(sx0, sx1, yd - 0.85, yd + 0.85, 0.0, CURB_H + 0.14, TRIM)
 
     # Zemin kat penceresi (kapının diğer tarafında)
     yw = ymid - door_pos * width * 0.27
-    if abs(yw - yd) > 1.6:
+    if not shop and yd is not None and abs(yw - yd) > 1.6:
         window(b, s, yw, 1.0, 0.7, 1.25)
+
+    # duvara asılı kilim (bazı evlerde, 1. kat)
+    if not has_cumba and floors >= 2 and rng.random() < 0.45:
+        kc = rng.choice((KILIMA, KILIMC))
+        yk = ymid + rng.uniform(-0.6, 0.6)
+        xk0, xk1 = sorted((s * (STREET_HALF - 0.04), s * (STREET_HALF - 0.07)))
+        b.box(xk0, xk1, yk - 0.6, yk + 0.6, FLOOR_H + 0.3, FLOOR_H + 2.1, kc)
+        for k in range(4):
+            zz = FLOOR_H + 0.55 + k * 0.42
+            b.box(*sorted((s * (STREET_HALF - 0.07), s * (STREET_HALF - 0.08))), yk - 0.5, yk + 0.5, zz, zz + 0.12, KILIMB)
 
     # Üst katlar: kemerli pencereler ya da cumba
     for f in range(1, floors):
@@ -310,6 +379,88 @@ def street_floor(b, y0, y1):
         b.box(xa, xb, y0, y1, -0.2, CURB_H, CURB)
 
 
+def string_lights(b, y_start, y_end, step=11.0):
+    """Sokak üstünde zikzak ışık zinciri: cephe → cephe, sıcak ampuller (akşam çarşı havası)."""
+    y = y_start
+    side = 1
+    while y > y_end + 2:
+        y2 = y - step * 0.5
+        p0 = Vector((side * (STREET_HALF - 0.1), y, 5.6))
+        p1 = Vector((-side * (STREET_HALF - 0.1), y2, 5.6))
+        n = 16
+        prev = None
+        for i in range(n + 1):
+            t = i / n
+            q = p0.lerp(p1, t)
+            q.z -= 0.7 * 4 * t * (1 - t)
+            if prev is not None:
+                mid = (q + prev) / 2
+                ln = (q - prev).length
+                b.box(mid.x - 0.012, mid.x + 0.012, mid.y - ln / 2, mid.y + ln / 2, mid.z - 0.012, mid.z + 0.012, IRON)
+            if 0 < i < n:
+                b.box(q.x - 0.05, q.x + 0.05, q.y - 0.05, q.y + 0.05, q.z - 0.16, q.z - 0.06, BULB)
+            prev = q
+        y = y2
+        side = -side
+
+
+def cyl(b, x, y, z0, z1, r, mat, segs=12):
+    bm = b.bm
+    lo = [bm.verts.new((x + r * math.cos(2 * math.pi * k / segs), y + r * math.sin(2 * math.pi * k / segs), z0)) for k in range(segs)]
+    hi = [bm.verts.new((x + r * math.cos(2 * math.pi * k / segs), y + r * math.sin(2 * math.pi * k / segs), z1)) for k in range(segs)]
+    for k in range(segs):
+        j = (k + 1) % segs
+        f = bm.faces.new((lo[k], lo[j], hi[j], hi[k]))
+        f.material_index = mat
+    f = bm.faces.new(list(reversed(lo)))
+    f.material_index = mat
+    f = bm.faces.new(hi)
+    f.material_index = mat
+
+
+def cone(b, x, y, z0, z1, r, mat, segs=12):
+    bm = b.bm
+    off = math.pi / 4 if segs == 4 else 0.0
+    lo = [bm.verts.new((x + r * math.cos(2 * math.pi * k / segs + off), y + r * math.sin(2 * math.pi * k / segs + off), z0))
+          for k in range(segs)]
+    tip = bm.verts.new((x, y, z1))
+    for k in range(segs):
+        f = bm.faces.new((lo[k], lo[(k + 1) % segs], tip))
+        f.material_index = mat
+    f = bm.faces.new(list(reversed(lo)))
+    f.material_index = mat
+
+
+def dort_ayakli_minare(b, x, y):
+    """Dört Ayaklı Minare (Şeyh Mutahhar Camii, 1500): dört silindir sütun üstünde kare bazalt gövde,
+    üstte kısa silindir gövde ve konik külah (Archnet / Dicle Üniv. tarifi). Ölçek oyuna göre."""
+    for dx in (-0.85, 0.85):
+        for dy in (-0.85, 0.85):
+            cyl(b, x + dx, y + dy, 0.0, 3.6, 0.22, BASALT)
+    b.box(x - 1.3, x + 1.3, y - 1.3, y + 1.3, 3.6, 4.0, TRIM)
+    b.box(x - 1.2, x + 1.2, y - 1.2, y + 1.2, 4.0, 15.0, BASALT)
+    z = 5.0
+    while z < 14.5:
+        b.box(x - 1.22, x + 1.22, y - 1.22, y + 1.22, z, z + 0.28, LIME)
+        z += 1.4
+    b.box(x - 1.45, x + 1.45, y - 1.45, y + 1.45, 15.0, 15.35, TRIM)
+    cyl(b, x, y, 15.35, 18.6, 0.75, BASALT)
+    cyl(b, x, y, 18.6, 18.8, 0.9, TRIM)
+    cone(b, x, y, 18.8, 21.6, 0.85, TRIM)
+
+
+def ulu_cami_minaret(b, x, y):
+    """Ulu Cami minaresi: kare planlı kalın gövde, açık kireç taşı bantlar, piramit külah."""
+    b.box(x - 1.9, x + 1.9, y - 1.9, y + 1.9, 0.0, 20.0, BASALT)
+    for z in (6.0, 10.0, 14.0, 17.5):
+        b.box(x - 1.92, x + 1.92, y - 1.92, y + 1.92, z, z + 0.45, LIME)
+    for k in (-1, 1):
+        for sy in (-1, 1):
+            b.box(x - 0.4 + k * 0.9, x + 0.4 + k * 0.9, y + sy * 1.9 - 0.03, y + sy * 1.9 + 0.03, 15.0, 16.8, GLASS)
+    b.box(x - 2.2, x + 2.2, y - 2.2, y + 2.2, 20.0, 20.4, TRIM)
+    cone(b, x, y, 20.4, 24.0, 2.2, TRIM, segs=4)
+
+
 def build():
     for o in list(bpy.data.objects):
         if o.name.startswith(("DiyarbakirStreet", "Street_")):
@@ -323,14 +474,17 @@ def build():
         while y > -SEGMENT + 0.5:
             w = min(rng.uniform(4.5, 7.5), y + SEGMENT)
             floors = rng.choice((2, 3, 3))
-            house(walls, s, y, y - w, floors, has_cumba=rng.random() < 0.8 and floors >= 2, door_pos=rng.choice((-1, 1)))
+            house(walls, s, y, y - w, floors, has_cumba=rng.random() < 0.6 and floors >= 2, door_pos=rng.choice((-1, 1)),
+                  striped=rng.random() < 0.45, shop=rng.random() < 0.5 and w > 4.6)
             y -= w
 
     bridges = Builder()
     for yc in (-18.0, -46.0):
         arch_bridge(bridges, yc)
 
-    objs = [floor.finish("Street_Floor"), walls.finish("Street_Houses"), bridges.finish("Street_Arches")]
+    lights = Builder()
+    string_lights(lights, -4.0, -SEGMENT)
+    objs = [floor.finish("Street_Floor"), walls.finish("Street_Houses"), bridges.finish("Street_Arches"), lights.finish("Street_Lights")]
     for o in objs:
         for p in o.data.polygons:
             p.use_smooth = False
@@ -349,7 +503,33 @@ def export(objs):
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH, copy=True)
 
 
+def build_landmarks():
+    """Ayrı FBX: Unity bazı sokak modüllerinin arkasına koyar (her modülde tekrarlanmasın)."""
+    a, c = Builder(), Builder()
+    dort_ayakli_minare(a, 0.0, 0.0)
+    ulu_cami_minaret(c, 0.0, 0.0)
+    objs = [a.finish("Landmark_DortAyakliMinare"), c.finish("Landmark_UluCamiMinaret")]
+    for o in objs:
+        for p in o.data.polygons:
+            p.use_smooth = False
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in objs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
+    bpy.ops.export_scene.fbx(filepath=LANDMARK_FBX, use_selection=True, object_types={"MESH"},
+                             apply_unit_scale=True, apply_scale_options="FBX_SCALE_UNITS",
+                             axis_forward="-Z", axis_up="Y", mesh_smooth_type="FACE", path_mode="COPY", embed_textures=False)
+    objs[0].location.x += 14.0      # blend dosyasında sokağın arkasında dursunlar (dışa aktarımdan sonra)
+    objs[1].location.x -= 16.0
+    objs[1].location.y -= 30.0
+    return objs
+
+
 if __name__ == "__main__":   # build_rooftops.py yardımcıları içe aktarır
     _objs = build()
+    with open(SIGNS_PATH, "w", encoding="utf-8") as fh:
+        json.dump({"signs": SIGNS}, fh, ensure_ascii=False, indent=1)
     export(_objs)
+    build_landmarks()
+    bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH, copy=True)
     print("STREET_OK", [(o.name, len(o.data.polygons)) for o in _objs])
