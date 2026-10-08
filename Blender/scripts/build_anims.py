@@ -2,7 +2,7 @@
 Koşucu animasyonları — Desktop/Yeni klasör animasyon videoları.
 runner.blend'deki RunnerRig (MPFB game_engine iskeleti) üzerine keyframe'li action'lar:
   Idle (nefes, döngü), Run (koşu, döngü), Crouch (zıplama şarjı), Jump (kalkış), Fall (havada tuck),
-  Land (iniş), Zipline (halatta, döngü), Death (çöküş).
+  Land (iniş), Zipline (halatta, döngü), Death (çöküş), Slide (aşağı kaydırma: yere yatıp kayma, 24 kare = 0.8 sn).
 Pozlar: kemik → dünya yönü (karakter -Y'ye bakar, sol taraf +X, yukarı +Z).
 Çıktı: Runner.fbx (meshler + tüm action'lar) ve runner.blend.
 """
@@ -111,6 +111,17 @@ DOWN = P(KNEEL, root=(-1.45, -0.95, 0.12),  # (X dönüşü rad, y kayma, z) —
          upperarm_l=V(0.9, -0.2, 0.3), upperarm_r=V(-0.9, -0.2, 0.3), lowerarm_l=V(0.9, -0.3, 0.2), lowerarm_r=V(-0.9, -0.3, 0.2),
          spine_02=V(0, 0, 1), spine_03=V(0, 0, 1), head=V(0.3, -0.1, 1), pelvis_z=0.0)
 
+# Kayma: gövde geriye yaslı, sağ bacak önde düz, sol bacak altta katlı, sol el yere destek, sağ kol önde denge
+SLIDE = P(
+    spine_01=V(0, 0.55, 0.83), spine_02=V(0, 0.6, 0.8), spine_03=V(0, 0.5, 0.86), neck_01=V(0, 0.15, 1), head=V(0, 0.05, 1),
+    thigh_r=V(-0.08, -0.95, -0.3), calf_r=V(-0.05, -1, -0.12), foot_r=V(0, -0.3, 0.95),
+    thigh_l=V(0.14, -0.85, -0.45), calf_l=V(0.05, 0.99, -0.05), foot_l=V(0, 0.5, 0.85),
+    upperarm_l=V(0.45, 0.5, -0.74), lowerarm_l=V(0.3, 0.3, -0.9),
+    upperarm_r=V(-0.45, -0.6, 0.2), lowerarm_r=V(-0.3, -0.8, 0.4),
+    pelvis_z=-0.7,
+)
+SLIDE_B = P(SLIDE, spine_02=V(0, 0.64, 0.77), upperarm_r=V(-0.5, -0.55, 0.3), head=V(0, 0.0, 1), pelvis_z=-0.72)
+
 BREATH_IN = P(spine_03=V(0, 0.07, 1), upperarm_l=V(0.23, 0.02, -1), upperarm_r=V(-0.23, 0.02, -1), pelvis_z=0.006)
 
 ACTIONS = {
@@ -123,6 +134,8 @@ ACTIONS = {
     "Land": ([(0, CROUCH), (8, CROUCH_LIGHT), (16, STAND)], False),
     "Zipline": ([(0, ZIP), (30, P(ZIP, spine_01=V(-0.05, 0.08, 1), thigh_l=V(0.08, -0.35, -0.94))), (60, ZIP)], True),
     "Death": ([(0, STAND), (8, STAGGER), (22, KNEEL), (34, KNEEL), (48, DOWN)], False),
+    # Unity: PlayerController.slideDuration ile senkron (SlideSpeed = 0.8 sn / kayma süresi)
+    "Slide": ([(0, CROUCH), (4, SLIDE), (12, SLIDE_B), (19, SLIDE), (24, CROUCH_LIGHT)], False),
 }
 
 

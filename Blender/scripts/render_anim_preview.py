@@ -5,7 +5,7 @@ import os
 import bpy
 from mathutils import Euler
 
-SHOTS = [("Idle", 0), ("Run", 0), ("Run", 5), ("Crouch", 12), ("Jump", 5), ("Jump", 14), ("Zipline", 0), ("Death", 22), ("Death", 48)]
+SHOTS = [("Run", 0), ("Slide", 0), ("Slide", 4), ("Slide", 12), ("Slide", 19), ("Slide", 24)]
 bpy.ops.wm.open_mainfile(filepath=r"D:\Repolar\junpline\Blender\source\runner.blend")
 sc = bpy.context.scene
 rig = bpy.data.objects["RunnerRig"]

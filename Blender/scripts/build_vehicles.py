@@ -6,6 +6,8 @@ ve dolu görünsün diye.
   Minibus.fbx   beyaz-mavi dolmuş (yüksek, üstüne çıkılmaz → şerit değiştir)
   SurGate.fbx   bazalt sur kapısı: iki burç + yolun üstünde alçak geçit (alt kenar 3.7 m, kırmızı neon uyarı şeridi)
                 → kamyon tavanındaki koşucu kafasını çarpar
+  SlideBar.fbx  kalas bariyer: iki taş direk + kırmızı-beyaz kalas (alt kenar 1.15, üst 1.5, mavi neon alt şerit)
+                → altından KAY (aşağı kaydır) ya da üstünden zıpla
   CrateStack.fbx üç ayrı sandık (Crate_0..2) — çarpınca ayrı ayrı yere savrulur (Unity Breakable)
 
 Koordinatlar "Unity gibi": x yanal, h yukarı, z ileri (koşucu -z'den gelir). Blender'a (−x, −z, h).
@@ -225,6 +227,25 @@ def sur_gate():
     return finish(p, "SurGate")
 
 
+def slide_bar():
+    p = []
+    for s in (-1, 1):                                                          # taş direkler (şerit kenarında)
+        box(p, s * 0.98, s * 1.18, 0.0, 1.62, -0.12, 0.12, "T_Basalt", 0.02)
+        box(p, s * 0.95, s * 1.21, 1.62, 1.72, -0.15, 0.15, "T_Trim", 0.02)
+        box(p, s * 0.94, s * 1.22, 0.0, 0.14, -0.16, 0.16, "T_Trim")
+    k, i = -0.98, 0
+    while k < 0.98:                                                            # kırmızı-beyaz uyarı kalası
+        box(p, k, min(k + 0.28, 0.98), 1.15, 1.5, -0.07, 0.07, "T_PaintRed" if i % 2 == 0 else "T_White")
+        k += 0.28
+        i += 1
+    box(p, -0.98, 0.98, 1.13, 1.17, -0.09, -0.05, "T_Neon")                   # alt kenar neon (ön)
+    box(p, -0.98, 0.98, 1.13, 1.17, 0.05, 0.09, "T_Neon")                     # (arka)
+    for x in (-0.6, 0.0, 0.6):                                                 # asılı küçük nazarlık / püskül
+        box(p, x - 0.03, x + 0.03, 0.95, 1.15, -0.02, 0.02, "T_Rust")
+        box(p, x - 0.07, x + 0.07, 0.85, 0.97, -0.03, 0.03, "T_Blue", 0.02)
+    return finish(p, "SlideBar")
+
+
 def crate_stack():
     """Üç ayrı sandık: Crate_0, Crate_1 (alt), Crate_2 (üst, hafif dönük)."""
     objs = []
@@ -270,6 +291,9 @@ def main():
     export([g], "SurGate")
     c = crate_stack()
     export(c, "CrateStack")
+    sb = slide_bar()
+    export([sb], "SlideBar")
+    sb.location.x -= 16
     # blend dosyasında yan yana dursunlar (dışa aktarımdan sonra)
     t.location.x -= 4
     m.location.x -= 8

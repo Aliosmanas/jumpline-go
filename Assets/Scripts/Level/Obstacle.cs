@@ -26,6 +26,10 @@ namespace Jumpline.Level
         [Tooltip("Yarı genişlik (x, m).")]
         [SerializeField, Min(0.05f)] private float halfWidth = 0.7f;
         [SerializeField] private Segment[] segments = { new Segment { z0 = -0.4f, z1 = 0.4f, h0 = 1f, h1 = 1f } };
+        [Tooltip("Tavan kalınlığı (m): 0 = gökyüzüne kadar (sur kapısı); >0 = üstünden de geçilebilen bariyer (kalas).")]
+        [SerializeField, Min(0f)] private float thickness;
+
+        public float Thickness => thickness;
 
         public Kind Type => kind;
         public float MinZ => transform.position.z + (segments.Length > 0 ? segments[0].z0 : 0f);
@@ -52,8 +56,9 @@ namespace Jumpline.Level
             return false;
         }
 
-        public void Configure(Kind type, float width, Segment[] segs)
+        public void Configure(Kind type, float width, Segment[] segs, float ceilingThickness = 0f)
         {
+            thickness = ceilingThickness;
             kind = type;
             halfWidth = width;
             segments = segs;
@@ -96,6 +101,19 @@ namespace Jumpline.Level
             for (int i = 0; i < Active.Count; i++)
                 if (Active[i].Type == Obstacle.Kind.Solid && Active[i].TryHeight(x, z, out float h)) surface = Mathf.Max(surface, h);
             return surface;
+        }
+
+        /// <summary>Gövde (ayak..kafa) bir tavanın/bariyerin kalınlığıyla çakışıyor mu (kafa çarpar).</summary>
+        public static bool HitsCeiling(float x, float z, float feet, float head)
+        {
+            for (int i = 0; i < Active.Count; i++)
+            {
+                Obstacle o = Active[i];
+                if (o.Type != Obstacle.Kind.Ceiling || !o.TryHeight(x, z, out float bottom)) continue;
+                float top = o.Thickness > 0f ? bottom + o.Thickness : float.PositiveInfinity;
+                if (head > bottom && feet < top) return true;
+            }
+            return false;
         }
 
         /// <summary>(x,z) noktasındaki en alçak tavan (yoksa +∞).</summary>

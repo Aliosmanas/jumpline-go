@@ -13,6 +13,7 @@ namespace Jumpline.Level
     ///  • Taksi (zıplayıp üstüne çıkılabilir) · Dolmuş (çıkılmaz, şerit değiştir)
     ///  • Rampalı kamyon: rampadan çık, tavanda koş — sur kapısı gelirse yana kaç (kafa çarpar)
     ///  • Sur kapısı (tavan): yerdeki koşucu altından geçer, tam güçle zıplayan ya da araç tavanındaki çarpar
+    ///  • Kalas bariyer: altından KAY (aşağı kaydır) ya da üstünden zıpla
     /// Aralar hızla birlikte açılır (aynı tepki süresi). Çatıda yalnız dekor engeller; zipline bölgesi ve portal önü boş.
     /// </summary>
     public class ObstacleSpawner : MonoBehaviour
@@ -31,6 +32,7 @@ namespace Jumpline.Level
         [SerializeField] private Obstacle[] cars;
         [SerializeField] private Obstacle[] buses;
         [SerializeField] private Obstacle[] gates;
+        [SerializeField] private Obstacle[] bars;
         [Tooltip("Rampalı aracın boyu (z, m).")]
         [SerializeField, Min(1f)] private float rampLength = 11.6f;
         [Tooltip("Kamyon başından sur kapısına mesafe (kamyon tavanının ortası).")]
@@ -95,7 +97,8 @@ namespace Jumpline.Level
                     float rel = Mathf.Repeat(z - switcher.RooftopRootZ, switcher.RooftopModuleLength);
                     if (rel > rooftopNoSpawn.x && rel < rooftopNoSpawn.y) return rooftopNoSpawn.y - rel;
                 }
-                if (roll < 0.30f) { Place(low, a, z); Place(low, b, z); return 0f; }
+                if (roll < 0.18f && Has(bars)) { Place(bars, a, z); Place(bars, b, z); if (Random.value < 0.5f) Place(low, c, z); return 0f; }
+                if (roll < 0.36f) { Place(low, a, z); Place(low, b, z); return 0f; }
                 if (roll < 0.55f) { Place(walls, a, z); Place(low, b, z); return 0f; }
                 if (roll < 0.75f) { Place(high, a, z); Place(walls, b, z); return 0f; }
                 if (roll < 0.88f) { Place(low, a, z); Place(low, b, z); Place(low, c, z); return 0f; }
@@ -125,7 +128,14 @@ namespace Jumpline.Level
                 if (Random.value < 0.6f) Place(low, b, z + 1.5f);
                 return 2f;
             }
-            if (roll < 0.52f) { Place(low, a, z); Place(Has(cars) ? cars : low, b, z + 1f); return 4f; }
+            if (roll < 0.50f && Has(bars))
+            {
+                Place(bars, a, z);                                                     // bariyer: kay ya da zıpla
+                Place(Random.value < 0.6f ? bars : low, b, z);
+                if (Random.value < 0.4f) Place(walls, c, z);
+                return 0f;
+            }
+            if (roll < 0.56f) { Place(low, a, z); Place(Has(cars) ? cars : low, b, z + 1f); return 4f; }
             if (roll < 0.64f) { Place(low, a, z); Place(low, b, z); return 0f; }
             if (roll < 0.74f) { Place(walls, a, z); Place(low, b, z); if (Random.value < 0.35f) Place(cars, c, z + 1f); return 3f; }
             if (roll < 0.82f) { Place(high, a, z); Place(Has(buses) ? buses : walls, b, z); return 5f; }

@@ -18,9 +18,9 @@ namespace Jumpline.Level
         [SerializeField] private Transform spinner;
         [SerializeField] private float spinSpeed = -160f;
         [Tooltip("Koşucunun (dünyaya girince) ilk portala kadar koşacağı mesafe.")]
-        [SerializeField, Min(5f)] private float firstDistance = 45f;
+        [SerializeField, Min(5f)] private float firstDistance = 160f;
         [Tooltip("Sonraki portallar arası mesafe.")]
-        [SerializeField, Min(10f)] private float spacing = 140f;
+        [SerializeField, Min(10f)] private float spacing = 420f;
         [Tooltip("İlk portal şeridi: -1 sol, 0 orta, 1 sağ, -2 rastgele.")]
         [SerializeField, Range(-2, 1)] private int startLane = 0;
         [Tooltip("Renk (alfa 0 = modelin kendi rengi). Girdap, ışık ve parçacıklara uygulanır.")]

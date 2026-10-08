@@ -18,7 +18,7 @@ namespace Jumpline.Player
     /// </summary>
     public class PlayerController : MonoBehaviour
     {
-        private enum State { Running, Charging, Airborne, ZipGrab, ZipSlide, Dead, FallingDead }
+        private enum State { Running, Charging, Airborne, ZipGrab, ZipSlide, Dead, FallingDead, Sliding }
 
         [Header("Koşu / hız")]
         [Tooltip("Başlangıç koşu hızı (m/sn).")]
@@ -61,6 +61,16 @@ namespace Jumpline.Player
         [Tooltip("Ayaktan kafaya yükseklik (tavana çarpma).")]
         [SerializeField, Min(0.5f)] private float headHeight = 1.7f;
 
+        [Header("Kayma (aşağı kaydır / S / ↓)")]
+        [Tooltip("Kayma süresi (sn). Animasyon bu süreye göre hızlandırılır/yavaşlatılır → tam senkron.")]
+        [SerializeField, Min(0.2f)] private float slideDuration = 0.8f;
+        [Tooltip("Slide klibinin gerçek uzunluğu (Blender build_anims.py: 24 kare / 30 fps).")]
+        [SerializeField, Min(0.05f)] private float slideClipLength = 0.8f;
+        [Tooltip("Kayarken kafa yüksekliği (bariyer altından geçiş).")]
+        [SerializeField, Min(0.3f)] private float slideHeadHeight = 1.0f;
+        [Tooltip("Havadayken aşağı kaydırınca yere iniş hızı (sonra kayar).")]
+        [SerializeField, Min(0f)] private float fastDropSpeed = 22f;
+
         [Header("Zipline")]
         [Tooltip("Halat üzerinde ileri hız (m/sn).")]
         [SerializeField, Min(0.1f)] private float ziplineSpeed = 13f;
@@ -95,6 +105,8 @@ namespace Jumpline.Player
         private float currentSpeed;
         private float aliveTime;
         private int speedLevel;
+        private float slideEnd;
+        private bool slideQueued;      // havada aşağı kaydırıldı: inince kay
 
         // zipline: kök (ayak) yolu
         private Vector3 zipA, zipB;
@@ -118,6 +130,7 @@ namespace Jumpline.Player
         public float GroundHeight => groundHeight;
         public bool OnZipline => state == State.ZipGrab || state == State.ZipSlide;
         public bool IsAirborne => state == State.Airborne;
+        public bool IsSliding => state == State.Sliding;
         public bool IsDead => state == State.Dead || state == State.FallingDead;
 
         private static readonly int RunTrigger = Animator.StringToHash("Run");
@@ -127,7 +140,9 @@ namespace Jumpline.Player
         private static readonly int LandTrigger = Animator.StringToHash("Land");
         private static readonly int ZiplineTrigger = Animator.StringToHash("Zipline");
         private static readonly int DeathTrigger = Animator.StringToHash("Death");
-        private static readonly int[] AllTriggers = { RunTrigger, CrouchTrigger, JumpTrigger, FallTrigger, LandTrigger, ZiplineTrigger, DeathTrigger };
+        private static readonly int SlideTrigger = Animator.StringToHash("Slide");
+        private static readonly int SlideSpeedParam = Animator.StringToHash("SlideSpeed");
+        private static readonly int[] AllTriggers = { RunTrigger, CrouchTrigger, JumpTrigger, FallTrigger, LandTrigger, ZiplineTrigger, DeathTrigger, SlideTrigger };
 
         private void Awake()
         {
@@ -162,7 +177,13 @@ namespace Jumpline.Player
             if (pressed && hasPointer && !pressConsumed)
             {
                 float dx = (pointer.x - pressStart.x) / Mathf.Max(1, Screen.width);
-                if (Mathf.Abs(dx) >= swipeThreshold)
+                float dy = (pointer.y - pressStart.y) / Mathf.Max(1, Screen.width);
+                if (-dy >= swipeThreshold && -dy > Mathf.Abs(dx))
+                {
+                    pressConsumed = true;      // aşağı kaydırma → kay
+                    RequestSlide();
+                }
+                else if (Mathf.Abs(dx) >= swipeThreshold)
                 {
                     pressConsumed = true;
                     ChangeLane(dx > 0f ? 1 : -1);
@@ -179,6 +200,14 @@ namespace Jumpline.Player
             {
                 case State.Running:
                     if (down && !pressConsumed) BeginCharge();
+                    break;
+                case State.Sliding:
+                    if (down && !pressConsumed) BeginCharge();   // kayarken basılı tut → kalkıp zıplamaya hazırlan
+                    else if (Time.time >= slideEnd)
+                    {
+                        state = State.Running;
+                        Trigger(RunTrigger);
+                    }
                     break;
                 case State.Charging:
                     Charge01 = Mathf.Clamp01((Time.time - chargeStart) / maxChargeTime);
@@ -230,7 +259,8 @@ namespace Jumpline.Player
                     p.y = surface;
                     verticalVelocity = 0f;
                     state = State.Running;
-                    Trigger(LandTrigger);
+                    if (slideQueued) StartSlide();   // havada aşağı kaydırıldı: yere değince kay
+                    else Trigger(LandTrigger);
                 }
                 else if (surface > p.y + stepUp)
                 {
@@ -250,20 +280,52 @@ namespace Jumpline.Player
                 {
                     // kenardan düştü (kamyon önü, çatı kenarı)
                     if (state == State.Charging) Charge01 = 0f;
+                    slideQueued = state == State.Sliding;
                     state = State.Airborne;
                     verticalVelocity = 0f;
                     Trigger(FallTrigger);
                 }
             }
 
-            // tavan: kafa sur kapısının alt kenarını aşıyorsa çarpar
-            if (p.y + headHeight > ObstacleField.CeilingAt(p.x, p.z))
+            // tavan / bariyer: gövde (ayak..kafa) sur kapısının ya da kalasın içine giriyorsa çarpar; kayarken kafa alçak
+            float head = state == State.Sliding ? slideHeadHeight : headHeight;
+            if (ObstacleField.HitsCeiling(p.x, p.z, p.y, p.y + head))
             {
                 Crash(ref p, prevY);
                 return;
             }
             if (p.y < groundHeight - fallDeathDepth) BeginFallDeath();
             transform.position = p;
+        }
+
+        /// <summary>Aşağı kaydırma: yerdeyse hemen kay; havadaysa hızla in, değince kay.</summary>
+        private void RequestSlide()
+        {
+            switch (state)
+            {
+                case State.Running:
+                case State.Charging:
+                    StartSlide();
+                    break;
+                case State.Airborne:
+                    verticalVelocity = Mathf.Min(verticalVelocity, -fastDropSpeed);
+                    slideQueued = true;
+                    break;
+            }
+        }
+
+        private void StartSlide()
+        {
+            slideQueued = false;
+            state = State.Sliding;
+            Charge01 = 0f;
+            slideEnd = Time.time + slideDuration;
+            if (animator != null)
+            {
+                animator.speed = 1f;
+                animator.SetFloat(SlideSpeedParam, slideClipLength / slideDuration);   // klip tam kayma süresince oynar
+            }
+            Trigger(SlideTrigger);
         }
 
         private void UpdateSpeed(float dt)
@@ -312,6 +374,7 @@ namespace Jumpline.Player
             transform.position = position;
             verticalVelocity = 0f;
             Charge01 = 0f;
+            slideQueued = false;
             if (ziplineSparks != null) ziplineSparks.Stop();
             if (position.y > ground + 0.01f)
             {
@@ -431,6 +494,7 @@ namespace Jumpline.Player
             if (kb == null) return;
             if (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame) ChangeLane(-1);
             if (kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame) ChangeLane(1);
+            if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame) RequestSlide();
         }
 
         private void Jump()

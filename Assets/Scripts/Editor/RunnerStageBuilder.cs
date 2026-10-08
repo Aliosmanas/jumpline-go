@@ -155,7 +155,7 @@ namespace Jumpline.EditorTools
         public const string MenuControllerPath = "Assets/Art/Characters/Runner/RunnerMenu.controller";
         public const string GameControllerPath = "Assets/Art/Characters/Runner/RunnerGame.controller";
         private static readonly string[] LoopClips = { "Idle", "Run", "Zipline" };
-        private static readonly string[] AllClips = { "Idle", "Run", "Crouch", "Jump", "Fall", "Land", "Zipline", "Death" };
+        private static readonly string[] AllClips = { "Idle", "Run", "Crouch", "Jump", "Fall", "Land", "Zipline", "Death", "Slide" };
 
         /// <summary>FBX'teki action'ları adlandırır, döngüleri ayarlar, menü (Idle) ve oyun (Run) controller'larını kurar.</summary>
         public static void SetupAnimations()
@@ -196,8 +196,16 @@ namespace Jumpline.EditorTools
                 if (name == defaultState) sm.defaultState = st;
             }
             // Oyun akışı için tetikleyiciler (oynanış kodu bunları çağıracak)
-            foreach (string trig in new[] { "Crouch", "Jump", "Fall", "Land", "Zipline", "Death", "Run", "Idle" })
+            foreach (string trig in new[] { "Crouch", "Jump", "Fall", "Land", "Zipline", "Death", "Run", "Idle", "Slide" })
                 ctrl.AddParameter(trig, AnimatorControllerParameterType.Trigger);
+            // kayma: PlayerController klibi kayma süresine eşitler (SlideSpeed = klip uzunluğu / kayma süresi)
+            ctrl.AddParameter(new AnimatorControllerParameter { name = "SlideSpeed", type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
+            var slideState = System.Array.Find(sm.states, x => x.state.name == "Slide").state;
+            if (slideState != null)
+            {
+                slideState.speedParameterActive = true;
+                slideState.speedParameter = "SlideSpeed";
+            }
             foreach (var st in sm.states)
             {
                 var t = sm.AddAnyStateTransition(st.state);

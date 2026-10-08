@@ -411,6 +411,9 @@ namespace Jumpline.EditorTools
             Set(comp, "spinner", spinner);
             var so = new SerializedObject(comp);
             so.FindProperty("leadsToRooftop").boolValue = leadsToRooftop;
+            // portallar seyrek: sokakta ~160 m sonra ilki, sonra ~420 m'de bir; çatıda dönüş biraz daha geç
+            so.FindProperty("firstDistance").floatValue = leadsToRooftop ? 160f : 200f;
+            so.FindProperty("spacing").floatValue = 420f;
             if (tint.HasValue) so.FindProperty("tint").colorValue = tint.Value;
             so.ApplyModifiedPropertiesWithoutUndo();
             return comp;
@@ -545,6 +548,7 @@ namespace Jumpline.EditorTools
         public const string MinibusPath = "Assets/Art/Environment/Obstacles/Minibus.fbx";
         public const string SurGatePath = "Assets/Art/Environment/Obstacles/SurGate.fbx";
         public const string CrateStackPath = "Assets/Art/Environment/Obstacles/CrateStack.fbx";
+        public const string SlideBarPath = "Assets/Art/Environment/Obstacles/SlideBar.fbx";
 
         /// <summary>build_vehicles.py taksi: kaput → ön cam eğimi → tavan → arka cam → bagaj (ön -z'de).</summary>
         private static readonly Obstacle.Segment[] TaxiSegments =
@@ -594,6 +598,9 @@ namespace Jumpline.EditorTools
                 new[] { new Obstacle.Segment { z0 = -2.95f, z1 = 2.92f, h0 = 4f, h1 = 4f } });   // çıkılmaz (zıplamanın üstünde)
             Obstacle gate = VehicleObstacle(SurGatePath, "Obs_SurGate", templates.transform, Obstacle.Kind.Ceiling, 3.65f,
                 new[] { new Obstacle.Segment { z0 = -0.8f, z1 = 0.8f, h0 = 3.7f, h1 = 3.7f } });   // alt kenar 3.7 m
+            // kalas bariyer: alt kenar 1.15, kalınlık 0.35 (üstü 1.5) → kayarak altından ya da zıplayarak üstünden
+            Obstacle bar = VehicleObstacle(SlideBarPath, "Obs_SlideBar", templates.transform, Obstacle.Kind.Ceiling, 1.0f,
+                new[] { new Obstacle.Segment { z0 = -0.3f, z1 = 0.3f, h0 = 1.15f, h1 = 1.15f } }, 0.35f);
             templates.SetActive(false);   // şablonlar kayıt olmaz; üretici kopyalar (sınırlar açıkken ölçüldü)
             var player = runner.GetComponent<Jumpline.Player.PlayerController>();
 
@@ -615,6 +622,7 @@ namespace Jumpline.EditorTools
                 SetArray(sp, "cars", One(taxi));
                 SetArray(sp, "buses", One(bus));
                 SetArray(sp, "gates", One(gate));
+                SetArray(sp, "bars", bar == null ? new Object[0] : new Object[] { bar });   // çatıda da var
                 return go;
             }
             return (Spawner("StreetObstacles", false), Spawner("RooftopObstacles", true));
@@ -662,7 +670,8 @@ namespace Jumpline.EditorTools
         }
 
         /// <summary>Tek parçalı araç/kapı FBX'inden engel şablonu (FBX'in eksen dönüşü korunur).</summary>
-        private static Obstacle VehicleObstacle(string path, string name, Transform parent, Obstacle.Kind kind, float halfWidth, Obstacle.Segment[] segs)
+        private static Obstacle VehicleObstacle(string path, string name, Transform parent, Obstacle.Kind kind, float halfWidth, Obstacle.Segment[] segs,
+                                                float thickness = 0f)
         {
             ConfigureVehicleImport(path);
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -672,7 +681,7 @@ namespace Jumpline.EditorTools
             var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root.transform);
             vis.transform.localPosition = Vector3.zero;
             var obs = root.AddComponent<Obstacle>();
-            obs.Configure(kind, halfWidth, segs);
+            obs.Configure(kind, halfWidth, segs, thickness);
             EditorUtility.SetDirty(obs);
             return obs;
         }
@@ -955,8 +964,8 @@ namespace Jumpline.EditorTools
         [MenuItem("Jumpline/Build All Scenes")]
         public static void BuildAll()
         {
-            GameplaySceneBuilder.Build();
-            MainMenuBuilder.Build();
+            MainMenuBuilder.Build();        // önce: koşucu FBX içe aktarımı + animasyon controller'ları yeniden kurulur
+            GameplaySceneBuilder.Build();   // sonra: oyun sahnesi güncel controller'ı bağlar
         }
     }
 }
