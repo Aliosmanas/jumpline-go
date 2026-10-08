@@ -776,7 +776,139 @@ namespace Jumpline.EditorTools
                 SetArray(sp, "bars", bar == null ? new Object[0] : new Object[] { bar });   // çatıda da var
                 return go;
             }
-            return (Spawner("StreetObstacles", false), Spawner("RooftopObstacles", true));
+            var streetGo = Spawner("StreetObstacles", false);
+            BuildCourse(streetGo.GetComponent<ObstacleSpawner>(), templates.transform, low, walls, high, truck, taxi, bus, gate, bar, portals);
+            return (streetGo, Spawner("RooftopObstacles", true));
+        }
+
+        // ---------------------------------------------------------------------
+        // "Sur İçi Koşusu" parkuru (onaylanan önizleme) — Blender/scripts/build_course_assets.py + make_course_json.py
+        // ---------------------------------------------------------------------
+        private const string ObstacleDir = "Assets/Art/Environment/Obstacles";
+        public const string CoursePath = "Assets/Data/Course_SurIci.json";
+
+        private static Obstacle.Segment Seg(float z0, float z1, float h0, float h1) => new Obstacle.Segment { z0 = z0, z1 = z1, h0 = h0, h1 = h1 };
+        private static Obstacle.Segment Seg(float z0, float z1, float h) => Seg(z0, z1, h, h);
+
+        private static void BuildCourse(ObstacleSpawner sp, Transform templates, Obstacle[] low, Obstacle[] walls, Obstacle[] high,
+                                        Obstacle truck, Obstacle taxi, Obstacle bus, Obstacle gate, Obstacle bar, Portal[] portals)
+        {
+            templates.gameObject.SetActive(true);   // sınırlar ölçülebilsin
+            Obstacle V(string file, Obstacle.Kind kind, float hw, Obstacle.Segment[] segs, float thick = 0f) =>
+                VehicleObstacle($"{ObstacleDir}/{file}.fbx", "Obs_" + file, templates, kind, hw, segs, thick);
+            const float Solid = 4f;   // yerden aşılamaz (şerit değiştir)
+            Obstacle melon = V("MelonTruck", Obstacle.Kind.Solid, 1.0f, new[] { Seg(0f, 4f, 0.05f, 2.35f), Seg(4f, 10f, 2.35f), Seg(10f, 12f, 1.95f) });
+            Obstacle cityBus = V("CityBus", Obstacle.Kind.Solid, 1.05f, new[] { Seg(-4.6f, 4.6f, 2.95f) });
+            Obstacle patpat = V("PatPat", Obstacle.Kind.Solid, 0.7f, new[] { Seg(-1.35f, 1.35f, 1.15f) });
+            Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, new[] { Seg(0f, 3f, 0.1f, 1.6f), Seg(3f, 7.2f, 1.6f), Seg(7.2f, 8.1f, 2.55f), Seg(8.1f, 9.5f, 1.35f) });
+            Obstacle stop = V("BusStop", Obstacle.Kind.Solid, 0.95f, new[] { Seg(-1.55f, 1.55f, Solid) });
+            Obstacle teaCart = V("TeaCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
+            Obstacle simitCart = V("SimitCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.7f, 0.7f, Solid) });
+            Obstacle melonStall = V("MelonStall", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
+            Obstacle grill = V("KebabGrill", Obstacle.Kind.Solid, 0.85f, new[] { Seg(-0.6f, 0.6f, Solid) });
+            Obstacle kilim = V("KilimLine", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.3f, 0.3f, 1.15f) }, 1.15f);   // yalnız kay
+            Obstacle potRack = V("PotRack", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.3f, 0.3f, 1.15f) }, 0.95f);
+            Obstacle arch = V("LowArch", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.45f, 0.45f, 1.15f) }, 1.45f);
+            Obstacle teaTable = PiecesObstacle($"{ObstacleDir}/TeaTable.fbx", "Obs_TeaTable", templates, 1f);
+            Obstacle taxiWhite = Recolor(taxi, "Obs_TaxiWhite", "T_Yellow", "#EDEAE3", templates);
+            Obstacle taxiRed = Recolor(taxi, "Obs_TaxiRed", "T_Yellow", "#B3262E", templates);
+            Obstacle truckRed = Recolor(truck, "Obs_TruckRed", "T_Paint", "#9E2B25", templates);
+            Obstacle truckYellow = Recolor(truck, "Obs_TruckYellow", "T_Paint", "#D9A21B", templates);
+            templates.gameObject.SetActive(false);
+
+            Obstacle Named(Obstacle[] set, string n) => System.Array.Find(set, o => o != null && o.name == "Obs_" + n);
+            Obstacle[] Arr(params Obstacle[] xs) => System.Array.FindAll(xs, o => o != null);
+            Obstacle crates = Named(low, "CrateStack");
+            var sets = new (string id, float front, bool span, Obstacle[] v)[]
+            {
+                ("low", 0.45f, false, low), ("crates", 0.45f, false, Arr(crates)), ("copper", 0.45f, false, Arr(Named(low, "CopperJugs"), Named(low, "CopperPlates"))),
+                ("teatable", 0.45f, false, Arr(teaTable)), ("bar", 0.3f, false, Arr(bar, kilim, potRack)), ("kilim", 0.3f, false, Arr(kilim)),
+                ("potrack", 0.3f, false, Arr(potRack)), ("arch", 0.45f, false, Arr(arch)), ("wall", 0.6f, false, walls.Concat(high).ToArray()),
+                ("busstop", 1.55f, false, Arr(stop)), ("grill", 0.6f, false, Arr(grill)),
+                ("stall", 0.75f, false, Arr(teaCart, simitCart, melonStall)), ("teacart", 0.75f, false, Arr(teaCart)),
+                ("simitcart", 0.7f, false, Arr(simitCart)), ("melonstall", 0.75f, false, Arr(melonStall)),
+                ("bus", 2.95f, false, Arr(bus)), ("citybus", 4.6f, false, Arr(cityBus)), ("taxi", 2.25f, false, Arr(taxi, taxiWhite, taxiRed)),
+                ("patpat", 1.35f, false, Arr(patpat)), ("truck", 0f, false, Arr(truck, truckRed, truckYellow)),
+                ("melon", 0f, false, Arr(melon)), ("tractor", 0f, false, Arr(tractor)), ("gate", 0.8f, true, Arr(gate)),
+            };
+            var so = new SerializedObject(sp);
+            var arr = so.FindProperty("assets");
+            arr.arraySize = sets.Length;
+            for (int i = 0; i < sets.Length; i++)
+            {
+                var e = arr.GetArrayElementAtIndex(i);
+                e.FindPropertyRelative("id").stringValue = sets[i].id;
+                e.FindPropertyRelative("frontToOrigin").floatValue = sets[i].front;
+                e.FindPropertyRelative("spansLanes").boolValue = sets[i].span;
+                var v = e.FindPropertyRelative("variants");
+                v.arraySize = sets[i].v.Length;
+                for (int k = 0; k < sets[i].v.Length; k++) v.GetArrayElementAtIndex(k).objectReferenceValue = sets[i].v[k];
+            }
+            so.FindProperty("course").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(CoursePath);
+            so.FindProperty("coursePortal").objectReferenceValue = portals != null && portals.Length > 0 ? portals[0] : null;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            if (portals != null && portals.Length > 0 && portals[0] != null)
+            {
+                var pso = new SerializedObject(portals[0]);
+                pso.FindProperty("courseControlled").boolValue = true;   // sokak portalı parkurun Portal Meydanı'nda
+                pso.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        /// <summary>Ayrı parçalı engel (çay masası + tabureler): parçalar köke bağlanır, Breakable savurur.</summary>
+        private static Obstacle PiecesObstacle(string path, string name, Transform parent, float scale)
+        {
+            ConfigureVehicleImport(path);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null) return null;
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root.transform);
+            vis.transform.localPosition = Vector3.zero;
+            PrefabUtility.UnpackPrefabInstance(vis, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            var kids = new System.Collections.Generic.List<Transform>();
+            foreach (Transform c in vis.transform) kids.Add(c);
+            foreach (Transform c in kids) c.SetParent(root.transform, true);
+            Object.DestroyImmediate(vis);
+            root.transform.localScale = Vector3.one * scale;
+            var rs = root.GetComponentsInChildren<Renderer>();
+            Bounds b = rs[0].bounds;
+            foreach (var r in rs) b.Encapsulate(r.bounds);
+            Vector3 c0 = b.center - root.transform.position;
+            float h = b.max.y - root.transform.position.y;
+            var obs = root.AddComponent<Obstacle>();
+            obs.Configure(Obstacle.Kind.Solid, Mathf.Clamp(b.extents.x, 0.45f, 1f),
+                new[] { Seg(c0.z - Mathf.Max(b.extents.z, 0.35f), c0.z + Mathf.Max(b.extents.z, 0.35f), h) });
+            root.AddComponent<Breakable>();
+            EditorUtility.SetDirty(obs);
+            return obs;
+        }
+
+        /// <summary>Renk çeşidi: şablonun kopyası, verilen malzeme yuvası yeni renkli malzemeyle (beyaz Şahin, kırmızı kamyonet…).</summary>
+        private static Obstacle Recolor(Obstacle src, string name, string slot, string hex, Transform parent)
+        {
+            if (src == null) return null;
+            string path = $"{TruckMatDir}/{slot}_{hex.TrimStart('#')}.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                var baseMat = AssetDatabase.LoadAssetAtPath<Material>($"{TruckMatDir}/{slot}.mat");
+                if (baseMat == null) return null;
+                mat = new Material(baseMat);
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.SetColor("_BaseColor", Hex(hex));
+            EditorUtility.SetDirty(mat);
+            var go = Object.Instantiate(src.gameObject, parent);
+            go.name = name;
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = r.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++)
+                    if (mats[i] != null && mats[i].name == slot) mats[i] = mat;
+                r.sharedMaterials = mats;
+            }
+            return go.GetComponent<Obstacle>();
         }
 
         /// <summary>Dekoru engel şablonu yapar: taban/yükseklik dekorun sınırlarından.</summary>
@@ -896,6 +1028,11 @@ namespace Jumpline.EditorTools
                 ("T_Yellow", "#F2B705", 0f, 0.7f, 0.1f), ("T_White", "#E9E6DF", 0f, 0.7f, 0.1f), ("T_Blue", "#1F4E9C", 0f, 0.6f, 0.1f),
                 ("T_Black", "#111111", 0f, 0.4f, 0f), ("T_Basalt", "#FFFFFF", 0f, 0.12f, 0f), ("T_Trim", "#BDB8AF", 0f, 0.15f, 0f),
                 ("T_NeonRed", "#FF3048", 4f, 0.5f, 0f), ("T_TailLight", "#D01020", 2f, 0.6f, 0f), ("T_Chrome", "#C8CCD0", 0f, 0.85f, 0.9f),
+                ("T_Melon", "#2E6B2F", 0f, 0.55f, 0f), ("T_MelonDark", "#1C4A1F", 0f, 0.55f, 0f), ("T_CityGreen", "#3E8E6E", 0f, 0.65f, 0.1f),
+                ("T_Orange", "#C14E2A", 0f, 0.55f, 0.1f), ("T_Hay", "#D9B65A", 0f, 0.1f, 0f), ("T_Copper", "#B8683A", 0f, 0.7f, 0.85f),
+                ("T_Simit", "#B9772F", 0f, 0.3f, 0f), ("T_Canvas", "#EFE7D6", 0f, 0.2f, 0f), ("T_Umbrella", "#B3262E", 0f, 0.3f, 0f),
+                ("T_Lime", "#E3D8C0", 0f, 0.15f, 0f), ("T_KilimRed", "#9B2335", 0f, 0.1f, 0f), ("T_KilimGold", "#D9A441", 0f, 0.1f, 0f),
+                ("T_KilimBlue", "#2C4A7A", 0f, 0.1f, 0f), ("T_Coal", "#FF7A2A", 3f, 0.3f, 0f),
             };
             foreach (var d in defs)
             {

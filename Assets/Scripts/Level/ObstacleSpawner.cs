@@ -12,6 +12,8 @@ namespace Jumpline.Level
     ///  • Alçak sıra (zıpla), bariyer sırası (kay), duvar + bariyer + alçak karışık, taksi sırası (üstüne zıpla),
     ///    sur kapısı altında engeller, zikzak (şerit değiştirerek ilerle).
     /// Aralar hızla birlikte açılır (tepki süresi sabit). Çatıda araç/kapı yok: aynı mantık dekor, bariyer ve duvarla.
+    /// PARKUR MODU (course atanmışsa, sokak): elle dizilmiş bölümler (Assets/Data/Course_*.json, Blender/scripts/make_course_json.py)
+    /// önce sırayla, sonra karışık sırayla ve her ikinci turda sağ-sol aynalı dizilir; satırlar hızla birlikte esner.
     /// </summary>
     public class ObstacleSpawner : MonoBehaviour
     {
@@ -20,6 +22,23 @@ namespace Jumpline.Level
         [Tooltip("true: çatı dünyası (araç/kapı yok, zipline bölgesi boş).")]
         [SerializeField] private bool rooftop;
         [SerializeField] private Portal[] portals;
+
+        [System.Serializable]
+        public struct AssetSet
+        {
+            [Tooltip("Parkur dosyasındaki engel kimliği (low, bus, melon…).")] public string id;
+            [Tooltip("Engelin koşucuya bakan ön kenarından kökene mesafe (m).")] public float frontToOrigin;
+            [Tooltip("Tüm şeritleri kaplar (sur kapısı): şerit yok sayılır.")] public bool spansLanes;
+            public Obstacle[] variants;
+        }
+
+        [Header("Parkur (boşsa rastgele desenler)")]
+        [SerializeField] private TextAsset course;
+        [SerializeField] private AssetSet[] assets;
+        [Tooltip("Hız çarpanındaki her +1 için satır aralıklarının esneme oranı.")]
+        [SerializeField, Min(0f)] private float stretchPerSpeed = 0.35f;
+        [Tooltip("Parkurdaki 'portal' satırını yerleştiren portal (sokak → çatı).")]
+        [SerializeField] private Portal coursePortal;
 
         [Header("Şablonlar (sahnede kapalı duran örnekler)")]
         [SerializeField] private Obstacle[] low;
@@ -57,8 +76,22 @@ namespace Jumpline.Level
         private readonly Dictionary<Obstacle, Obstacle> sourceOf = new Dictionary<Obstacle, Obstacle>();
         private float nextZ = float.NaN;
 
+        [System.Serializable] private class CourseData { public CourseSection[] sections; }
+        [System.Serializable] private class CourseSection { public string name; public float length; public CourseRow[] rows; }
+        [System.Serializable] private class CourseRow { public float z; public int lane; public string id; }
+
+        private CourseData courseData;
+        private readonly List<int> order = new List<int>();
+        private int orderIndex;
+        private int loop;
+
         private float OriginX => switcher == null ? 0f : rooftop ? switcher.RooftopOriginX : switcher.StreetOriginX;
         private float Ground => switcher == null ? 0f : rooftop ? switcher.RooftopGround : switcher.StreetGround;
+
+        private void Awake()
+        {
+            if (course != null) courseData = JsonUtility.FromJson<CourseData>(course.text);
+        }
 
         private void OnEnable()
         {
@@ -75,14 +108,68 @@ namespace Jumpline.Level
             if (float.IsNaN(nextZ)) nextZ = pz + startDistance;
             float scale = Mathf.Max(1f, player.SpeedFactor);
             int guard = 0;
+            bool useCourse = !rooftop && courseData != null && courseData.sections != null && courseData.sections.Length > 0;
             while (nextZ < pz + spawnAhead * scale && guard++ < 16)
-                nextZ += SpawnPattern(nextZ) + Random.Range(gap.x, gap.y) * scale;
+                nextZ += useCourse ? SpawnSection(nextZ, scale) : SpawnPattern(nextZ) + Random.Range(gap.x, gap.y) * scale;
             for (int i = active.Count - 1; i >= 0; i--)
             {
                 if (active[i].MaxZ >= pz - despawnBehind) continue;
                 Release(active[i]);
                 active.RemoveAt(i);
             }
+        }
+
+        /// <summary>Parkurdan sıradaki bölümü z'den başlayarak dizer; kapladığı uzunluğu döndürür.</summary>
+        private float SpawnSection(float z, float speedScale)
+        {
+            if (orderIndex >= order.Count) NextLoop();
+            CourseSection sec = courseData.sections[order[orderIndex++]];
+            float stretch = 1f + stretchPerSpeed * (speedScale - 1f);
+            bool mirror = loop % 2 == 1;
+            foreach (CourseRow row in sec.rows)
+            {
+                float rz = z + row.z * stretch;
+                int lane = mirror ? -row.lane : row.lane;
+                if (row.id == "portal")
+                {
+                    if (coursePortal != null) coursePortal.PlaceAt(rz, lane);
+                    continue;
+                }
+                if (!TryGetSet(row.id, out AssetSet set)) continue;
+                if (set.spansLanes) PlaceCenter(set.variants, rz + set.frontToOrigin);
+                else Place(set.variants, lane, rz + set.frontToOrigin);
+            }
+            return sec.length * stretch;
+        }
+
+        /// <summary>İlk tur: dosya sırası. Sonraki turlar: giriş bölümü hariç karışık, portal meydanı hep sonda.</summary>
+        private void NextLoop()
+        {
+            int n = courseData.sections.Length;
+            if (order.Count > 0) loop++;
+            order.Clear();
+            orderIndex = 0;
+            if (loop == 0)
+            {
+                for (int i = 0; i < n; i++) order.Add(i);
+                return;
+            }
+            for (int i = 1; i < n - 1; i++) order.Add(i);
+            for (int i = order.Count - 1; i > 0; i--)
+            {
+                int j = Random.Range(0, i + 1);
+                (order[i], order[j]) = (order[j], order[i]);
+            }
+            order.Add(n - 1);
+        }
+
+        private bool TryGetSet(string id, out AssetSet set)
+        {
+            if (assets != null)
+                foreach (AssetSet a in assets)
+                    if (a.id == id && Has(a.variants)) { set = a; return true; }
+            set = default;
+            return false;
         }
 
         /// <summary>z'ye bir sıra koyar; sıranın kapladığı ek uzunluğu döndürür.</summary>

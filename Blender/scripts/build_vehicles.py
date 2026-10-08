@@ -32,6 +32,12 @@ MATS = {
     "T_Yellow": ("#F2B705", None, 0), "T_White": ("#E9E6DF", None, 0), "T_Blue": ("#1F4E9C", None, 0),
     "T_Black": ("#111111", None, 0), "T_Basalt": ("#FFFFFF", "basalt.png", 0), "T_Trim": ("#B8B4AC", "basalt.png", 0),
     "T_NeonRed": ("#FF3048", None, 8), "T_TailLight": ("#D01020", None, 4), "T_Chrome": ("#C8CCD0", None, 0),
+    # parkur araçları/tezgâhları (build_course_assets.py)
+    "T_Melon": ("#2E6B2F", None, 0), "T_MelonDark": ("#1C4A1F", None, 0), "T_CityGreen": ("#3E8E6E", None, 0),
+    "T_Orange": ("#C14E2A", None, 0), "T_Hay": ("#D9B65A", None, 0), "T_Copper": ("#B8683A", None, 0),
+    "T_Simit": ("#B9772F", None, 0), "T_Canvas": ("#EFE7D6", None, 0), "T_Umbrella": ("#B3262E", None, 0),
+    "T_Lime": ("#E3D8C0", None, 0), "T_KilimRed": ("#9B2335", None, 0), "T_KilimGold": ("#D9A441", None, 0),
+    "T_KilimBlue": ("#2C4A7A", None, 0), "T_Coal": ("#FF7A2A", None, 6),
 }
 
 
@@ -303,4 +309,5 @@ def main():
     print("VEHICLES_OK", [(o.name, len(o.data.polygons)) for o in [t, m, g] + c])
 
 
-main()
+if __name__ == "__main__":   # build_course_assets.py yardımcıları içe aktarır
+    main()

@@ -25,6 +25,8 @@ namespace Jumpline.Level
         [SerializeField, Range(-2, 1)] private int startLane = 0;
         [Tooltip("Renk (alfa 0 = modelin kendi rengi). Girdap, ışık ve parçacıklara uygulanır.")]
         [SerializeField] private Color tint = new Color(0f, 0f, 0f, 0f);
+        [Tooltip("Yeri parkur dosyası belirler (ObstacleSpawner → PlaceAt); kendi aralığıyla yerleşmez.")]
+        [SerializeField] private bool courseControlled;
 
         private int lane;
 
@@ -46,7 +48,8 @@ namespace Jumpline.Level
             ApplyTint();
             if (player == null) return;
             lane = startLane < -1 ? Random.Range(-1, 2) : startLane;
-            Place(player.transform.position.z + firstDistance);
+            if (courseControlled) Park();
+            else Place(player.transform.position.z + firstDistance);
         }
 
         private void Update()
@@ -60,13 +63,24 @@ namespace Jumpline.Level
                 if (leadsToRooftop) switcher.EnterRooftop();
                 else switcher.ExitToStreet();
             }
+            if (courseControlled) { Park(); return; }
             lane = Random.Range(-1, 2);
             Place(p.z + spacing);
         }
 
+        /// <summary>Parkur bu portalı z'ye, verilen şeride koyar.</summary>
+        public void PlaceAt(float z, int newLane)
+        {
+            lane = Mathf.Clamp(newLane, -1, 1);
+            Place(z);
+        }
+
+        /// <summary>Parkur yeniden koyana kadar uzakta bekle (geçilemez).</summary>
+        private void Park() => transform.position = new Vector3(transform.position.x, transform.position.y, 1e7f);
+
         private void OnWorldChanged(bool street)
         {
-            if (player == null || street != leadsToRooftop) return;   // benim dünyama girildi
+            if (player == null || street != leadsToRooftop || courseControlled) return;   // benim dünyama girildi
             lane = Random.Range(-1, 2);
             Place(player.transform.position.z + firstDistance);
         }
