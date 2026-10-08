@@ -6,10 +6,11 @@ using UnityEngine;
 namespace Jumpline.Level
 {
     /// <summary>
-    /// Toplanabilir paralar (Subway Surfers mantığı): engel sıralarının arasına para dizileri koyar — şeritte düz çizgi,
-    /// alçak engelin üstünde yay (zıplarken alınır), bariyer altında alçak (kayarken alınır), araç tavanında (trende koşarken).
-    /// Yerden aşılamayan engelin içine para konmaz. Tek bileşen tüm paraları döndürür ve toplar (para başına Update yok).
-    /// Toplanan paralar koşu bitince (ölüm) kalıcı altına eklenir.
+    /// Toplanabilir paralar (Subway Surfers mantığı). Para YALNIZCA koşucunun ulaşabileceği yere konur:
+    /// her dizi şeritte 25 cm adımlarla "yürünür" — rampadan çıkılabilen yüzey yol sayılır (araç tavanı da), zıplanabilen
+    /// engelin (≤ jumpable) üstünden paralar YAY çizer, kayılacak bariyerin altında alçak durur; zıplanamayan engelde
+    /// (duvar, yerden çıkılmayan araç) dizi engelden önce biter. Dizi yerden başlar (ulaşılamaz tavanda başlamaz).
+    /// Tek bileşen tüm paraları döndürür ve toplar. Toplanan paralar koşu bitince (sahne kapanınca) altına eklenir.
     /// </summary>
     public class CoinField : MonoBehaviour
     {
@@ -23,12 +24,21 @@ namespace Jumpline.Level
         [SerializeField] private Vector2 trailsPer100m = new Vector2(2f, 4f);
         [SerializeField] private Vector2Int coinsPerTrail = new Vector2Int(6, 12);
         [SerializeField, Min(0.5f)] private float spacing = 2.2f;
-        [Tooltip("Zeminden / üstüne basılan yüzeyden para yüksekliği.")]
+        [Tooltip("Yürünen yüzeyden para yüksekliği.")]
         [SerializeField, Min(0.1f)] private float hoverHeight = 1.0f;
         [Tooltip("Bariyer/kemer altındaki para yüksekliği (kayarken alınır).")]
         [SerializeField, Min(0.1f)] private float lowHeight = 0.5f;
-        [Tooltip("Bu kadar yükselen yüzey duvar sayılır, para konmaz.")]
-        [SerializeField, Min(0.5f)] private float wallHeight = 3.2f;
+
+        [Header("Ulaşılabilirlik (PlayerController ile uyumlu)")]
+        [Tooltip("Yürürken çıkılabilen basamak (rampa adımı).")]
+        [SerializeField, Min(0.05f)] private float stepUp = 0.3f;
+        [Tooltip("Bu yüksekliğe kadar engelin üstünden zıplanır (zıplama tepesi 1.9).")]
+        [SerializeField, Min(0.2f)] private float jumpable = 1.45f;
+        [Tooltip("Yayın tepe yüksekliği (yürünen yüzeyden).")]
+        [SerializeField, Min(0.5f)] private float arcPeak = 2.3f;
+        [Tooltip("Yay, engelin bu kadar önünde başlar / arkasında biter.")]
+        [SerializeField, Min(0.5f)] private float arcLead = 3.2f;
+        [SerializeField, Min(0.05f)] private float probeStep = 0.25f;
 
         [Header("Görsel / toplama")]
         [SerializeField] private float spinSpeed = 220f;
@@ -37,41 +47,78 @@ namespace Jumpline.Level
 
         private readonly List<Transform> active = new List<Transform>();
         private readonly Stack<Transform> pool = new Stack<Transform>();
-        private bool banked;
+        private readonly List<float> zs = new List<float>();
+        private readonly List<float> ys = new List<float>();
+        private int bankedCount;
 
         public int RunCoins { get; private set; }
         /// <summary>Para toplandı (koşudaki toplam).</summary>
         public event System.Action<int> Collected;
 
-        private void Start()
-        {
-            if (player != null) player.Died += Bank;
-        }
-
-        private void OnDisable() => Bank();
-
-        /// <summary>[z0, z1) aralığına rastgele para dizileri koyar (engeller yerleştikten sonra çağrılır).</summary>
+        /// <summary>[z0, z1) aralığına ulaşılabilir para dizileri koyar (engeller yerleştikten sonra çağrılır).</summary>
         public void Populate(float z0, float z1, float originX, float ground, float laneWidth)
         {
             if (coinTemplate == null || z1 <= z0) return;
             int n = Mathf.RoundToInt((z1 - z0) / 100f * Random.Range(trailsPer100m.x, trailsPer100m.y));
             for (int i = 0; i < n; i++)
             {
-                int lane = Random.Range(-1, 2);
                 int count = Random.Range(coinsPerTrail.x, coinsPerTrail.y + 1);
                 float start = Random.Range(z0, Mathf.Max(z0, z1 - count * spacing));
-                float x = originX + lane * laneWidth;
-                for (int k = 0; k < count; k++)
+                PlanTrail(originX + Random.Range(-1, 2) * laneWidth, start, count, ground);
+            }
+        }
+
+        /// <summary>Şeritte yürüyerek dizinin para yüksekliklerini hesaplar ve koyar.</summary>
+        private void PlanTrail(float x, float start, int count, float ground)
+        {
+            zs.Clear();
+            ys.Clear();
+            float cur = ObstacleField.SurfaceAt(x, start, ground);
+            if (cur > ground + stepUp || cur < ground - 0.5f) return;      // dizi yerden başlar
+            var spans = new List<Vector2>();                                   // yay çizilecek engel aralıkları (z)
+            float z = start;
+            for (int k = 0; k < count; k++)
+            {
+                float target = start + k * spacing;
+                bool stop = false;
+                while (z < target - 1e-3f)                                       // iki para arası ince yürüyüş
                 {
-                    float z = start + k * spacing;
-                    float surface = ObstacleField.SurfaceAt(x, z, ground);
-                    if (surface - ground > wallHeight) continue;                         // duvarın / aracın gövdesinin içi
-                    if (surface < ground - 0.5f) continue;                               // çatı boşluğu (zipline)
-                    float y = surface + hoverHeight;
-                    if (ObstacleField.HitsCeiling(x, z, surface, surface + 1.7f)) y = surface + lowHeight;   // kay
-                    Spawn(new Vector3(x, y, z));
+                    float nz = Mathf.Min(z + probeStep, target);
+                    float s = ObstacleField.SurfaceAt(x, nz, ground);
+                    if (s < ground - 0.5f) { stop = true; break; }               // boşluk (çatı arası)
+                    if (s <= cur + stepUp) { cur = s; z = nz; continue; }        // düz, rampa, iniş
+                    // engel: sonunu bul, yüksekliğine bak
+                    float a = nz, top = s, b = nz;
+                    while (b < start + count * spacing + 6f)
+                    {
+                        float sb = ObstacleField.SurfaceAt(x, b + probeStep, ground);
+                        top = Mathf.Max(top, sb);
+                        b += probeStep;
+                        if (sb <= cur + stepUp) break;
+                    }
+                    if (top - cur > jumpable) { stop = true; break; }            // aşılamaz: dizi burada biter
+                    spans.Add(new Vector2(a, b));
+                    z = b;                                                       // engelin üstünden atlandı, öbür yanda devam
+                }
+                if (stop) break;
+                if (ObstacleField.SurfaceAt(x, target, ground) > cur + stepUp) break;
+                bool low = ObstacleField.HitsCeiling(x, target, cur, cur + 1.7f);
+                zs.Add(target);
+                ys.Add(cur + (low ? lowHeight : hoverHeight));
+            }
+            // yaylar: engelin önünden arkasına bombeli geçiş (yürünen yüzeyden arcPeak yükseğe)
+            foreach (Vector2 sp in spans)
+            {
+                float za = sp.x - arcLead, zb = sp.y + arcLead;
+                for (int i = 0; i < zs.Count; i++)
+                {
+                    if (zs[i] < za || zs[i] > zb) continue;
+                    float t = Mathf.InverseLerp(za, zb, zs[i]);
+                    float baseY = ys[i] - hoverHeight;
+                    ys[i] = Mathf.Max(ys[i], baseY + hoverHeight + (arcPeak - hoverHeight) * Mathf.Sin(t * Mathf.PI));
                 }
             }
+            for (int i = 0; i < zs.Count; i++) Spawn(new Vector3(x, ys[i], zs[i]));
         }
 
         /// <summary>Dünya değişince (sokak ↔ çatı) eski paraları topla.</summary>
@@ -125,12 +172,17 @@ namespace Jumpline.Level
             pool.Push(c);
         }
 
-        /// <summary>Koşu bitti: toplanan paraları kalıcı altına ekle (bir kez).</summary>
-        private void Bank()
+        // Koşu biter (yeniden başlat / ana menü / uygulama kapanır): elmasla devam edilebildiği için ölümde değil, çıkışta eklenir.
+        private void OnDestroy() => Bank();
+        private void OnApplicationPause(bool paused) { if (paused) Bank(); }
+
+        /// <summary>Henüz eklenmemiş toplanan paraları kalıcı altına ekle.</summary>
+        public void Bank()
         {
-            if (banked || RunCoins == 0) return;
-            banked = true;
-            SaveManager.Gold += RunCoins;
+            int add = RunCoins - bankedCount;
+            if (add <= 0) return;
+            bankedCount = RunCoins;
+            SaveManager.Gold += add;
             SaveManager.Flush();
         }
     }

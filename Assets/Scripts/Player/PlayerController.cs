@@ -463,6 +463,22 @@ namespace Jumpline.Player
             Trigger(JumpTrigger);
         }
 
+        /// <summary>Elmasla devam: ölüm yerinde (güvenli noktada) koşmaya döner. Önündeki engelleri çağıran temizler.</summary>
+        public void Revive(Vector3 position)
+        {
+            if (!IsDead) return;
+            transform.position = new Vector3(laneOriginX + lane * laneWidth, position.y, position.z);
+            state = State.Running;
+            verticalVelocity = 0f;
+            gravityNow = gravity;
+            deathSpeed = 0f;
+            diedRaised = false;
+            slideQueued = false;
+            jumpQueuedUntil = -1f;
+            if (animator != null) animator.speed = 1f;
+            Trigger(RunTrigger);
+        }
+
         /// <summary>Başka dünyaya ışınla (sokak ↔ çatı). Şerit korunur.</summary>
         public void Teleport(Vector3 position, float ground, float originX)
         {

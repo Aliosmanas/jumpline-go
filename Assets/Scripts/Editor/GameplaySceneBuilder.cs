@@ -63,6 +63,7 @@ namespace Jumpline.EditorTools
             Image flash = BuildFlash(canvas);
             var switcher = BuildWorldSwitcher(runner, follow, cam, flash, rooftop);
             Set(switcher, "streetRoot", street);
+            Set(canvas.GetComponent<LevelFlowController>(), "worldSwitcher", switcher);
             Portal up = BuildPortal(runner, switcher, true, "PortalUp", null);                 // sokak → çatı (mavi)
             Portal down = BuildPortal(runner, switcher, false, "PortalDown", Hex("#FF3C8E"));  // çatı → sokak (pembe)
             var (streetObs, roofObs) = BuildObstacles(runner, switcher, new[] { up, down });
@@ -1248,6 +1249,7 @@ namespace Jumpline.EditorTools
         }
 
         private static TextMeshProUGUI speedLabel, coinLabel, scoreLabel;
+        private static Box hudMid;
         private static Image coinIcon;
 
         private static void BuildUI(Transform safe, LevelFlowController flow, GameConfig config)
@@ -1256,6 +1258,7 @@ namespace Jumpline.EditorTools
             Stretch(hud);
             Box top = Group(hud, "Top", 1f);
             Box mid = Group(hud, "Middle", 0.5f);
+            hudMid = mid;
             Box bot = Group(hud, "Bottom", 0f);
 
             Panel(top, "LevelPill", new Rect(308f, 50f, 500f, 92f), Hex("#1B2236", 0.9f), Hex("#2A3556", 0.9f), 46f, Hex("#7083B3"));
@@ -1268,10 +1271,14 @@ namespace Jumpline.EditorTools
             Button pause = MakeButton(pausePanel, pausePanel.rt.GetComponent<Image>());
 
             // para sayacı (duraklat butonunun altında) + puan (metre başına 10)
-            coinIcon = Icon(top, "coin", new Rect(1000f, 186f, 62f, 62f), Color.white);
-            coinLabel = Txt(top, "CoinCount", "0", new Rect(760f, 186f, 228f, 62f), fExtra, 44f, C.Gold, TextAlignmentOptions.MidlineRight, localize: false);
-            scoreLabel = Txt(top, "Score", "0", new Rect(700f, 252f, 362f, 46f), fBold, 32f, Color.white, TextAlignmentOptions.MidlineRight, localize: false);
-            coinLabel.raycastTarget = scoreLabel.raycastTarget = coinIcon.raycastTarget = false;
+            // para kapsülü (altın kenar) + altında puan kapsülü (neon kenar, "PUAN" etiketi)
+            Panel(top, "CoinPill", new Rect(756f, 182f, 320f, 74f), Hex("#1B2236", 0.9f), Hex("#2A3556", 0.9f), 37f, Hex("#E8B95B"));
+            coinIcon = Icon(top, "coin", new Rect(1007f, 189f, 60f, 60f), Color.white);
+            coinLabel = Txt(top, "CoinCount", "0", new Rect(778f, 182f, 220f, 74f), fExtra, 42f, C.Gold, TextAlignmentOptions.MidlineRight, localize: false);
+            Panel(top, "ScorePill", new Rect(776f, 268f, 300f, 64f), Hex("#1B2236", 0.9f), Hex("#2A3556", 0.9f), 32f, Hex("#55CFFF"));
+            var scoreTag = Txt(top, "ScoreTag", "SCORE", new Rect(800f, 268f, 110f, 64f), fBold, 24f, Hex("#55CFFF"), TextAlignmentOptions.MidlineLeft);
+            scoreLabel = Txt(top, "Score", "0", new Rect(900f, 268f, 158f, 64f), fExtra, 34f, Color.white, TextAlignmentOptions.MidlineRight, localize: false);
+            coinLabel.raycastTarget = scoreLabel.raycastTarget = coinIcon.raycastTarget = scoreTag.raycastTarget = false;
 
             Button win = PillButton(bot, "TestWin", new Rect(118f, 1780f, 420f, 90f), "WIN (TEST)", 34f, Color.white, 1f);
             Button fail = PillButton(bot, "TestFail", new Rect(578f, 1780f, 420f, 90f), "FAIL (TEST)", 34f, Color.white, 1f, Hex("#E2B45A"), Hex("#F2C366"));
@@ -1295,9 +1302,21 @@ namespace Jumpline.EditorTools
             Button replay = BoxButton(completeBox, "Replay", new Rect(213f, 1080f, 690f, 120f), "REPLAY", 44f);
             Button menu2 = BoxButton(completeBox, "MainMenu", new Rect(213f, 1230f, 690f, 120f), "MAIN MENU", 44f);
 
-            CanvasGroup failGroup = Overlay(safe, "FailPanel", "GAME OVER", 520f, out Box failBox);
-            Button retry = BoxButton(failBox, "Retry", new Rect(213f, 840f, 690f, 120f), "RETRY", 44f);
-            Button menu3 = BoxButton(failBox, "MainMenu", new Rect(213f, 990f, 690f, 120f), "MAIN MENU", 44f);
+            CanvasGroup failGroup = Overlay(safe, "FailPanel", "GAME OVER", 820f, out Box failBox);
+            var gemBalance = Txt(failBox, "GemBalance", "", new Rect(213f, 690f, 690f, 50f), fBold, 30f, Hex("#BFD8FF"), localize: false);
+            Button reviveAd = BoxButton(failBox, "ReviveAd", new Rect(213f, 750f, 690f, 110f), "WATCH AD · CONTINUE (SOON)", 32f);
+            Button reviveGems = BoxButton(failBox, "ReviveGems", new Rect(213f, 875f, 690f, 110f), "CONTINUE · 50", 40f, out TextMeshProUGUI reviveLabel, false);
+            Icon(failBox, "gem", new Rect(236f, 891f, 78f, 78f), Color.white).raycastTarget = false;
+            Button retry = BoxButton(failBox, "Retry", new Rect(213f, 1000f, 690f, 110f), "PLAY AGAIN", 40f);
+            Button menu3 = BoxButton(failBox, "MainMenu", new Rect(213f, 1125f, 690f, 110f), "MAIN MENU", 40f);
+            var countdown = Txt(hudMid, "Countdown", "3", new Rect(258f, 760f, 600f, 400f), fExtra, 280f, Color.white, localize: false);
+            countdown.raycastTarget = false;
+            countdown.gameObject.SetActive(false);
+            Set(flow, "reviveGemsButton", reviveGems);
+            Set(flow, "reviveAdButton", reviveAd);
+            Set(flow, "reviveGemsLabel", reviveLabel);
+            Set(flow, "gemBalanceLabel", gemBalance);
+            Set(flow, "countdownLabel", countdown);
 
             Set(flow, "config", config);
             Set(flow, "levelLabel", level);

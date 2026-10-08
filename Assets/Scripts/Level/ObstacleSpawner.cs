@@ -129,6 +129,17 @@ namespace Jumpline.Level
             }
         }
 
+        /// <summary>Elmasla devam: [z0, z1] aralığındaki engelleri kaldır (koşucu güvenle yeniden başlasın).</summary>
+        public void ClearRange(float z0, float z1)
+        {
+            for (int i = active.Count - 1; i >= 0; i--)
+            {
+                if (active[i].MaxZ < z0 || active[i].MinZ > z1) continue;
+                Release(active[i]);
+                active.RemoveAt(i);
+            }
+        }
+
         /// <summary>Parkurdan sıradaki bölümü z'den başlayarak dizer; kapladığı uzunluğu döndürür.</summary>
         private float SpawnSection(float z, float speedScale)
         {

@@ -183,6 +183,11 @@ namespace Jumpline.Core
             { "FAIL (TEST)", "KAYBET (TEST)" },
             { "ALL LEVELS COMPLETE!", "TÜM BÖLÜMLER TAMAM!" },
             { "SPEED UP! x{0}", "HIZLANDI! x{0}" },
+            { "WATCH AD · CONTINUE (SOON)", "REKLAM İZLE · DEVAM ET (YAKINDA)" },
+            { "CONTINUE · {0}", "DEVAM ET · {0}" },
+            { "YOUR GEMS: {0}", "ELMASIN: {0}" },
+            { "PLAY AGAIN", "BAŞTAN OYNA" },
+            { "SCORE", "PUAN" },
             { "SWIPE UP: JUMP   ·   DOWN: SLIDE\nLEFT / RIGHT: CHANGE LANE", "YUKARI KAYDIR: ZIPLA   ·   AŞAĞI: KAY\nSAĞA / SOLA: ŞERİT DEĞİŞTİR" },
             {
                 "The runner and obstacles come next.\nUse the test buttons to try the flow.",

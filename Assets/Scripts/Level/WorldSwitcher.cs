@@ -68,6 +68,13 @@ namespace Jumpline.Level
         /// <summary>Dünya değişti (true = sokak). Portallar kendi dünyalarında koşucunun önüne yerleşir.</summary>
         public event System.Action<bool> WorldChanged;
 
+        /// <summary>Elmasla devam için güvenli nokta: bulunulan dünyanın zemininde; çatıda boşluktaysa karşı çatıya.</summary>
+        public Vector3 SafeRevivePoint(Vector3 p)
+        {
+            if (InStreet) return new Vector3(p.x, streetGround, p.z);
+            return new Vector3(p.x, RooftopGround, SafeRooftopZ(p.z));
+        }
+
         /// <summary>Çatıda verilen z zipline boşluğuna denk geliyorsa karşı çatıya öteler.</summary>
         public float SafeRooftopZ(float z)
         {

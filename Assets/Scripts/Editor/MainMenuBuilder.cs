@@ -78,6 +78,7 @@ namespace Jumpline.EditorTools
             BuildLegal(NewScreen(safe, "legal", false));
 
             GameObject nav = BuildBottomNav(safe);
+            BuildCurrencyBar(safe);   // her ekranın üstünde altın + elmas
             Toast toast = BuildToast(safe);
             Set(navigator, "bottomNav", nav);
             Set(navigator, "toast", toast);
@@ -101,6 +102,41 @@ namespace Jumpline.EditorTools
                 mid = Group(rt, "Middle", 0.5f),
                 bot = Group(rt, "Bottom", 0f),
             };
+        }
+
+        // ---------------------------------------------------------------------
+        // ALTIN + ELMAS ÇUBUĞU (her ekranda)
+        // ---------------------------------------------------------------------
+        private const float CurrencyBarHeight = 92f;
+
+        /// <summary>Üstte sabit çubuk; ekranların üst içeriği çubuk kadar aşağı kayar (logo, sekmeler, başlıklar altında kalmasın).</summary>
+        private static void BuildCurrencyBar(Transform safe)
+        {
+            foreach (Transform screen in safe)
+            {
+                if (screen.GetComponent<MenuScreen>() == null) continue;
+                var top = screen.Find("Top") as RectTransform;
+                if (top != null) top.anchoredPosition += new Vector2(0f, -CurrencyBarHeight);
+            }
+            Box bar = Group(safe, "CurrencyBar", 1f);
+            var shade = Add(bar, "Shade", new Rect(0f, 0f, 1116f, CurrencyBarHeight));
+            var shadeImg = shade.go.AddComponent<Image>();
+            shadeImg.color = Hex("#0E1220", 0.55f);
+            shadeImg.raycastTarget = false;
+            TMP_Text Pill(string name, string icon, Rect r, Color border, Color text)
+            {
+                Panel(bar, name, r, Hex("#1B2236", 0.95f), Hex("#2A3556", 0.95f), r.height * 0.5f, border);
+                Icon(bar, icon, new Rect(r.x + 10f, r.y + 7f, r.height - 14f, r.height - 14f), Color.white);
+                var t = Txt(bar, name + "Text", "0", new Rect(r.x + r.height, r.y, r.width - r.height - 22f, r.height), fExtra, 36f, text,
+                    TextAlignmentOptions.MidlineRight, localize: false);
+                t.raycastTarget = false;
+                return t;
+            }
+            var gold = Pill("GoldPill", "coin", new Rect(560f, 14f, 260f, 64f), Hex("#E8B95B"), C.Gold);
+            var gems = Pill("GemsPill", "gem", new Rect(836f, 14f, 240f, 64f), Hex("#6EA6FF"), Hex("#BFD8FF"));
+            var cb = bar.rt.gameObject.AddComponent<CurrencyBar>();
+            Set(cb, "goldLabel", gold);
+            Set(cb, "gemsLabel", gems);
         }
 
         private static void Link(Button b, MenuLink.LinkAction action, string target = null) =>
