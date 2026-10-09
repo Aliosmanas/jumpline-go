@@ -32,6 +32,7 @@ namespace Jumpline.EditorTools
             LoadAssets();
             var config = GetOrCreateAsset<GameConfig>(MainMenuBuilder.ConfigPath, null);
 
+            SegmentCombiner.EnsureReadable(StreetPath, DecorPath, RooftopPath, LandmarkPath);   // modüller açılışta birleşir
             Transform street = BuildWorld();
             Transform runner = BuildRunner();
             Set(street.gameObject.AddComponent<StreetRecycler>(), "player", runner);
