@@ -65,6 +65,8 @@ namespace Jumpline.Level
         [SerializeField] private string legendId = "tepegoz";
 
         private State state;
+        /// <summary>Bölüm tamamlandı (ödül paneli açıldı).</summary>
+        public event System.Action LevelCompleted;
         private Color? failTitleColor;
 
         private void Awake()
@@ -154,6 +156,7 @@ namespace Jumpline.Level
 
             Time.timeScale = 0f;   // ödül ekranı açıkken dünya durur
             rewardText.text = reward;
+            LevelCompleted?.Invoke();
             nextButton.gameObject.SetActive(GameSession.Mode == RunMode.Campaign && !lastLevel);
             Show(completePanel, true);
         }

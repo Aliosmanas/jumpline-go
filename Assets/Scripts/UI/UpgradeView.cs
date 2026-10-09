@@ -44,10 +44,16 @@ namespace Jumpline.UI
         {
             StatDefinition s = stats.Find(row.bar.statId);
             string message = CharacterStats.IsMaxed(s) ? "MAX"
-                : CharacterStats.TryUpgrade(s) ? "UPGRADED!"
+                : CharacterStats.TryUpgrade(s) ? Upgraded()
                 : "NOT ENOUGH GOLD";
             GetComponentInParent<MenuNavigator>(true).Toast.Show(Localization.Get(message));
             Refresh();
+        }
+
+        private static string Upgraded()
+        {
+            Jumpline.Audio.AudioManager.Play("purchase");
+            return "UPGRADED!";
         }
 
         private void Refresh()

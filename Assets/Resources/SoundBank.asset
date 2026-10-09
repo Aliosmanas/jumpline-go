@@ -1,0 +1,160 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bd9fe7a83edb3d49884a20f679ae1cd, type: 3}
+  m_Name: SoundBank
+  m_EditorClassIdentifier: Jumpline::Jumpline.Audio.SoundBank
+  sounds:
+  - id: click
+    clip: {fileID: 8300000, guid: 3020630af743bb64db2b4657bad91672, type: 3}
+    volume: 0.55
+    pitch: 1
+    pitchJitter: 0.04
+    maxDuration: 0
+    cooldown: 0.04
+  - id: purchase
+    clip: {fileID: 8300000, guid: b56559f6c777f7c4abbcaa98d369aa04, type: 3}
+    volume: 0.9
+    pitch: 0.85
+    pitchJitter: 0
+    maxDuration: 0
+    cooldown: 0.1
+  - id: coin
+    clip: {fileID: 8300000, guid: b56559f6c777f7c4abbcaa98d369aa04, type: 3}
+    volume: 0.55
+    pitch: 1.05
+    pitchJitter: 0.06
+    maxDuration: 0
+    cooldown: 0.035
+  - id: jump
+    clip: {fileID: 8300000, guid: 357ca33f143abd24d96f205fead8ffd4, type: 3}
+    volume: 0.7
+    pitch: 1
+    pitchJitter: 0.06
+    maxDuration: 0
+    cooldown: 0.08
+  - id: slide
+    clip: {fileID: 8300000, guid: bddb54e3ce372d644b549c61cec72637, type: 3}
+    volume: 0.8
+    pitch: 1
+    pitchJitter: 0.05
+    maxDuration: 0.8
+    cooldown: 0.15
+  - id: stumble
+    clip: {fileID: 8300000, guid: c6de9d03dc7562e4a96d5ee6bac1e3cf, type: 3}
+    volume: 0.85
+    pitch: 1
+    pitchJitter: 0.05
+    maxDuration: 0.9
+    cooldown: 0.25
+  - id: crash
+    clip: {fileID: 8300000, guid: 619feeea6e44df64e8cf8c144d51beb5, type: 3}
+    volume: 1
+    pitch: 1
+    pitchJitter: 0.03
+    maxDuration: 1.6
+    cooldown: 0.3
+  - id: crate
+    clip: {fileID: 8300000, guid: e5e5c008b4991e5428dbf77834b1ba7d, type: 3}
+    volume: 0.75
+    pitch: 1
+    pitchJitter: 0.08
+    maxDuration: 1.2
+    cooldown: 0.12
+  - id: footsteps
+    clip: {fileID: 8300000, guid: 3249153f00af6e745a4da5ec46972b36, type: 3}
+    volume: 0.35
+    pitch: 1
+    pitchJitter: 0
+    maxDuration: 0
+    cooldown: 0
+  - id: zipline
+    clip: {fileID: 8300000, guid: e0125ea82140d73428f1b869e2474482, type: 3}
+    volume: 0.6
+    pitch: 1
+    pitchJitter: 0
+    maxDuration: 0
+    cooldown: 0
+  - id: portal
+    clip: {fileID: 8300000, guid: 8fdfe52bbf5aa4a4fbe614dff95efe48, type: 3}
+    volume: 0.75
+    pitch: 1
+    pitchJitter: 0.02
+    maxDuration: 1.6
+    cooldown: 0.4
+  - id: throw
+    clip: {fileID: 8300000, guid: 7f470e257a87e194d97e2023ae23eb8c, type: 3}
+    volume: 0.8
+    pitch: 1
+    pitchJitter: 0.08
+    maxDuration: 0.9
+    cooldown: 0.1
+  - id: splat
+    clip: {fileID: 8300000, guid: 1b90d44170046ba4b8b6a96db2ae51b4, type: 3}
+    volume: 1
+    pitch: 1
+    pitchJitter: 0.07
+    maxDuration: 1.2
+    cooldown: 0.1
+  - id: heart_lost
+    clip: {fileID: 8300000, guid: 2efa1fb00a535f0489397c2e3a7f9230, type: 3}
+    volume: 0.75
+    pitch: 1
+    pitchJitter: 0
+    maxDuration: 1.4
+    cooldown: 0.3
+  - id: roar
+    clip: {fileID: 8300000, guid: 94f8f5c7c6db1334b830abc30e822365, type: 3}
+    volume: 1
+    pitch: 1
+    pitchJitter: 0.03
+    maxDuration: 2.6
+    cooldown: 0.8
+  - id: tea
+    clip: {fileID: 8300000, guid: 5d6c978ddf5e2334a84700a0157d12c0, type: 3}
+    volume: 0.8
+    pitch: 1
+    pitchJitter: 0.05
+    maxDuration: 0
+    cooldown: 0.1
+  - id: pickup
+    clip: {fileID: 8300000, guid: b56559f6c777f7c4abbcaa98d369aa04, type: 3}
+    volume: 0.8
+    pitch: 0.72
+    pitchJitter: 0.03
+    maxDuration: 0
+    cooldown: 0.1
+  - id: powerup
+    clip: {fileID: 8300000, guid: 8fdfe52bbf5aa4a4fbe614dff95efe48, type: 3}
+    volume: 0.7
+    pitch: 1.45
+    pitchJitter: 0.02
+    maxDuration: 0.8
+    cooldown: 0.3
+  tracks:
+  - id: street
+    clip: {fileID: 8300000, guid: 047fc63956c10d74ba090fce96dc68e8, type: 3}
+    volume: 0.42
+  - id: roof
+    clip: {fileID: 8300000, guid: 67d9c7daf06520b4ca6d9507f939d3bd, type: 3}
+    volume: 0.45
+  - id: menu
+    clip: {fileID: 8300000, guid: 67d9c7daf06520b4ca6d9507f939d3bd, type: 3}
+    volume: 0.32
+  - id: boss
+    clip: {fileID: 8300000, guid: c92107e0c5fea3f4faa1f8c97ce3a565, type: 3}
+    volume: 0.5
+  - id: victory
+    clip: {fileID: 8300000, guid: 057968d6c8150534d8bd04a527e12101, type: 3}
+    volume: 0.55
+  - id: saz
+    clip: {fileID: 8300000, guid: e5727788d3a4ad849af80a990f208d33, type: 3}
+    volume: 0.16

@@ -147,6 +147,10 @@ namespace Jumpline.Player
         public event System.Action Crashed;
         /// <summary>Yandan çarpıp sendeledi (hafif sarsıntı).</summary>
         public event System.Action Stumbled;
+        /// <summary>Zıpladı / kaymaya başladı / zipline'a tutundu-bıraktı (ses, efekt).</summary>
+        public event System.Action Jumped;
+        public event System.Action SlideStarted;
+        public event System.Action<bool> ZiplineChanged;
         /// <summary>Hız kademesi arttı (1, 2, 3…).</summary>
         public event System.Action<int> SpeedLevelChanged;
 
@@ -395,6 +399,7 @@ namespace Jumpline.Player
             slideQueued = false;
             jumpQueuedUntil = -1f;
             Trigger(JumpTrigger);
+            Jumped?.Invoke();
         }
 
         private void StartSlide()
@@ -409,6 +414,7 @@ namespace Jumpline.Player
                 animator.SetFloat(SlideSpeedParam, slideClipLength / slideDuration);   // klip tam kayma süresince oynar
             }
             Trigger(SlideTrigger);
+            SlideStarted?.Invoke();
         }
 
         private void ChangeLane(int dir)
@@ -616,6 +622,7 @@ namespace Jumpline.Player
             state = State.ZipSlide;
             Trigger(ZiplineTrigger);
             if (ziplineSparks != null) ziplineSparks.Play();
+            ZiplineChanged?.Invoke(true);
         }
 
         private void ReleaseZipline()
@@ -625,6 +632,7 @@ namespace Jumpline.Player
             gravityNow = gravity;
             Trigger(FallTrigger);
             if (ziplineSparks != null) ziplineSparks.Stop();
+            ZiplineChanged?.Invoke(false);
         }
 
         private void Trigger(int id)

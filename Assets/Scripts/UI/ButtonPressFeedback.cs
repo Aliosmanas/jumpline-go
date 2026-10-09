@@ -33,6 +33,7 @@ namespace Jumpline.UI
         {
             if (selectable != null && !selectable.IsInteractable()) return;
             pressed = true;
+            Jumpline.Audio.AudioManager.Play("click");
         }
 
         public void OnPointerUp(PointerEventData eventData) => pressed = false;

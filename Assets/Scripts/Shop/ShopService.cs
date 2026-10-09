@@ -64,6 +64,7 @@ namespace Jumpline.Shop
                     break;
             }
             SaveManager.Flush();
+            Jumpline.Audio.AudioManager.Play("purchase");   // tık + çın (buton sesi zaten çaldı)
             return PurchaseResult.Success;
         }
 

@@ -162,6 +162,8 @@ namespace Jumpline.Boss
         /// <summary>Son kalp düştü, devrilme bitti — bölüm kazanıldı.</summary>
         public event System.Action Defeated;
         public event System.Action<Phase> PhaseChanged;
+        /// <summary>Fırlattığı engel yere düştü.</summary>
+        public event System.Action ObstacleLanded;
 
         public bool IsActive => isActiveAndEnabled;
         /// <summary>true: konum/yenilgi akışını BossFinale yönetir (köprüden düşüş sinematiği).</summary>
@@ -504,6 +506,7 @@ namespace Jumpline.Boss
             if (landingMarker != null) landingMarker.gameObject.SetActive(false);
             if (cameraFollow != null) cameraFollow.Shake(0.25f);
             if (landFx != null) { landFx.transform.position = to + Vector3.up * 0.2f; landFx.Emit(26); }
+            ObstacleLanded?.Invoke();
             nextThrow = Time.time + Random.Range(throwInterval.x, throwInterval.y) / Mathf.Max(0.1f, PhaseValue(throwRatePerPhase));
         }
 

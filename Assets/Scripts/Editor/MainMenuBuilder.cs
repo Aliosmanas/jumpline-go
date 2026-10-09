@@ -64,6 +64,8 @@ namespace Jumpline.EditorTools
             Stretch(safe);
             safe.gameObject.AddComponent<SafeArea>();
             var navigator = canvas.gameObject.AddComponent<MenuNavigator>();
+            canvas.gameObject.AddComponent<Jumpline.Audio.MenuMusic>();
+            AudioSetup.Setup();
 
             BuildHome(NewScreen(safe, "home", true));
             BuildCharacter(NewScreen(safe, "character", true));
