@@ -78,6 +78,8 @@ namespace Jumpline.Boss
         public event System.Action PickedUp;
 
         public int Count => held.Count;
+        /// <summary>Bu koşuda yapılan atış sayısı (yıldız: az atışla yenmek).</summary>
+        public int ThrowsMade { get; private set; }
         public Sprite CurrentIcon => held.Count > 0 && kinds[held.Peek()].icon != null ? kinds[held.Peek()].icon : null;
         public bool CanThrow => held.Count > 0 && player != null && !player.IsDead && Time.time - lastThrow >= throwCooldown;
 
@@ -207,6 +209,7 @@ namespace Jumpline.Boss
         {
             if (!CanThrow) return;
             lastThrow = Time.time;
+            ThrowsMade++;
             int kind = held.Pop();
             Vector3 p = player.transform.position;
             float x = player.LaneOriginX + player.Lane * player.LaneWidth;   // hedef şerit (geçiş sırasında da)

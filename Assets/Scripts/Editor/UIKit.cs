@@ -794,7 +794,7 @@ namespace Jumpline.EditorTools
 
             Icons.Clear();
             foreach (string n in new[] { "shopping-cart", "calendar-star", "backpack", "helmet", "settings", "arrow-left", "ban", "player-pause", "check",
-                                         "heart", "throw_melon", "throw_jug", "boss_head", "mission_pouch", "mission_fish" })
+                                         "heart", "throw_melon", "throw_jug", "boss_head", "mission_pouch", "mission_fish", "star", "lock" })
                 Icons[n] = ImportSprite($"{IconDir}/{n}.png");
             circuit = MakeCircuit();
             arcRing = MakeSizedSprite("ArcRing", 256, ArcRingAlpha);

@@ -1325,6 +1325,10 @@ namespace Jumpline.EditorTools
 
             CanvasGroup completeGroup = Overlay(safe, "CompletePanel", "LEVEL COMPLETE!", 800f, out Box completeBox);
             var reward = Txt(completeBox, "Reward", "", new Rect(113f, 790f, 890f, 120f), fExtra, 42f, C.Gold, localize: false);
+            var starImgs = new Object[3];
+            for (int k = 0; k < 3; k++)
+                starImgs[k] = Icon(completeBox, "star", new Rect(398f + k * 110f, 700f, 100f, 100f), Color.white);
+            SetArray(flow, "starImages", starImgs);
             Button next = BoxButton(completeBox, "Next", new Rect(213f, 930f, 690f, 120f), "NEXT", 44f);
             Button replay = BoxButton(completeBox, "Replay", new Rect(213f, 1080f, 690f, 120f), "REPLAY", 44f);
             Button menu2 = BoxButton(completeBox, "MainMenu", new Rect(213f, 1230f, 690f, 120f), "MAIN MENU", 44f);

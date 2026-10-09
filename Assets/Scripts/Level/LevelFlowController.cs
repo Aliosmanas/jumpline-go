@@ -59,6 +59,14 @@ namespace Jumpline.Level
         [SerializeField] private TMP_Text failReasonLabel;
         [Tooltip("Kovalamada gizlenen bölüm ilerleme çubuğu ve mod yazısı.")]
         [SerializeField] private GameObject[] hideDuringChase;
+        [Header("Yıldızlar")]
+        [Tooltip("Bölüm sonu panelindeki 3 yıldız.")]
+        [SerializeField] private Image[] starImages;
+        [SerializeField] private Color starOn = Color.white;
+        [SerializeField] private Color starOff = new Color(0.25f, 0.22f, 0.28f, 0.8f);
+        [Tooltip("3. yıldız: canavarı en fazla bu kadar atışla yen.")]
+        [SerializeField, Min(1)] private int threeStarThrows = 6;
+        [SerializeField] private Jumpline.Boss.ThrowSystem throws;
         [Tooltip("Canavarı ilk kez yenince verilen elmas.")]
         [SerializeField, Min(0)] private int bossFirstWinGems = 25;
         [Header("Hızlı Yarış")]
@@ -72,6 +80,7 @@ namespace Jumpline.Level
         /// <summary>Bölüm tamamlandı (ödül paneli açıldı).</summary>
         public event System.Action LevelCompleted;
         private Color? failTitleColor;
+        private int revives;
 
         private void Awake()
         {
@@ -174,6 +183,21 @@ namespace Jumpline.Level
             if (GameSession.Mode == RunMode.Campaign && lastLevel) reward += "\n" + Localization.Get("ALL LEVELS COMPLETE!");
             SaveManager.Flush();
 
+            int stars = 0;
+            if (GameSession.Mode == RunMode.Campaign)
+            {
+                stars = 1;                                                                   // bitirdin
+                if (revives == 0) stars++;                                                   // elmasla devam etmeden
+                if (revives == 0 && throws != null && throws.ThrowsMade <= threeStarThrows) stars++;   // az atışla
+                SaveManager.SubmitStars(level, stars);
+            }
+            if (starImages != null)
+                for (int i = 0; i < starImages.Length; i++)
+                    if (starImages[i] != null)
+                    {
+                        starImages[i].gameObject.SetActive(GameSession.Mode == RunMode.Campaign);
+                        starImages[i].color = i < stars ? starOn : starOff;
+                    }
             Time.timeScale = 0f;   // ödül ekranı açıkken dünya durur
             rewardText.text = reward;
             LevelCompleted?.Invoke();
@@ -224,6 +248,7 @@ namespace Jumpline.Level
             if (SaveManager.Gems < reviveGemCost) return;
             SaveManager.Gems -= reviveGemCost;
             SaveManager.Flush();
+            revives++;
             StartCoroutine(ReviveRoutine());
         }
 

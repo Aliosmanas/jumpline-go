@@ -26,6 +26,7 @@ namespace Jumpline.Save
         public const string StatPrefix = "jl.stat.";
         public const string LegendPrefix = "jl.legend.";
         public const string QuickRaceBestKey = "jl.quickBest";
+        public const string StarsPrefix = "jl.stars.";
         public const string SaveVersionKey = "jl.saveVersion";
         /// <summary>Kayıt biçimi sürümü. Artınca <see cref="Migrate"/> eski kaydı yeni biçime taşır (oyuncu ilerlemesi kaybolmaz).</summary>
         public const int CurrentSaveVersion = 2;
@@ -82,6 +83,17 @@ namespace Jumpline.Save
         {
             if (level <= UnlockedLevel) return;
             PlayerPrefs.SetInt(UnlockedLevelKey, level);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>Bölümün en iyi yıldızı (0-3).</summary>
+        public static int GetStars(int level) => PlayerPrefs.GetInt(StarsPrefix + level, 0);
+
+        /// <summary>Daha iyiyse kaydeder.</summary>
+        public static void SubmitStars(int level, int stars)
+        {
+            if (stars <= GetStars(level)) return;
+            PlayerPrefs.SetInt(StarsPrefix + level, Mathf.Clamp(stars, 0, 3));
             PlayerPrefs.Save();
         }
 

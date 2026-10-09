@@ -172,6 +172,7 @@ namespace Jumpline.EditorTools
 
             BuildBossHud(boss, throws);
             Set(flow, "boss", boss);
+            Set(flow, "throws", throws);
 
             // --- final: On Gözlü Köprü arenası + düşüş sinematiği ---
             Transform arena = BuildBridgeArena(runner);

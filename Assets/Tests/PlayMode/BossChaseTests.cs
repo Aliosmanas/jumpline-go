@@ -160,6 +160,7 @@ namespace Jumpline.Tests
             for (float t = 0f; t < 10f && !complete.gameObject.activeSelf; t += Time.unscaledDeltaTime) yield return null;
             Assert.IsTrue(complete.gameObject.activeSelf, "düşüşten sonra bölüm tamam");
             Assert.IsTrue(SaveManager.HasLegend("tepegoz"), "Efsaneler Kitabı'na Tepegöz sayfası");
+            Assert.GreaterOrEqual(SaveManager.GetStars(1), 1, "bölüm yıldızı kaydedildi");
         }
     }
 }

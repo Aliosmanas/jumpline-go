@@ -18,7 +18,7 @@ namespace Jumpline.EditorTools
     /// (docs/references/menu) birebir; Events / Inventory / Upgrade / Customize / Language / Help / Legal
     /// aynı stille. Karakter görselleri bilerek boş. Menü: Jumpline → Build Main Menu.
     /// </summary>
-    public static class MainMenuBuilder
+    public static partial class MainMenuBuilder
     {
         public const string ScenePath = "Assets/Scenes/MainMenu/MainMenu.unity";
         public const string ConfigPath = "Assets/Settings/GameConfig.asset";
@@ -78,6 +78,7 @@ namespace Jumpline.EditorTools
             BuildLanguage(NewScreen(safe, "language", false));
             BuildHelp(NewScreen(safe, "help", false));
             BuildLegal(NewScreen(safe, "legal", false));
+            BuildMap(NewScreen(safe, "map", true));
 
             GameObject nav = BuildBottomNav(safe);
             BuildCurrencyBar(safe);   // her ekranın üstünde altın + elmas
@@ -155,8 +156,8 @@ namespace Jumpline.EditorTools
         {
             // docs/references/menu/home_v2.jpg
             RawPreview(s.top, "RunnerPreview", new Rect(108f, 330f, 900f, 900f), preview);
-            Logo(s.top, "SEASON 4: VELOCITY");
-            Starts(GlassPlayButton(s.bot, "PlayButton", new Rect(118f, 1215f, 880f, 250f), "PLAY", 120f), RunMode.Campaign);
+            Logo(s.top, "THE BOOK OF LEGENDS");
+            Link(GlassPlayButton(s.bot, "PlayButton", new Rect(118f, 1215f, 880f, 250f), "PLAY", 120f), MenuLink.LinkAction.Open, "map");
             Starts(TagButton(s.bot, "QuickRaceButton", new Rect(70f, 1535f, 470f, 118f), "QUICK RACE", true), RunMode.QuickRace);
             Starts(TagButton(s.bot, "DailyChallengeButton", new Rect(576f, 1535f, 470f, 118f), "DAILY CHALLENGE", false, 33f), RunMode.Daily);
         }
@@ -805,8 +806,8 @@ namespace Jumpline.EditorTools
             SolidBackground(s);
             Link(Header(s.top, "EVENTS"), MenuLink.LinkAction.Back);
 
-            var season = Section(s.top, "Season", "SEASON PROGRESS", new Rect(63f, 250f, 990f, 300f));
-            Txt(season, "SeasonName", "SEASON 4: VELOCITY", new Rect(123f, 360f, 870f, 50f), fBold, 32f, Hex("#8C95AA"));
+            var season = Section(s.top, "Season", "THE BOOK OF LEGENDS", new Rect(63f, 250f, 990f, 300f));
+            Txt(season, "SeasonName", "8 CITIES · 8 LEGENDS", new Rect(123f, 360f, 870f, 50f), fBold, 32f, Hex("#8C95AA"));
             RectTransform progress = ProgressBar(season, "SeasonBar", new Rect(123f, 430f, 870f, 30f), 0f);
             var progressText = Txt(season, "SeasonProgress", "", new Rect(123f, 475f, 870f, 50f), fExtra, 34f, Color.white, localize: false);
 
