@@ -50,6 +50,11 @@ namespace Jumpline.Level
         [SerializeField] private WorldLook streetLook;
         [SerializeField] private WorldLook rooftopLook;
 
+        [Header("Final arenası (On Gözlü Köprü)")]
+        [Tooltip("Arena kökü (x = orta şerit, y = köprü yüzeyi). Girilince sokak ve çatı kapanır.")]
+        [SerializeField] private Transform arenaRoot;
+        [SerializeField] private WorldLook arenaLook;
+
         [Header("Geçiş")]
         [SerializeField, Min(0.01f)] private float flashIn = 0.12f;
         [SerializeField, Min(0.01f)] private float flashOut = 0.45f;
@@ -58,6 +63,10 @@ namespace Jumpline.Level
         private bool busy;
 
         public bool InStreet { get; private set; } = true;
+        /// <summary>Final arenasında (köprü). Arena "sokak" sayılır (InStreet true): canavar ve portallar aynı mantıkla çalışır.</summary>
+        public bool InArena { get; private set; }
+        public float ArenaOriginX => arenaRoot != null ? arenaRoot.position.x : 0f;
+        public float ArenaGround => arenaRoot != null ? arenaRoot.position.y : 0f;
         public float StreetOriginX => streetOriginX;
         public float StreetGround => streetGround;
         public float RooftopOriginX => rooftopRoot != null ? rooftopRoot.position.x : 0f;
@@ -71,6 +80,7 @@ namespace Jumpline.Level
         /// <summary>Elmasla devam için güvenli nokta: bulunulan dünyanın zemininde; çatıda boşluktaysa karşı çatıya.</summary>
         public Vector3 SafeRevivePoint(Vector3 p)
         {
+            if (InArena) return new Vector3(p.x, ArenaGround, p.z);
             if (InStreet) return new Vector3(p.x, streetGround, p.z);
             return new Vector3(p.x, RooftopGround, SafeRooftopZ(p.z));
         }
@@ -88,12 +98,13 @@ namespace Jumpline.Level
         {
             Apply(streetLook);
             SetWorldActive(true);
+            if (arenaRoot != null) arenaRoot.gameObject.SetActive(false);
             if (flash != null) flash.color = new Color(flashColor.r, flashColor.g, flashColor.b, 0f);
         }
 
         private void Update()
         {
-            if (!Debug.isDebugBuild || Keyboard.current == null) return;
+            if (!Debug.isDebugBuild || Keyboard.current == null || InArena) return;
             if (Keyboard.current.tKey.wasPressedThisFrame)
             {
                 if (InStreet) EnterRooftop();
@@ -103,7 +114,7 @@ namespace Jumpline.Level
 
         public void EnterRooftop()
         {
-            if (busy || !InStreet || rooftopRoot == null || player.IsDead) return;
+            if (busy || !InStreet || InArena || rooftopRoot == null || player.IsDead) return;
             StartCoroutine(Switch(false));
         }
 
@@ -111,6 +122,34 @@ namespace Jumpline.Level
         {
             if (busy || InStreet || player.IsDead) return;
             StartCoroutine(Switch(true));
+        }
+
+        /// <summary>Final: flaşla köprüye geç (sokak/çatı ve engel üreticileri kapanır, z korunur).</summary>
+        public void EnterArena()
+        {
+            if (busy || InArena || arenaRoot == null) return;
+            StartCoroutine(SwitchToArena());
+        }
+
+        private IEnumerator SwitchToArena()
+        {
+            busy = true;
+            yield return Fade(0f, 1f, flashIn);
+            Vector3 p = player.transform.position;
+            Vector3 root = arenaRoot.position;
+            player.Teleport(new Vector3(root.x, root.y, p.z), root.y, root.x);
+            InArena = true;
+            InStreet = true;
+            if (streetRoot != null) streetRoot.gameObject.SetActive(false);
+            if (rooftopRoot != null) rooftopRoot.gameObject.SetActive(false);
+            if (streetExtras != null) foreach (var g in streetExtras) if (g != null) g.SetActive(false);
+            if (rooftopExtras != null) foreach (var g in rooftopExtras) if (g != null) g.SetActive(false);
+            arenaRoot.gameObject.SetActive(true);
+            Apply(arenaLook);
+            if (cameraFollow != null) cameraFollow.Snap();
+            WorldChanged?.Invoke(true);
+            yield return Fade(1f, 0f, flashOut * 1.6f);
+            busy = false;
         }
 
         private IEnumerator Switch(bool toStreet)

@@ -25,6 +25,12 @@ namespace Jumpline.EditorTools
         private static readonly string[] BossClips = { "Idle", "Run", "Roar", "Throw", "Hit", "Defeat" };
         private const string KarpuzTexPath = BossDir + "/Karpuz_Albedo.png";
 
+        public const string BridgePath = "Assets/Art/Environment/Bridge/OnGozluBridge.fbx";
+        private const string BridgeMatDir = "Assets/Art/Environment/Bridge/Materials";
+        private static readonly Vector3 ArenaOrigin = new Vector3(-400f, 0f, 0f);
+        private const float BridgeSegment = 40f;   // build_bridge.py SEG
+        private const int BridgeCopies = 7;
+
         private static Box hudTop, hudBot;
         private static GameObject[] chaseHidden;
 
@@ -142,6 +148,34 @@ namespace Jumpline.EditorTools
 
             BuildBossHud(boss, throws);
             Set(flow, "boss", boss);
+
+            // --- final: On Gözlü Köprü arenası + düşüş sinematiği ---
+            Transform arena = BuildBridgeArena(runner);
+            Set(switcher, "arenaRoot", arena);
+            SetLook(switcher, "arenaLook", "#F2B98A", "#E9B48C", 45f, 240f, "#E6ECF7", "#F0D6C0", "#A48A76", "#FFC48A", 2.2f,
+                    new Vector3(34f, -50f, 0f), true);
+            var finaleGo = new GameObject("BossFinale");
+            var finale = finaleGo.AddComponent<BossFinale>();
+            Set(finale, "boss", boss);
+            Set(finale, "player", player);
+            Set(finale, "switcher", switcher);
+            Set(finale, "cameraFollow", follow);
+            Set(finale, "throws", throws);
+            var splash = MakeBurst(finaleGo.transform, "SplashFx", Hex("#FFFFFF"), Hex("#9FE3FF"), 6f, 15f, 1.6f);
+            splash.GetComponent<ParticleSystemRenderer>().sharedMaterial = SplashMaterial();
+            splash.GetComponent<ParticleSystemRenderer>().renderMode = ParticleSystemRenderMode.Billboard;
+            var sm = splash.main;
+            sm.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 1f, 1f, 0.95f), new Color(0.75f, 0.92f, 1f, 0.85f));
+            sm.startSize = new ParticleSystem.MinMaxCurve(0.5f, 1.6f);
+            sm.startLifetime = new ParticleSystem.MinMaxCurve(0.8f, 1.6f);
+            sm.maxParticles = 600;
+            var ssh = splash.shape;
+            ssh.shapeType = ParticleSystemShapeType.Cone;
+            ssh.angle = 25f;
+            ssh.radius = 1.5f;
+            splash.transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
+            Set(finale, "splashFx", splash);
+            SetArray(finale, "hideDuringCinematic", new Object[] { hudTop.rt.parent.gameObject, GameObject.Find("BossHud") });
             SetArray(flow, "hideDuringChase", chaseHidden);
         }
 
@@ -211,6 +245,96 @@ namespace Jumpline.EditorTools
             Set(hud, "throwGroup", group);
             Set(hud, "throwIcon", icon);
             Set(hud, "throwCount", count);
+        }
+
+        /// <summary>Su sıçraması: yumuşak beyaz damla/köpük (alfa karışımlı, suyun üstünde görünür).</summary>
+        private static Material SplashMaterial()
+        {
+            const string path = "Assets/Art/Materials/FxSplash.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.SetFloat("_Surface", 1f);
+            mat.SetFloat("_Blend", 0f);   // alfa
+            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.renderQueue = (int)RenderQueue.Transparent;
+            var tex = AssetDatabase.GetBuiltinExtraResource<Texture2D>("Default-Particle.psd");
+            if (tex != null) mat.SetTexture("_BaseMap", tex);
+            mat.SetColor("_BaseColor", Color.white);
+            EditorUtility.SetDirty(mat);
+            return mat;
+        }
+
+        /// <summary>Köprü arenası: 40 m'lik parçalar sonsuz döngüde (StreetRecycler). Başta kapalı; WorldSwitcher.EnterArena açar.</summary>
+        private static Transform BuildBridgeArena(Transform runner)
+        {
+            ConfigureBridgeImport();
+            var root = new GameObject("BridgeArena").transform;
+            root.position = ArenaOrigin;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(BridgePath);
+            if (prefab != null)
+            {
+                for (int i = 0; i < BridgeCopies; i++)
+                {
+                    var seg = new GameObject("BridgeSeg_" + i).transform;
+                    seg.SetParent(root, false);
+                    seg.localPosition = new Vector3(0f, 0f, (i - 1) * BridgeSegment);
+                    var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, seg);
+                    vis.transform.localPosition = Vector3.zero;
+                    foreach (var r in vis.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.On;
+                }
+            }
+            var rec = root.gameObject.AddComponent<StreetRecycler>();
+            Set(rec, "player", runner);
+            SetFloat(rec, "segmentLength", BridgeSegment);
+            root.gameObject.SetActive(false);
+            return root;
+        }
+
+        private static void ConfigureBridgeImport()
+        {
+            if (AssetImporter.GetAtPath(BridgePath) is not ModelImporter imp) return;
+            EnsureFolder(BridgeMatDir);
+            imp.importCameras = imp.importLights = imp.importAnimation = false;
+            foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { BridgeMatDir }))
+            {
+                var m = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                imp.AddRemap(new AssetImporter.SourceAssetIdentifier(typeof(Material), m.name), m);
+            }
+            imp.SaveAndReimport();
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(BridgePath))
+            {
+                if (o is not Material m) continue;
+                string dst = $"{BridgeMatDir}/{m.name}.mat";
+                if (AssetDatabase.LoadAssetAtPath<Material>(dst) == null) AssetDatabase.ExtractAsset(m, dst);
+            }
+            AssetDatabase.WriteImportSettingsIfDirty(BridgePath);
+            AssetDatabase.ImportAsset(BridgePath, ImportAssetOptions.ForceUpdate);
+            var basalt = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Environment/Diyarbakir/DiyarbakirStreet.fbm/basalt.png");
+            (string name, string color, float smooth, bool tex)[] defs =
+            {
+                ("BR_Stone", "#B2A79C", 0.12f, true), ("BR_Light", "#E2D3BE", 0.15f, true), ("BR_Deck", "#D2C7BB", 0.2f, true),
+                ("BR_Cap", "#CFC2B2", 0.18f, true), ("BR_Water", "#2E6A6E", 0.92f, false), ("BR_Earth", "#9A774E", 0.05f, false),
+                ("BR_Grass", "#6E8540", 0.05f, false), ("BR_Wall", "#7A6F66", 0.1f, true),
+            };
+            foreach (var d in defs)
+            {
+                var mat = AssetDatabase.LoadAssetAtPath<Material>($"{BridgeMatDir}/{d.name}.mat");
+                if (mat == null) continue;
+                mat.shader = Shader.Find("Universal Render Pipeline/Lit");
+                mat.SetColor("_BaseColor", Hex(d.color));
+                mat.SetFloat("_Smoothness", d.smooth);
+                mat.SetFloat("_Metallic", 0f);
+                if (d.tex && basalt != null) mat.SetTexture("_BaseMap", basalt);
+                EditorUtility.SetDirty(mat);
+            }
+            AssetDatabase.SaveAssets();
         }
 
         private static Transform FindDeep(Transform t, string name)

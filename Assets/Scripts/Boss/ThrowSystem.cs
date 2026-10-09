@@ -36,6 +36,8 @@ namespace Jumpline.Boss
         [Tooltip("Elde nesne yokken ve canavar uzaklaşmışken (Gap01 ≥ pityAt) aralık bu kadar kısalır.")]
         [SerializeField] private Vector2 pitySpacing = new Vector2(45f, 65f);
         [SerializeField, Range(0f, 1f)] private float pityAt = 0.5f;
+        [Tooltip("Final (köprü): nesneler daha sık çıkar.")]
+        [SerializeField] private Vector2 finaleSpacing = new Vector2(55f, 80f);
         [SerializeField, Min(20f)] private float spawnAhead = 85f;
         [SerializeField, Min(0.3f)] private float hoverHeight = 1.0f;
         [SerializeField, Range(0f, 1f)] private float preferPlayerLane = 0.35f;
@@ -66,6 +68,7 @@ namespace Jumpline.Boss
         private readonly Dictionary<int, Stack<Transform>> pool = new Dictionary<int, Stack<Transform>>();
         private readonly Stack<int> held = new Stack<int>();
         private float nextSpawnDistance;
+        private bool finale;
         private float lastThrow = -10f;
 
         /// <summary>Elindeki nesne sayısı / en üstteki nesnenin türü değişti.</summary>
@@ -108,7 +111,8 @@ namespace Jumpline.Boss
             bool pity = held.Count == 0 && pickups.Count == 0 && boss.Gap01 >= pityAt;
             if (pity) nextSpawnDistance = Mathf.Min(nextSpawnDistance, player.Distance + Random.Range(pitySpacing.x, pitySpacing.y));
             if (player.Distance < nextSpawnDistance) return;
-            if (TrySpawn()) nextSpawnDistance = player.Distance + Random.Range(spacing.x, spacing.y);
+            Vector2 sp = finale ? finaleSpacing : spacing;
+            if (TrySpawn()) nextSpawnDistance = player.Distance + Random.Range(sp.x, sp.y);
             else nextSpawnDistance = player.Distance + 6f;   // uygun yer yok: biraz sonra yeniden dene
         }
 
@@ -174,6 +178,13 @@ namespace Jumpline.Boss
                     Changed?.Invoke();
                 }
             }
+        }
+
+        /// <summary>Final arenası: daha sık nesne; ilki hemen gelir.</summary>
+        public void SetFinale(bool on)
+        {
+            finale = on;
+            if (on) nextSpawnDistance = player.Distance + 25f;
         }
 
         /// <summary>Dünya değişti / devam edildi: yoldaki nesneleri topla (elindekiler kalır).</summary>

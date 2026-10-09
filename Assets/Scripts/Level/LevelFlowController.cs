@@ -59,6 +59,10 @@ namespace Jumpline.Level
         [SerializeField] private TMP_Text failReasonLabel;
         [Tooltip("Kovalamada gizlenen bölüm ilerleme çubuğu ve mod yazısı.")]
         [SerializeField] private GameObject[] hideDuringChase;
+        [Tooltip("Canavarı ilk kez yenince verilen elmas.")]
+        [SerializeField, Min(0)] private int bossFirstWinGems = 25;
+        [Tooltip("Efsaneler Kitabı sayfa kimliği (bölüm 1: tepegoz).")]
+        [SerializeField] private string legendId = "tepegoz";
 
         private State state;
         private Color? failTitleColor;
@@ -137,6 +141,12 @@ namespace Jumpline.Level
                 SaveManager.Gems += config.DailyRewardGems;
                 SaveManager.MarkDailyClaimed();
                 reward += "    " + Localization.Format("+{0} GEMS", config.DailyRewardGems);
+            }
+            if (boss != null && boss.IsDefeated && SaveManager.UnlockLegend(legendId))
+            {
+                SaveManager.Gems += bossFirstWinGems;
+                reward += "    " + Localization.Format("+{0} GEMS", bossFirstWinGems);
+                reward += "\n" + Localization.Get("NEW PAGE IN THE BOOK OF LEGENDS!");
             }
             bool lastLevel = level >= config.LevelCount;
             if (GameSession.Mode == RunMode.Campaign && lastLevel) reward += "\n" + Localization.Get("ALL LEVELS COMPLETE!");

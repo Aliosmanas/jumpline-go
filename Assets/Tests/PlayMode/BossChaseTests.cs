@@ -25,6 +25,7 @@ namespace Jumpline.Tests
         [UnitySetUp]
         public IEnumerator Load()
         {
+            UnityEngine.PlayerPrefs.DeleteKey(SaveManager.LegendPrefix + "tepegoz");
             GameSession.Mode = RunMode.Campaign;
             GameSession.Level = 1;
             SceneManager.LoadScene("Gameplay");
@@ -133,18 +134,31 @@ namespace Jumpline.Tests
         }
 
         [UnityTest]
-        public IEnumerator FourHits_DefeatBoss_CompleteLevel()
+        public IEnumerator ThreeHits_GoToBridge_FinalHit_FallCinematic_CompleteLevel()
         {
             yield return new WaitForSeconds(4f);
-            for (int i = 0; i < 4; i++)
+            var sw = Object.FindAnyObjectByType<WorldSwitcher>();
+            for (int i = 0; i < 3; i++)
             {
                 boss.TakeHit();
-                yield return new WaitForSeconds(0.3f);
+                yield return new WaitForSeconds(0.4f);
             }
+            Assert.AreEqual(1, boss.Hearts);
+            Assert.AreEqual(BossChase.Phase.LastHeart, boss.CurrentPhase);
+            boss.TakeHit();
+            Assert.AreEqual(1, boss.Hearts, "köprüye varmadan son kalp düşmez");
+            for (float t = 0f; t < 6f && !sw.InArena; t += Time.deltaTime) yield return null;
+            Assert.IsTrue(sw.InArena, "son kalpte On Gözlü Köprü'ye geçilir");
+            yield return new WaitForSeconds(1f);
+            Assert.IsTrue(boss.Visible, "canavar köprüde görünür");
+            Assert.Less(Mathf.Abs(player.transform.position.x - sw.ArenaOriginX), 3f, "koşucu köprüde");
+            boss.TakeHit();
             Assert.IsTrue(boss.IsDefeated);
-            yield return new WaitForSecondsRealtime(3f);
+            Assert.IsFalse(player.InputEnabled, "sinematikte kontrol yok");
             var complete = GetField<CanvasGroup>(flow, "completePanel");
-            Assert.IsTrue(complete.gameObject.activeSelf, "son kalp → bölüm tamam");
+            for (float t = 0f; t < 10f && !complete.gameObject.activeSelf; t += Time.unscaledDeltaTime) yield return null;
+            Assert.IsTrue(complete.gameObject.activeSelf, "düşüşten sonra bölüm tamam");
+            Assert.IsTrue(SaveManager.HasLegend("tepegoz"), "Efsaneler Kitabı'na Tepegöz sayfası");
         }
     }
 }

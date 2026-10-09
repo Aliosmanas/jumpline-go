@@ -147,6 +147,8 @@ namespace Jumpline.Player
         public event System.Action<int> SpeedLevelChanged;
 
         public float Charge01 => 0f;      // eski HUD uyumluluğu (şarj yok)
+        /// <summary>false: kaydırma/tuş yok sayılır (final sinematiği). Koşu sürer.</summary>
+        public bool InputEnabled { get; set; } = true;
         public float RunSpeed => currentSpeed;
         /// <summary>Bu koşuda katedilen yol (m).</summary>
         public float Distance => distance;
@@ -199,8 +201,11 @@ namespace Jumpline.Player
                 return;
             }
             UpdateSpeed(dt);
-            ReadSwipes();
-            ReadKeys();
+            if (InputEnabled)
+            {
+                ReadSwipes();
+                ReadKeys();
+            }
 
             Vector3 p = transform.position;
             float laneX = laneOriginX + lane * laneWidth;

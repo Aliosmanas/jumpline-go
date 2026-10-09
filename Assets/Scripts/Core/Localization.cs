@@ -197,6 +197,8 @@ namespace Jumpline.Core
             { "LAST HEART!", "SON KALP!" },
             { "ESCAPING!", "KAÇIYOR!" },
             { "THROW", "AT" },
+            { "NEW PAGE IN THE BOOK OF LEGENDS!", "EFSANELER KİTABI'NA YENİ SAYFA!" },
+            { "TO THE BRIDGE! LAST HEART!", "KÖPRÜYE KAÇIYOR! SON KALP!" },
             { "SWIPE UP: JUMP   ·   DOWN: SLIDE\nLEFT / RIGHT: CHANGE LANE", "YUKARI KAYDIR: ZIPLA   ·   AŞAĞI: KAY\nSAĞA / SOLA: ŞERİT DEĞİŞTİR" },
             {
                 "The runner and obstacles come next.\nUse the test buttons to try the flow.",

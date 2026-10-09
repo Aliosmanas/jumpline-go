@@ -24,6 +24,7 @@ namespace Jumpline.Save
         public const string OwnedPrefix = "jl.owned.";
         public const string BoostPrefix = "jl.boost.";
         public const string StatPrefix = "jl.stat.";
+        public const string LegendPrefix = "jl.legend.";
 
         public const int FirstLevel = 1;
         public const float DefaultMusicVolume = 0.6f;
@@ -49,6 +50,18 @@ namespace Jumpline.Save
             if (level <= UnlockedLevel) return;
             PlayerPrefs.SetInt(UnlockedLevelKey, level);
             PlayerPrefs.Save();
+        }
+
+        /// <summary>Efsaneler Kitabı: yenilen canavarın sayfası açık mı.</summary>
+        public static bool HasLegend(string id) => PlayerPrefs.GetInt(LegendPrefix + id, 0) == 1;
+
+        /// <summary>Canavar yenildi: kitaba sayfası döner. İlk kez açıldıysa true.</summary>
+        public static bool UnlockLegend(string id)
+        {
+            if (HasLegend(id)) return false;
+            PlayerPrefs.SetInt(LegendPrefix + id, 1);
+            PlayerPrefs.Save();
+            return true;
         }
 
         public static bool DailyClaimedToday => PlayerPrefs.GetString(DailyClaimKey, "") == Today;

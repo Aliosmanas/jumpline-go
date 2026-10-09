@@ -133,6 +133,38 @@ namespace Jumpline.Tests
         }
 
         [UnityTest]
+        public IEnumerator CaptureFinale()
+        {
+            GameSession.Mode = RunMode.Campaign;
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.ObstacleSpawner>(FindObjectsSortMode.None))
+            {
+                sp.ClearRange(-1e6f, 1e6f);
+                sp.enabled = false;
+            }
+            var boss = Object.FindAnyObjectByType<BossChase>();
+            var sw = Object.FindAnyObjectByType<Jumpline.Level.WorldSwitcher>();
+            yield return new WaitForSeconds(4f);
+            for (int i = 0; i < 3; i++) { boss.TakeHit(); yield return new WaitForSeconds(0.4f); }
+            Shot("finale_01_announce");
+            for (float t = 0f; t < 6f && !sw.InArena; t += Time.deltaTime) yield return null;
+            yield return new WaitForSeconds(2.5f);
+            Shot("finale_02_bridge");
+            boss.TakeHit();
+            yield return new WaitForSecondsRealtime(0.7f);
+            Shot("finale_03_stumble");
+            yield return new WaitForSecondsRealtime(0.9f);
+            Shot("finale_04_fall");
+            yield return new WaitForSecondsRealtime(0.95f);
+            Shot("finale_05_splash");
+            yield return new WaitForSecondsRealtime(2.5f);
+            Shot("finale_06_complete");
+            Assert.Pass();
+        }
+
+        [UnityTest]
         public IEnumerator CaptureChase()
         {
             GameSession.Mode = RunMode.Campaign;

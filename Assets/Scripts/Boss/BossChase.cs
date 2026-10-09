@@ -158,6 +158,14 @@ namespace Jumpline.Boss
         public event System.Action<Phase> PhaseChanged;
 
         public bool IsActive => isActiveAndEnabled;
+        /// <summary>true: konum/yenilgi akışını BossFinale yönetir (köprüden düşüş sinematiği).</summary>
+        public bool ExternalControl { get; set; }
+        /// <summary>true: atışlar isabet etmez (köprüye geçiş sırasında son kalp korunur).</summary>
+        public bool Invulnerable { get; set; }
+        /// <summary>Son kalp düştü (devrilme başladı) — final sinematiği bunu dinler.</summary>
+        public event System.Action Defeating;
+        public Transform Visual => visual;
+        public Animator BodyAnimator => animator;
         public bool IsChasing => state == State.Chasing || state == State.Intro;
         public bool IsEscaped => state == State.Escaped;
         public bool IsDefeated => state == State.Defeated || state == State.Done;
@@ -233,7 +241,7 @@ namespace Jumpline.Boss
 
         private void Update()
         {
-            if (player == null) return;
+            if (player == null || ExternalControl) return;
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
             UpdateFlash();
@@ -344,7 +352,7 @@ namespace Jumpline.Boss
         /// <summary>Atış canavarın hizasına vardı: şerit tutuyorsa isabet.</summary>
         public bool TryHit(float x)
         {
-            if (state != State.Chasing || !Visible) return false;
+            if (state != State.Chasing || !Visible || Invulnerable) return false;
             if (Mathf.Abs(x - transform.position.x) > player.LaneWidth * 0.55f)
             {
                 Dodged?.Invoke();
@@ -356,7 +364,7 @@ namespace Jumpline.Boss
 
         public void TakeHit()
         {
-            if (state != State.Chasing) return;
+            if (state != State.Chasing || Invulnerable) return;
             hearts = Mathf.Max(0, hearts - 1);
             pull += hitPull;
             flashUntil = Time.time + 0.35f;
@@ -388,6 +396,7 @@ namespace Jumpline.Boss
         /// <summary>Canavarın yöneldiği portalın şeridi (yoksa int.MinValue).</summary>
         private int PortalLaneAhead()
         {
+            if (switcher != null && switcher.InArena) return int.MinValue;
             float z = transform.position.z;
             if (upPortalOpen && !onRoof && !PlayerOnRoof && upPortalZ - z < portalLead + 5f) return upPortal.Lane;
             if (onRoof && PlayerOnRoof && downPortal != null)
@@ -400,6 +409,7 @@ namespace Jumpline.Boss
 
         private void UpdatePortals()
         {
+            if (switcher != null && switcher.InArena) return;   // köprüde portal yok
             float z = transform.position.z;
             float pz = player.transform.position.z;
             // canavar portaldan geçti → öbür dünyaya
@@ -571,9 +581,32 @@ namespace Jumpline.Boss
             Anim("Run");
         }
 
+        /// <summary>Final sinematiği bitti: bölüm tamam.</summary>
+        public void FinishDefeat()
+        {
+            if (state == State.Done) return;
+            state = State.Done;
+            Time.timeScale = 1f;
+            Defeated?.Invoke();
+        }
+
+        /// <summary>Köprüye geçince: canavar başlangıç mesafesine (görünür, aynı dünyada).</summary>
+        public void ResetForArena()
+        {
+            ClearThrown();
+            onRoof = false;
+            upPortalOpen = false;
+            gap = Mathf.Max(minGap + 4f, Mathf.Min(gap, startGap));
+            pull = 0f;
+            y = player.GroundHeight;
+            vy = 0f;
+            ApplyVisibility();
+        }
+
         private void Defeat()
         {
             state = State.Defeated;
+            Defeating?.Invoke();
             defeatedAt = Time.unscaledTime;
             ClearThrown();
             Time.timeScale = defeatSlowMo;

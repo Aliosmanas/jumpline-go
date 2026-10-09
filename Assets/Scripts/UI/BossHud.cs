@@ -90,7 +90,7 @@ namespace Jumpline.UI
             {
                 case BossChase.Phase.Rooftop: Announce(Localization.Get("TO THE ROOFTOPS! FOLLOW IT!"), announceTime); break;
                 case BossChase.Phase.Fury: Announce(Localization.Get("IT'S FURIOUS! WATCH ITS DODGE!"), announceTime); break;
-                case BossChase.Phase.LastHeart: Announce(Localization.Get("LAST HEART!"), announceTime); break;
+                case BossChase.Phase.LastHeart: Announce(Localization.Get("TO THE BRIDGE! LAST HEART!"), announceTime); break;
             }
         }
 
