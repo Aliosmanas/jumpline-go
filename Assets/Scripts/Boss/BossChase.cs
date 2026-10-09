@@ -36,6 +36,10 @@ namespace Jumpline.Boss
         [Tooltip("Canavarın görünen gövdesi (kök: ayak hizası, +Z'ye bakar).")]
         [SerializeField] private Transform visual;
         [SerializeField] private Animator animator;
+        [Tooltip("Fırlatılan engelin çıktığı el (yoksa omuz hizası).")]
+        [SerializeField] private Transform throwHand;
+        [Tooltip("Koşu animasyonunun 1x oynadığı hız (m/sn); koşucu hızlandıkça canavarın adımları da hızlanır.")]
+        [SerializeField, Min(1f)] private float animReferenceSpeed = 11f;
         [Tooltip("İsabette kırmızı parlayan gövde parçaları.")]
         [SerializeField] private Renderer[] flashRenderers;
         [SerializeField] private Color hitFlash = new Color(1f, 0.25f, 0.2f, 1f);
@@ -65,7 +69,7 @@ namespace Jumpline.Boss
         [SerializeField, Min(0f)] private float stumblePush = 6f;
         [Tooltip("Girişte canavarın başlangıç mesafesine kaçma hızı (m/sn).")]
         [SerializeField, Min(0.5f)] private float introRunOff = 5f;
-        [SerializeField, Min(0f)] private float introRoarTime = 1.4f;
+        [SerializeField, Min(0f)] private float introRoarTime = 1.75f;
 
         [Header("Şerit değiştirme")]
         [SerializeField] private Vector2 laneChangeInterval = new Vector2(2.6f, 5.2f);
@@ -135,6 +139,7 @@ namespace Jumpline.Boss
         private bool upPortalOpen;
         private float upPortalZ;
         private float defeatedAt;
+        private bool introRunning;
         private readonly List<Obstacle> thrown = new List<Obstacle>();
         private readonly Stack<Obstacle> thrownPool = new Stack<Obstacle>();
         private Transform flyingThrow;
@@ -220,7 +225,7 @@ namespace Jumpline.Boss
             if (landingMarker != null) landingMarker.gameObject.SetActive(false);
             y = player != null ? player.GroundHeight : 0f;
             Place();
-            Anim("Roar");
+            if (animator == null) Anim("Roar");   // canlandırıcıda varsayılan durum zaten kükreme
             if (cameraFollow != null) cameraFollow.Shake(0.6f);
             HeartsChanged?.Invoke(hearts, maxHearts);
             PhaseChanged?.Invoke(CurrentPhase);
@@ -238,8 +243,9 @@ namespace Jumpline.Boss
                 case State.Intro:
                     if (Time.time - stateTime > introRoarTime)
                     {
+                        if (!introRunning) { introRunning = true; Anim("Run"); }   // kükreme bitti: dönüp kaçar
                         gap = Mathf.MoveTowards(gap, startGap, introRunOff * dt);
-                        if (gap >= startGap - 0.01f) { state = State.Chasing; Anim("Run"); }
+                        if (gap >= startGap - 0.01f) state = State.Chasing;
                     }
                     break;
                 case State.Chasing:
@@ -460,7 +466,7 @@ namespace Jumpline.Boss
             }
             float t = Time.time - throwStart;
             if (t < throwWindUp) return;
-            Vector3 from = transform.position + Vector3.up * 3.2f;
+            Vector3 from = throwHand != null ? throwHand.position : transform.position + Vector3.up * 3.2f;
             Vector3 to = new Vector3(LaneWorldX(throwLane), player.GroundHeight, throwLandZ);
             float k = Mathf.Clamp01((t - throwWindUp) / throwFlight);
             if (flyingThrow == null) flyingThrow = TakeThrown().transform;
@@ -628,9 +634,11 @@ namespace Jumpline.Boss
             float lean = 0f;
             if (telegraphUntil > 0f) lean = -Mathf.Sign(pendingLane - lane) * leanAngle;
             else if (Mathf.Abs(x - target) > 0.05f) lean = -Mathf.Sign(target - x) * leanAngle * 0.5f;
-            float pitch = throwStart >= 0f ? -12f : (pull > 0f ? -18f : 0f);
-            Quaternion want = Quaternion.Euler(pitch, 0f, lean);
-            visual.localRotation = Quaternion.Slerp(visual.localRotation, want, 1f - Mathf.Exp(-12f * dt));
+            float pitch = animator != null ? 0f : (throwStart >= 0f ? -12f : (pull > 0f ? -18f : 0f));   // canlandırıcı varsa gövdeyi o eğer
+            bool facePlayer = state == State.Intro && Time.time - stateTime < introRoarTime;   // girişte koşucuya dönüp kükrer
+            Quaternion want = Quaternion.Euler(pitch, facePlayer ? 180f : 0f, lean);
+            visual.localRotation = Quaternion.Slerp(visual.localRotation, want, 1f - Mathf.Exp((facePlayer ? -30f : -7f) * dt));
+            if (animator != null) animator.SetFloat(RunSpeedParam, Mathf.Clamp(player.RunSpeed / animReferenceSpeed, 0.8f, 1.7f));
         }
 
         private void UpdateFlash()
@@ -641,14 +649,16 @@ namespace Jumpline.Boss
             {
                 if (r == null) continue;
                 r.GetPropertyBlock(block);
-                block.SetColor("_EmissionColor", hitFlash * (k * 3f));
+                block.SetColor("_EmissionColor", hitFlash * (k * 1.4f));
                 r.SetPropertyBlock(block);
             }
         }
 
+        private static readonly int RunSpeedParam = Animator.StringToHash("RunSpeed");
+
         private void Anim(string trigger)
         {
-            if (animator == null || animator.runtimeAnimatorController == null) return;
+            if (animator == null || animator.runtimeAnimatorController == null || !animator.isActiveAndEnabled) return;
             foreach (var p in animator.parameters)
                 if (p.type == AnimatorControllerParameterType.Trigger && p.name == trigger) { animator.SetTrigger(trigger); return; }
         }

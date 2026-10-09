@@ -19,10 +19,10 @@ namespace Jumpline.Tests
     {
         private static string Dir => Path.Combine(Application.dataPath, "..", "Logs", "Captures");
 
-        public static void Shot(string name)
+        public static void Shot(string name, Camera cam = null)
         {
             Directory.CreateDirectory(Dir);
-            var cam = Camera.main;
+            if (cam == null) cam = Camera.main;
             var rt = new RenderTexture(1080, 1920, 24);
             var canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
             var modes = new RenderMode[canvases.Length];
@@ -49,6 +49,87 @@ namespace Jumpline.Tests
             File.WriteAllBytes(Path.Combine(Dir, name + ".png"), tex.EncodeToJPG(85));
             Object.Destroy(tex);
             rt.Release();
+        }
+
+        [UnityTest]
+        public IEnumerator CaptureBossCloseup()
+        {
+            GameSession.Mode = RunMode.Campaign;
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.ObstacleSpawner>(FindObjectsSortMode.None))
+                sp.ClearRange(-1e6f, 1e6f);
+            var boss = Object.FindAnyObjectByType<BossChase>();
+            var main = Camera.main;
+            var close = new GameObject("CloseCam").AddComponent<Camera>();
+            close.fieldOfView = 40f;
+            close.enabled = false;
+            foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None)) c.enabled = false;
+            void Frame(string name, Vector3 offset)
+            {
+                Vector3 b = boss.Position;
+                close.transform.position = b + offset;
+                close.transform.LookAt(b + Vector3.up * 1.9f);
+                Shot(name, close);
+            }
+            yield return new WaitForSeconds(0.7f);
+            Frame("boss_intro_front", new Vector3(1.5f, 2.2f, -7f));
+            yield return new WaitForSeconds(3.5f);
+            for (int i = 0; i < 3; i++)
+            {
+                Frame("boss_run_side_" + i, new Vector3(7f, 2f, 0.5f));
+                yield return new WaitForSeconds(0.11f);
+            }
+            Frame("boss_run_back", new Vector3(1.5f, 2.6f, -7f));
+            boss.TakeHit();
+            yield return new WaitForSeconds(0.15f);
+            Frame("boss_hit", new Vector3(5f, 2.4f, -4f));
+            Assert.Pass();
+        }
+
+        private static Transform FindDeep(Transform t, string n)
+        {
+            if (t.name == n) return t;
+            foreach (Transform c in t) { var r = FindDeep(c, n); if (r != null) return r; }
+            return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CaptureBossPoses()
+        {
+            GameSession.Mode = RunMode.Campaign;
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            var boss = Object.FindAnyObjectByType<BossChase>();
+            boss.enabled = false;
+            var anim = boss.GetComponentInChildren<Animator>();
+            var cam = new GameObject("PoseCam").AddComponent<Camera>();
+            cam.enabled = false;
+            cam.fieldOfView = 40f;
+            foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None)) c.enabled = false;
+            Vector3 b = boss.transform.position;
+            cam.transform.position = b + new Vector3(4f, 2.4f, -9f);
+            cam.transform.LookAt(b + Vector3.up * 1.9f);
+            Debug.Log($"[PoseCheck] animator={anim.name} ctrl={anim.runtimeAnimatorController} avatar={anim.avatar} valid={(anim.avatar != null && anim.avatar.isValid)} init={anim.isInitialized} enabled={anim.enabled} active={anim.isActiveAndEnabled}");
+            foreach (var smr in boss.GetComponentsInChildren<SkinnedMeshRenderer>())
+                Debug.Log($"[PoseCheck] smr={smr.name} bones={smr.bones.Length} root={smr.rootBone}");
+            anim.enabled = false;
+            yield return null;
+            Shot("pose_bind", cam);
+            anim.enabled = true;
+            foreach (string st in new[] { "Run", "Roar", "Throw", "Hit", "Defeat" })
+            {
+                anim.Play(st, 0, 0.3f);
+                anim.Update(0f);
+                yield return null;
+                Debug.Log("[PoseCheck] " + st + " playing=" + anim.GetCurrentAnimatorStateInfo(0).IsName(st));
+                Transform foot = FindDeep(anim.transform, "foot_l"), ball = FindDeep(anim.transform, "ball_l");
+                if (foot != null && ball != null) Debug.Log("[PoseCheck] toes dir " + (ball.position - foot.position).normalized);
+                Shot("pose_" + st, cam);
+            }
+            Assert.Pass();
         }
 
         [UnityTest]

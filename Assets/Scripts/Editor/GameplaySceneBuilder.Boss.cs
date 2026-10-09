@@ -19,6 +19,10 @@ namespace Jumpline.EditorTools
         private const string BossMatDir = BossDir + "/Materials";
         public const string ThrowablesPath = BossDir + "/Throwables.fbx";
         public const string TepegozBlockPath = BossDir + "/TepegozBlock.fbx";
+        public const string TepegozPath = BossDir + "/Tepegoz.fbx";
+        private const string TepegozControllerPath = BossDir + "/Tepegoz.controller";
+        private const float TepegozHeight = 3.6f;   // oyundaki boy (m): koşucunun ~2 katı
+        private static readonly string[] BossClips = { "Idle", "Run", "Roar", "Throw", "Hit", "Defeat" };
         private const string KarpuzTexPath = BossDir + "/Karpuz_Albedo.png";
 
         private static Box hudTop, hudBot;
@@ -29,6 +33,8 @@ namespace Jumpline.EditorTools
         {
             ConfigureBossImport(ThrowablesPath);
             ConfigureBossImport(TepegozBlockPath);
+            ConfigureBossImport(TepegozPath);
+            var controller = SetupTepegozAnimations();
             var player = runner.GetComponent<Jumpline.Player.PlayerController>();
 
             // --- canavar ---
@@ -36,16 +42,34 @@ namespace Jumpline.EditorTools
             var boss = root.AddComponent<BossChase>();
             var visual = new GameObject("Visual").transform;
             visual.SetParent(root.transform, false);
-            var blockPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TepegozBlockPath);
+            var tgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TepegozPath);
+            if (tgPrefab == null) tgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TepegozBlockPath);   // model yoksa kaba gövde
             Renderer[] flash = new Renderer[0];
-            if (blockPrefab != null)
+            if (tgPrefab != null)
             {
-                var body = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab, visual);
+                var body = (GameObject)PrefabUtility.InstantiatePrefab(tgPrefab, visual);
                 body.transform.localPosition = Vector3.zero;   // FBX eksen dönüşü korunur
                 flash = body.GetComponentsInChildren<Renderer>();
+                Bounds b = flash[0].bounds;
+                foreach (var r in flash) b.Encapsulate(r.bounds);
+                float h = Mathf.Max(0.1f, b.max.y - body.transform.position.y);
+                body.transform.localScale *= TepegozHeight / h;
                 foreach (var r in flash)
-                    foreach (var m in r.sharedMaterials)
-                        if (m != null) m.EnableKeyword("_EMISSION");   // isabet parlaması için
+                {
+                    r.shadowCastingMode = ShadowCastingMode.On;
+                    if (r is SkinnedMeshRenderer smr) { smr.updateWhenOffscreen = true; smr.quality = SkinQuality.Bone2; }
+                }
+                var anim = body.GetComponentInChildren<Animator>();
+                if (anim == null) anim = body.AddComponent<Animator>();
+                if (controller != null)
+                {
+                    anim.runtimeAnimatorController = controller;
+                    anim.applyRootMotion = false;
+                    anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                    Set(boss, "animator", anim);
+                }
+                Transform hand = FindDeep(body.transform, "hand_r");
+                if (hand != null) Set(boss, "throwHand", hand);
             }
             Set(boss, "player", player);
             Set(boss, "switcher", switcher);
@@ -189,6 +213,77 @@ namespace Jumpline.EditorTools
             Set(hud, "throwCount", count);
         }
 
+        private static Transform FindDeep(Transform t, string name)
+        {
+            if (t.name == name) return t;
+            foreach (Transform c in t)
+            {
+                var r = FindDeep(c, name);
+                if (r != null) return r;
+            }
+            return null;
+        }
+
+        /// <summary>Tepegoz.fbx klipleri (Idle/Run döngü) + tetikleyicili controller (BossChase.Anim adları).</summary>
+        private static RuntimeAnimatorController SetupTepegozAnimations()
+        {
+            if (AssetImporter.GetAtPath(TepegozPath) is not ModelImporter imp) return null;
+            imp.animationType = ModelImporterAnimationType.Generic;
+            imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            imp.importAnimation = true;
+            var clips = new System.Collections.Generic.List<ModelImporterClipAnimation>();
+            foreach (ModelImporterClipAnimation c in imp.defaultClipAnimations)
+            {
+                string shortName = c.takeName.Contains("|") ? c.takeName.Substring(c.takeName.LastIndexOf('|') + 1) : c.takeName;
+                if (System.Array.IndexOf(BossClips, shortName) < 0) continue;
+                c.name = shortName;
+                c.loopTime = shortName == "Run" || shortName == "Idle";
+                clips.Add(c);
+            }
+            imp.clipAnimations = clips.ToArray();
+            imp.SaveAndReimport();
+            var byName = new System.Collections.Generic.Dictionary<string, AnimationClip>();
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(TepegozPath))
+                if (o is AnimationClip clip && !clip.name.StartsWith("__preview")) byName[clip.name] = clip;
+            AssetDatabase.DeleteAsset(TepegozControllerPath);
+            var ctrl = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(TepegozControllerPath);
+            var sm = ctrl.layers[0].stateMachine;
+            var states = new System.Collections.Generic.Dictionary<string, UnityEditor.Animations.AnimatorState>();
+            foreach (string n in BossClips)
+            {
+                if (!byName.TryGetValue(n, out var clip)) continue;
+                var st = sm.AddState(n);
+                st.motion = clip;
+                states[n] = st;
+                if (n == "Roar") sm.defaultState = st;   // giriş: kükreyerek başlar
+            }
+            foreach (string trig in new[] { "Run", "Roar", "Throw", "Hit", "Defeat" })
+            {
+                ctrl.AddParameter(trig, AnimatorControllerParameterType.Trigger);
+                if (!states.TryGetValue(trig, out var st)) continue;
+                var t = sm.AddAnyStateTransition(st);
+                t.AddCondition(UnityEditor.Animations.AnimatorConditionMode.If, 0, trig);
+                t.duration = trig == "Hit" ? 0.06f : 0.15f;
+                t.canTransitionToSelf = trig == "Hit";
+            }
+            ctrl.AddParameter(new AnimatorControllerParameter { name = "RunSpeed", type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
+            if (states.TryGetValue("Run", out var run))
+            {
+                run.speedParameterActive = true;
+                run.speedParameter = "RunSpeed";
+                foreach (string back in new[] { "Roar", "Throw", "Hit" })
+                {
+                    if (!states.TryGetValue(back, out var a)) continue;
+                    var t = a.AddTransition(run);
+                    t.hasExitTime = true;
+                    t.exitTime = 0.92f;
+                    t.duration = 0.18f;
+                }
+            }
+            AssetDatabase.SaveAssets();
+            return ctrl;
+        }
+
         /// <summary>Koyu konturlu başlık yazısı malzemesi (fExtra'nın kopyası; diğer yazılar etkilenmez).</summary>
         private static Material OutlinedFont()
         {
@@ -230,7 +325,8 @@ namespace Jumpline.EditorTools
         {
             if (AssetImporter.GetAtPath(path) is not ModelImporter imp) return;
             EnsureFolder(BossMatDir);
-            imp.importCameras = imp.importLights = imp.importAnimation = false;
+            imp.importCameras = imp.importLights = false;
+            imp.importAnimation = path == TepegozPath;   // canavarın animasyonları kalır
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { BossMatDir }))
             {
                 var m = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
@@ -253,7 +349,12 @@ namespace Jumpline.EditorTools
                 ("M_Warn", "#FF3B30", 3.5f, 0.5f, 0f),
                 ("B_Skin", "#C9875F", 0f, 0.35f, 0f), ("B_Cloth", "#5A2770", 0f, 0.15f, 0f), ("B_Eye", "#F4F1E8", 0f, 0.8f, 0f),
                 ("B_Iris", "#C8261E", 2.5f, 0.7f, 0f), ("B_Rope", "#8B6B43", 0f, 0.1f, 0f),
+                ("TG_Skin", "#FFFFFF", 0f, 0.38f, 0f), ("TG_Eye", "#F2EEE4", 0f, 0.85f, 0f), ("TG_Iris", "#E0601F", 1.8f, 0.8f, 0f),
+                ("TG_Pupil", "#120808", 0f, 0.9f, 0f), ("TG_Cloth", "#FFFFFF", 0f, 0.12f, 0f), ("TG_Rope", "#6E5236", 0f, 0.1f, 0f),
+                ("TG_Brass", "#C9A04A", 0f, 0.65f, 0.9f),
             };
+            var skinTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Tepegoz_Skin.png");
+            var clothTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Pestemal.png");
             foreach (var d in defs)
             {
                 var mat = AssetDatabase.LoadAssetAtPath<Material>($"{BossMatDir}/{d.name}.mat");
@@ -264,6 +365,12 @@ namespace Jumpline.EditorTools
                 mat.SetFloat("_Smoothness", d.smooth);
                 mat.SetFloat("_Metallic", d.metal);
                 if (d.name == "K_Rind" && rind != null) mat.SetTexture("_BaseMap", rind);
+                if (d.name == "TG_Skin" && skinTex != null) mat.SetTexture("_BaseMap", skinTex);
+                if (d.name == "TG_Cloth" && clothTex != null)
+                {
+                    mat.SetTexture("_BaseMap", clothTex);
+                    mat.SetFloat("_Cull", 0f);   // peştemalin iç yüzü de görünsün
+                }
                 mat.EnableKeyword("_EMISSION");
                 mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
                 mat.SetColor("_EmissionColor", d.glow > 0f ? c * d.glow : Color.black);
