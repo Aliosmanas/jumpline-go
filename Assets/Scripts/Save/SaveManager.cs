@@ -25,6 +25,10 @@ namespace Jumpline.Save
         public const string BoostPrefix = "jl.boost.";
         public const string StatPrefix = "jl.stat.";
         public const string LegendPrefix = "jl.legend.";
+        public const string QuickRaceBestKey = "jl.quickBest";
+        public const string SaveVersionKey = "jl.saveVersion";
+        /// <summary>Kayıt biçimi sürümü. Artınca <see cref="Migrate"/> eski kaydı yeni biçime taşır (oyuncu ilerlemesi kaybolmaz).</summary>
+        public const int CurrentSaveVersion = 2;
 
         public const int FirstLevel = 1;
         public const float DefaultMusicVolume = 0.6f;
@@ -36,6 +40,35 @@ namespace Jumpline.Save
         public const int DefaultGems = 250;
         public const string DefaultSkin = "rookie";
         public const string DefaultLanguage = "en";
+
+        // ---------- Kayıt sürümü ----------
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void Boot() => Migrate();
+
+        /// <summary>
+        /// v1 → v2: geliştirme ekranı karakter özelliklerinden (hız/zıplama/ivme) güç sürelerine geçti — eski seviyelere
+        /// harcanan altın iade edilir. Yeni sürümler buraya bir adım daha ekler.
+        /// </summary>
+        public static void Migrate()
+        {
+            int v = PlayerPrefs.GetInt(SaveVersionKey, PlayerPrefs.HasKey(GoldKey) ? 1 : CurrentSaveVersion);
+            if (v >= CurrentSaveVersion) { PlayerPrefs.SetInt(SaveVersionKey, CurrentSaveVersion); return; }
+            if (v < 2)
+            {
+                (string id, int costBase)[] old = { ("speed", 500), ("jump", 500), ("momentum", 400) };
+                int refund = 0;
+                foreach (var (id, costBase) in old)
+                {
+                    int level = PlayerPrefs.GetInt(StatPrefix + id, 0);
+                    for (int i = 0; i < level; i++) refund += costBase * (i + 1);
+                    PlayerPrefs.DeleteKey(StatPrefix + id);
+                }
+                if (refund > 0) PlayerPrefs.SetInt(GoldKey, PlayerPrefs.GetInt(GoldKey, DefaultGold) + refund);
+            }
+            PlayerPrefs.SetInt(SaveVersionKey, CurrentSaveVersion);
+            PlayerPrefs.Save();
+        }
 
         // ---------- İlerleme ----------
 
@@ -50,6 +83,18 @@ namespace Jumpline.Save
             if (level <= UnlockedLevel) return;
             PlayerPrefs.SetInt(UnlockedLevelKey, level);
             PlayerPrefs.Save();
+        }
+
+        /// <summary>Hızlı Yarış en iyi puanı.</summary>
+        public static int QuickRaceBest => PlayerPrefs.GetInt(QuickRaceBestKey, 0);
+
+        /// <summary>Yeni rekorsa kaydeder ve true döner.</summary>
+        public static bool SubmitQuickRace(int score)
+        {
+            if (score <= QuickRaceBest) return false;
+            PlayerPrefs.SetInt(QuickRaceBestKey, score);
+            PlayerPrefs.Save();
+            return true;
         }
 
         /// <summary>Efsaneler Kitabı: yenilen canavarın sayfası açık mı.</summary>
@@ -183,7 +228,7 @@ namespace Jumpline.Save
 
         public static string Language
         {
-            get => PlayerPrefs.GetString(LanguageKey, DefaultLanguage);
+            get => PlayerPrefs.GetString(LanguageKey, Application.systemLanguage == SystemLanguage.Turkish ? "tr" : DefaultLanguage);
             set => PlayerPrefs.SetString(LanguageKey, value);
         }
 

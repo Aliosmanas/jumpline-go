@@ -79,6 +79,12 @@ namespace Jumpline.EditorTools
                 var score = scoreLabel.gameObject.AddComponent<Jumpline.UI.ScoreCounter>();
                 Set(score, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
                 Set(score, "label", scoreLabel);
+                Set(canvas.GetComponent<LevelFlowController>(), "score", score);
+                // Hızlı Yarış: para kapsülünün solunda "2x" rozeti
+                var x2 = Panel(hudTopBox, "CoinX2", new Rect(686f, 190f, 84f, 58f), Hex("#B3262E"), Hex("#FF4B5A"), 29f, Hex("#FFE08A"));
+                Txt(x2, "X2", "2x", new Rect(686f, 190f, 84f, 58f), fExtra, 34f, Color.white, localize: false);
+                x2.go.SetActive(false);
+                SetArray(canvas.GetComponent<LevelFlowController>(), "quickRaceOnly", new Object[] { x2.go });
             }
             BuildPowerUps(runner, coins);
             BuildBossChase(runner, follow, switcher, streetObs.GetComponent<ObstacleSpawner>(), up, down, canvas.GetComponent<LevelFlowController>());
@@ -1264,7 +1270,7 @@ namespace Jumpline.EditorTools
         }
 
         private static TextMeshProUGUI speedLabel, coinLabel, scoreLabel;
-        private static Box hudMid;
+        private static Box hudMid, hudTopBox;
         private static Image coinIcon;
 
         private static void BuildUI(Transform safe, LevelFlowController flow, GameConfig config)
@@ -1281,6 +1287,7 @@ namespace Jumpline.EditorTools
             var mode = Txt(top, "ModeLabel", "", new Rect(308f, 150f, 500f, 44f), fBold, 28f, C.TextGrey, localize: false);
             var progress = ProgressBar(top, "Progress", new Rect(258f, 210f, 600f, 24f), 0f);
             hudTop = top;
+            hudTopBox = top;
             hudBot = bot;
             chaseHidden = new[] { mode.gameObject, progress.parent.gameObject };   // ProgressBar dolguyu döndürür; iz ebeveyn
 
@@ -1385,6 +1392,7 @@ namespace Jumpline.EditorTools
         [MenuItem("Jumpline/Build All Scenes")]
         public static void BuildAll()
         {
+            LoadingScreenBuilder.Build();
             MainMenuBuilder.Build();        // önce: koşucu FBX içe aktarımı + animasyon controller'ları yeniden kurulur
             GameplaySceneBuilder.Build();   // sonra: oyun sahnesi güncel controller'ı bağlar
         }

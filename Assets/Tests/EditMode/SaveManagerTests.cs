@@ -91,7 +91,9 @@ namespace Jumpline.Tests
             Assert.IsFalse(SaveManager.Muted);
             Assert.IsTrue(SaveManager.Vibration);
             Assert.AreEqual(SaveManager.DefaultGraphicsQuality, SaveManager.GraphicsQuality);
-            Assert.AreEqual(SaveManager.DefaultLanguage, SaveManager.Language);
+            // ilk açılışta cihaz dili Türkçeyse Türkçe, değilse İngilizce
+            string expected = Application.systemLanguage == SystemLanguage.Turkish ? "tr" : SaveManager.DefaultLanguage;
+            Assert.AreEqual(expected, SaveManager.Language);
 
             SaveManager.GraphicsQuality = 99;
             Assert.AreEqual(SaveManager.GraphicsQualityCount - 1, SaveManager.GraphicsQuality);

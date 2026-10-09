@@ -23,6 +23,8 @@ namespace Jumpline.Level
         [Tooltip("Mıknatıs: önde bu kadar (m) ve yanlarda bu kadar (m) içindeki paralar çekilir.")]
         [SerializeField] private Vector2 magnetReach = new Vector2(14f, 5.5f);
         [SerializeField, Min(1f)] private float magnetSpeed = 30f;
+        [Tooltip("Hızlı Yarış'ta her para bu kadar sayılır (para kasma modu).")]
+        [SerializeField, Min(1)] private int quickRaceMultiplier = 2;
 
         [Header("Dizi")]
         [Tooltip("Her 100 m'ye düşen dizi sayısı.")]
@@ -163,7 +165,8 @@ namespace Jumpline.Level
                         pickupFx.Emit(10);
                     }
                     Release(i);
-                    RunCoins += powerUps != null ? powerUps.CoinMultiplier : 1;
+                    int mode = Jumpline.Core.GameSession.Mode == Jumpline.Core.RunMode.QuickRace ? quickRaceMultiplier : 1;
+                    RunCoins += (powerUps != null ? powerUps.CoinMultiplier : 1) * mode;
                     Collected?.Invoke(RunCoins);
                 }
             }

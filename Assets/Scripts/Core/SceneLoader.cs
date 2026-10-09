@@ -12,13 +12,13 @@ namespace Jumpline.Core
             GameSession.Level = Mathf.Clamp(level, 1, config.LevelCount);
             GameSession.Mode = mode;
             Time.timeScale = 1f;
-            SceneManager.LoadScene(config.GameplayScene);
+            Jumpline.UI.LoadingScreen.Load(config.GameplayScene);
         }
 
         public static void LoadMainMenu(GameConfig config)
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(config.MainMenuScene);
+            Jumpline.UI.LoadingScreen.Load(config.MainMenuScene);
         }
 
         /// <summary>Açık en yüksek bölüm (kampanyada sıradaki).</summary>

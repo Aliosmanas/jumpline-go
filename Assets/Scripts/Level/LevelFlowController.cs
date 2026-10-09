@@ -61,6 +61,10 @@ namespace Jumpline.Level
         [SerializeField] private GameObject[] hideDuringChase;
         [Tooltip("Canavarı ilk kez yenince verilen elmas.")]
         [SerializeField, Min(0)] private int bossFirstWinGems = 25;
+        [Header("Hızlı Yarış")]
+        [Tooltip("Yalnız Hızlı Yarış'ta görünen (para kapsülündeki 2x rozeti).")]
+        [SerializeField] private GameObject[] quickRaceOnly;
+        [SerializeField] private Jumpline.UI.ScoreCounter score;
         [Tooltip("Efsaneler Kitabı sayfa kimliği (bölüm 1: tepegoz).")]
         [SerializeField] private string legendId = "tepegoz";
 
@@ -103,7 +107,10 @@ namespace Jumpline.Level
             Show(completePanel, false);
             Show(failPanel, false);
             bool chase = boss != null && boss.gameObject.activeSelf;
-            if (hideDuringChase != null) foreach (var g in hideDuringChase) if (g != null) g.SetActive(!chase);
+            bool quick = GameSession.Mode == RunMode.QuickRace;
+            if (hideDuringChase != null) foreach (var g in hideDuringChase) if (g != null) g.SetActive(!chase && !quick);
+            if (quickRaceOnly != null) foreach (var g in quickRaceOnly) if (g != null) g.SetActive(quick);
+            if (quick) levelLabel.text = Localization.Get("QUICK RACE");   // sonsuz: bölüm numarası yok
         }
 
         private void Update()
@@ -111,6 +118,17 @@ namespace Jumpline.Level
             if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
             if (state == State.Playing) Pause();
             else if (state == State.Paused) Resume();
+        }
+
+        // telefon çaldı / uygulama arka plana geçti: oyun kendiliğinden duraklar (dönünce oyuncu "devam"a basar)
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused) Pause();
+        }
+
+        private void OnApplicationFocus(bool focus)
+        {
+            if (!focus && !Application.isEditor) Pause();
         }
 
         public void Pause()
@@ -174,6 +192,12 @@ namespace Jumpline.Level
                 if (failTitleColor == null) failTitleColor = failReasonLabel.color;
                 failReasonLabel.text = Localization.Get(escaped ? "TEPEGOZ ESCAPED!" : "GAME OVER");
                 failReasonLabel.color = escaped ? new Color(1f, 0.36f, 0.3f) : failTitleColor.Value;
+                if (GameSession.Mode == RunMode.QuickRace && score != null)   // Hızlı Yarış: puan ve rekor
+                {
+                    bool record = SaveManager.SubmitQuickRace(score.Score);
+                    failReasonLabel.text = Localization.Format(record ? "NEW RECORD! {0}" : "SCORE {0}", score.Score.ToString("N0"));
+                    if (record) failReasonLabel.color = new Color(1f, 0.85f, 0.35f);
+                }
             }
         }
 
@@ -183,7 +207,12 @@ namespace Jumpline.Level
             if (reviveGemsButton != null) reviveGemsButton.interactable = canAfford && player != null && CanRevive;
             if (reviveGemsLabel != null) reviveGemsLabel.text = Localization.Format("CONTINUE · {0}", reviveGemCost);
             if (gemBalanceLabel != null)
-                gemBalanceLabel.text = Localization.Format("YOUR GEMS: {0}", SaveManager.Gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture));
+            {
+                string gems = Localization.Format("YOUR GEMS: {0}", SaveManager.Gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture));
+                if (GameSession.Mode == RunMode.QuickRace)
+                    gems = Localization.Format("BEST {0}", SaveManager.QuickRaceBest.ToString("N0")) + "   ·   " + gems;
+                gemBalanceLabel.text = gems;
+            }
         }
 
         /// <summary>50 elmas ver, ölünen yerden 3-2-1 geri sayımla devam et.</summary>

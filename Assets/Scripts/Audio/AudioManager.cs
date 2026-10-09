@@ -79,7 +79,11 @@ namespace Jumpline.Audio
         // ------------------------------------------------------------------
 
         /// <summary>Kısa yol: AudioManager.Instance.Sfx(id).</summary>
-        public static void Play(string id, float volume = 1f, float pitch = 1f) => Instance.Sfx(id, volume, pitch);
+        public static void Play(string id, float volume = 1f, float pitch = 1f)
+        {
+            if (!Application.isPlaying) return;   // edit modu testleri / editör araçları
+            Instance.Sfx(id, volume, pitch);
+        }
 
         public void Sfx(string id, float volume = 1f, float pitch = 1f)
         {
