@@ -67,6 +67,8 @@ namespace Jumpline.Level
         [Tooltip("3. yıldız: canavarı en fazla bu kadar atışla yen.")]
         [SerializeField, Min(1)] private int threeStarThrows = 6;
         [SerializeField] private Jumpline.Boss.ThrowSystem throws;
+        [Tooltip("Bağlılık sayaçları + XP (ödül yazısında gösterilir).")]
+        [SerializeField] private ProgressTracker tracker;
         [Tooltip("Canavarı ilk kez yenince verilen elmas.")]
         [SerializeField, Min(0)] private int bossFirstWinGems = 25;
         [Header("Hızlı Yarış")]
@@ -179,6 +181,13 @@ namespace Jumpline.Level
                 reward += "    " + Localization.Format("+{0} GEMS", bossFirstWinGems);
                 reward += "\n" + Localization.Get("NEW PAGE IN THE BOOK OF LEGENDS!");
             }
+            if (tracker != null)
+            {
+                int xpBefore = tracker.LastRunXp, upsBefore = tracker.LastLevelUps;
+                tracker.CommitRun(true);
+                reward += "\n" + Localization.Format("+{0} XP", tracker.LastRunXp);
+                if (tracker.LastLevelUps > upsBefore) reward += "   " + Localization.Format("LEVEL UP! {0}", Progression.Level);
+            }
             bool lastLevel = level >= config.LevelCount;
             if (GameSession.Mode == RunMode.Campaign && lastLevel) reward += "\n" + Localization.Get("ALL LEVELS COMPLETE!");
             SaveManager.Flush();
@@ -211,6 +220,7 @@ namespace Jumpline.Level
             state = State.Finished;
             bool escaped = boss != null && boss.IsEscaped && (player == null || !player.IsDead);
             if (escaped) Time.timeScale = 0f;   // canavar kaçtı: koşucu yaşıyor, panel açıkken dünya dursun
+            if (tracker != null) tracker.CommitRun(false);
             RefreshRevive();
             Show(failPanel, true);
             if (failReasonLabel != null)   // başlık: "OYUN BİTTİ" ya da "TEPEGÖZ KAÇTI!" (panel açıldıktan sonra; çeviri bileşeni ezmesin)
@@ -221,6 +231,7 @@ namespace Jumpline.Level
                 if (GameSession.Mode == RunMode.QuickRace && score != null)   // Hızlı Yarış: puan ve rekor
                 {
                     bool record = SaveManager.SubmitQuickRace(score.Score);
+                    Progression.Max(Progression.Stat.QuickBest, score.Score);
                     failReasonLabel.text = Localization.Format(record ? "NEW RECORD! {0}" : "SCORE {0}", score.Score.ToString("N0"));
                     if (record) failReasonLabel.color = new Color(1f, 0.85f, 0.35f);
                 }

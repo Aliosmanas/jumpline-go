@@ -79,9 +79,12 @@ namespace Jumpline.EditorTools
             BuildHelp(NewScreen(safe, "help", false));
             BuildLegal(NewScreen(safe, "legal", false));
             BuildMap(NewScreen(safe, "map", true));
+            BuildTasks(NewScreen(safe, "tasks", false));
 
             GameObject nav = BuildBottomNav(safe);
             BuildCurrencyBar(safe);   // her ekranın üstünde altın + elmas
+            BuildPlayerBadge(safe);
+            BuildLoginCalendar(safe);
             Toast toast = BuildToast(safe);
             Set(navigator, "bottomNav", nav);
             Set(navigator, "toast", toast);
