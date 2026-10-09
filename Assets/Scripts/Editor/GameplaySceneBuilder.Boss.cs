@@ -245,6 +245,7 @@ namespace Jumpline.EditorTools
 
             // atma düğmesi: bakır halkalı yuvarlak, içinde nesne, altında "AT", sayısı köşede
             var btnRoot = Add(bot, "ThrowButton", new Rect(826f, 1592f, 250f, 250f));
+            btnRoot.go.AddComponent<Jumpline.UI.HandednessMirror>();   // solak modu: sola
             var group = btnRoot.go.AddComponent<CanvasGroup>();
             var ring = Panel(btnRoot, "Ring", new Rect(826f, 1592f, 250f, 250f), Hex("#7A3B1C"), Hex("#E39A55"), 125f, Hex("#FFE0A8"));
             var face = Panel(btnRoot, "Face", new Rect(844f, 1610f, 214f, 214f), Hex("#D99A52"), Hex("#FBE7C0"), 107f, Hex("#00000000"));

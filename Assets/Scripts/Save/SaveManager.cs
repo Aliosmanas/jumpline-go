@@ -15,6 +15,9 @@ namespace Jumpline.Save
         public const string MutedKey = "jl.muted";
         public const string GraphicsQualityKey = "jl.graphicsQuality";
         public const string SensitivityKey = "jl.sensitivity";
+        public const string LeftHandedKey = "jl.leftHanded";
+        public const string HighContrastKey = "jl.highContrast";
+        public const string CurrencySigKey = "jl.sig";
         public const string VibrationKey = "jl.vibration";
         public const string GoldKey = "jl.gold";
         public const string GemsKey = "jl.gems";
@@ -45,7 +48,11 @@ namespace Jumpline.Save
         // ---------- Kayıt sürümü ----------
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void Boot() => Migrate();
+        private static void Boot()
+        {
+            Migrate();
+            VerifyCurrency();
+        }
 
         /// <summary>
         /// v1 → v2: geliştirme ekranı karakter özelliklerinden (hız/zıplama/ivme) güç sürelerine geçti — eski seviyelere
@@ -65,7 +72,7 @@ namespace Jumpline.Save
                     for (int i = 0; i < level; i++) refund += costBase * (i + 1);
                     PlayerPrefs.DeleteKey(StatPrefix + id);
                 }
-                if (refund > 0) PlayerPrefs.SetInt(GoldKey, PlayerPrefs.GetInt(GoldKey, DefaultGold) + refund);
+                if (refund > 0) { PlayerPrefs.SetInt(GoldKey, PlayerPrefs.GetInt(GoldKey, DefaultGold) + refund); SignCurrency(); }
             }
             PlayerPrefs.SetInt(SaveVersionKey, CurrentSaveVersion);
             PlayerPrefs.Save();
@@ -143,13 +150,13 @@ namespace Jumpline.Save
         public static int Gold
         {
             get => UnlimitedCurrency ? UnlimitedAmount : PlayerPrefs.GetInt(GoldKey, DefaultGold);
-            set { if (!UnlimitedCurrency) PlayerPrefs.SetInt(GoldKey, Mathf.Max(0, value)); }
+            set { if (!UnlimitedCurrency) { PlayerPrefs.SetInt(GoldKey, Mathf.Max(0, value)); SignCurrency(); } }
         }
 
         public static int Gems
         {
             get => UnlimitedCurrency ? UnlimitedAmount : PlayerPrefs.GetInt(GemsKey, DefaultGems);
-            set { if (!UnlimitedCurrency) PlayerPrefs.SetInt(GemsKey, Mathf.Max(0, value)); }
+            set { if (!UnlimitedCurrency) { PlayerPrefs.SetInt(GemsKey, Mathf.Max(0, value)); SignCurrency(); } }
         }
 
         // ---------- Ekipman (takılı / çıkarılmış) ----------
@@ -230,6 +237,48 @@ namespace Jumpline.Save
         {
             get => PlayerPrefs.GetFloat(SensitivityKey, DefaultSensitivity);
             set => PlayerPrefs.SetFloat(SensitivityKey, Mathf.Clamp01(value));
+        }
+
+        public static bool LeftHanded
+        {
+            get => PlayerPrefs.GetInt(LeftHandedKey, 0) == 1;
+            set => PlayerPrefs.SetInt(LeftHandedKey, value ? 1 : 0);
+        }
+
+        public static bool HighContrast
+        {
+            get => PlayerPrefs.GetInt(HighContrastKey, 0) == 1;
+            set => PlayerPrefs.SetInt(HighContrastKey, value ? 1 : 0);
+        }
+
+        // ---------- Basit hile koruması ----------
+        // Altın/elmas kayıt dosyasında elle değiştirilirse imza tutmaz → CurrencyTampered (ileride liderlik tablosundan
+        // ayırmak için). İlerleme SİLİNMEZ: yanlış alarm oyuncuya zarar vermesin.
+
+        private const string SigSalt = "jl-sur-1453";
+
+        /// <summary>Bu açılışta para kaydı imzayla uyuşmadı.</summary>
+        public static bool CurrencyTampered { get; private set; }
+
+        private static string CurrencySignature()
+        {
+            int gold = PlayerPrefs.GetInt(GoldKey, DefaultGold), gems = PlayerPrefs.GetInt(GemsKey, DefaultGems);
+            unchecked
+            {
+                int h = 17;
+                foreach (char c in SigSalt + gold + ":" + gems) h = h * 31 + c;
+                return h.ToString("X8");
+            }
+        }
+
+        private static void SignCurrency() => PlayerPrefs.SetString(CurrencySigKey, CurrencySignature());
+
+        public static void VerifyCurrency()
+        {
+            string sig = PlayerPrefs.GetString(CurrencySigKey, "");
+            CurrencyTampered = sig.Length > 0 && sig != CurrencySignature();
+            if (CurrencyTampered) Debug.LogWarning("[Save] para kaydı imzası tutmuyor (elle değiştirilmiş olabilir)");
+            SignCurrency();
         }
 
         public static bool Vibration

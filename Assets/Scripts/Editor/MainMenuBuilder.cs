@@ -78,6 +78,7 @@ namespace Jumpline.EditorTools
             BuildLanguage(NewScreen(safe, "language", false));
             BuildHelp(NewScreen(safe, "help", false));
             BuildLegal(NewScreen(safe, "legal", false));
+            BuildCredits(NewScreen(safe, "credits", false));
             BuildMap(NewScreen(safe, "map", true));
             BuildTasks(NewScreen(safe, "tasks", false));
 
@@ -731,14 +732,18 @@ namespace Jumpline.EditorTools
             Txt(audio, "MuteLabel", "Mute", new Rect(123f, 635f, 210f, 56f), fMedium, 40f, C.TextSoft, TextAlignmentOptions.Left);
             SwitchToggle mute = RefSwitch(audio, "MuteToggle", new Rect(860f, 628f, 133f, 68f), false);
 
-            var graphics = Section(s.top, "Graphics", "GRAPHICS", new Rect(63f, 798f, 990f, 279f));
-            SegmentedControl quality = QualitySelector(graphics, new Rect(123f, 935f, 870f, 95f));
+            var graphics = Section(s.top, "Graphics", "GRAPHICS", new Rect(63f, 776f, 990f, 260f));
+            SegmentedControl quality = QualitySelector(graphics, new Rect(123f, 900f, 870f, 95f));
 
-            var controls = Section(s.top, "Controls", "CONTROLS", new Rect(63f, 1142f, 990f, 380f));
-            Txt(controls, "SensitivityLabel", "Sensitivity", new Rect(123f, 1296f, 260f, 56f), fMedium, 40f, C.TextSoft, TextAlignmentOptions.Left);
-            Slider sensitivity = RefSlider(controls, "SensitivitySlider", new Rect(388f, 1305f, 605f, 36f), 0.54f);
-            Txt(controls, "VibrationLabel", "Vibration", new Rect(123f, 1406f, 260f, 56f), fMedium, 40f, C.TextSoft, TextAlignmentOptions.Left);
-            SwitchToggle vibration = RefSwitch(controls, "VibrationToggle", new Rect(860f, 1400f, 133f, 68f), true);
+            var controls = Section(s.top, "Controls", "CONTROLS", new Rect(63f, 1066f, 990f, 560f));
+            Txt(controls, "SensitivityLabel", "Sensitivity", new Rect(123f, 1196f, 260f, 56f), fMedium, 40f, C.TextSoft, TextAlignmentOptions.Left);
+            Slider sensitivity = RefSlider(controls, "SensitivitySlider", new Rect(388f, 1205f, 605f, 36f), 0.54f);
+            Txt(controls, "VibrationLabel", "Vibration", new Rect(123f, 1296f, 500f, 56f), fMedium, 40f, C.TextSoft, TextAlignmentOptions.Left);
+            SwitchToggle vibration = RefSwitch(controls, "VibrationToggle", new Rect(860f, 1290f, 133f, 68f), true);
+            Txt(controls, "LeftHandedLabel", "Left-handed", new Rect(123f, 1396f, 600f, 56f), fMedium, 40f, C.TextSoft, TextAlignmentOptions.Left);
+            SwitchToggle leftHanded = RefSwitch(controls, "LeftHandedToggle", new Rect(860f, 1390f, 133f, 68f), false);
+            Txt(controls, "ContrastLabel", "High contrast", new Rect(123f, 1496f, 600f, 56f), fMedium, 40f, C.TextSoft, TextAlignmentOptions.Left);
+            SwitchToggle contrast = RefSwitch(controls, "ContrastToggle", new Rect(860f, 1490f, 133f, 68f), false);
 
             Link(BoxButton(s.bot, "LanguageButton", new Rect(63f, 1766f, 307f, 106f), "LANGUAGE"), MenuLink.LinkAction.Open, "language");
             Link(BoxButton(s.bot, "HelpButton", new Rect(405f, 1766f, 306f, 106f), "HELP"), MenuLink.LinkAction.Open, "help");
@@ -751,6 +756,8 @@ namespace Jumpline.EditorTools
             Set(view, "graphicsQuality", quality);
             Set(view, "sensitivitySlider", sensitivity);
             Set(view, "vibrationToggle", vibration);
+            Set(view, "leftHandedToggle", leftHanded);
+            Set(view, "contrastToggle", contrast);
         }
 
         private static SegmentedControl QualitySelector(Box parent, Rect r)
@@ -949,7 +956,7 @@ namespace Jumpline.EditorTools
             Link(Header(s.top, "HELP"), MenuLink.LinkAction.Back);
             var sec = Section(s.top, "HowToPlay", "HOW TO PLAY", new Rect(63f, 285f, 990f, 980f));
             Txt(sec, "Body",
-                "Your runner moves forward on its own.\n\nHOLD the screen to charge your jump.\nRELEASE to jump.\n\nA short press is a small hop, a long press is a big jump. Read the obstacles ahead and time your release.\n\nHit an obstacle and the run ends. Retry instantly and beat the level!",
+                "Your runner moves forward on its own.\n\nSWIPE UP to jump.\nSWIPE DOWN to slide, or to drop fast from the air.\nSWIPE LEFT / RIGHT to change lanes.\n\nWhen Tepegoz chases you, tap THROW to hit him with melons. Four hits and he falls!\n\nCrash into an obstacle and the run ends. Retry instantly and beat the level!",
                 new Rect(123f, 410f, 870f, 820f), fMedium, 38f, C.TextSoft, TextAlignmentOptions.TopLeft, wrap: true);
         }
 
@@ -963,7 +970,74 @@ namespace Jumpline.EditorTools
             var terms = Section(s.top, "Terms", "TERMS OF USE", new Rect(63f, 750f, 990f, 420f));
             Txt(terms, "Body", "The game is provided as is. In-game gold and gems have no real-world value and cannot be exchanged for money.",
                 new Rect(123f, 875f, 870f, 270f), fMedium, 36f, C.TextSoft, TextAlignmentOptions.TopLeft, wrap: true);
-            Txt(s.top, "Version", $"JUMPLINE GO  v{PlayerSettings.bundleVersion}", new Rect(63f, 1220f, 990f, 50f), fBold, 30f, C.TextDim, localize: false);
+            Link(BoxButton(s.top, "CreditsButton", new Rect(313f, 1210f, 490f, 106f), "CREDITS"), MenuLink.LinkAction.Open, "credits");
+            Txt(s.top, "Version", $"JUMPLINE GO  v{PlayerSettings.bundleVersion}", new Rect(63f, 1350f, 990f, 50f), fBold, 30f, C.TextDim, localize: false);
+        }
+
+        // ---------------------------------------------------------------------
+        // Jenerik (aşama 12): docs/CREDITS.md tablolarından üretilir — kaynak listesi tek yerde kalır
+        // ---------------------------------------------------------------------
+
+        private const string CreditsDoc = "docs/CREDITS.md";
+
+        /// <summary>CREDITS.md: "## Başlık" bölümleri ve tablo satırları → (bölüm, satırlar).</summary>
+        private static List<(string section, List<string> lines)> ReadCredits()
+        {
+            var result = new List<(string, List<string>)>();
+            if (!System.IO.File.Exists(CreditsDoc)) return result;
+            List<string> current = null;
+            foreach (string raw in System.IO.File.ReadAllLines(CreditsDoc))
+            {
+                string line = raw.Trim();
+                if (line.StartsWith("## "))
+                {
+                    string h = line.Substring(3);
+                    string key = h.StartsWith("Ses") ? "SOUNDS" : h.StartsWith("Müzik") ? "MUSIC" : h.StartsWith("3D") ? "3D AND TEXTURES" : "SOUNDS";
+                    current = null;
+                    foreach (var r in result) if (r.Item1 == key) current = r.Item2;
+                    if (current == null) { current = new List<string>(); result.Add((key, current)); }
+                    continue;
+                }
+                if (current == null || !line.StartsWith("|") || line.StartsWith("|---") || line.Contains("| Oyunda |") || line.Contains("| Kullanım |")) continue;
+                string[] c = line.Trim('|').Split('|');
+                for (int i = 0; i < c.Length; i++) c[i] = c[i].Trim();
+                if (c.Length >= 4) current.Add($"{c[1]}  ·  {c[2]}");          // kayıt · sanatçı
+                else if (c.Length == 3) current.Add($"{c[1]}  ·  {c[2]}");     // kaynak · lisans
+            }
+            return result;
+        }
+
+        private static void BuildCredits(Screen s)
+        {
+            SolidBackground(s);
+            Link(Header(s.top, "CREDITS"), MenuLink.LinkAction.Back);
+            var sections = ReadCredits();
+            const float lineH = 50f, headH = 120f;
+            float contentH = 360f;
+            foreach (var (_, lines) in sections) contentH += headH + lines.Count * lineH + 30f;
+            Box list = VerticalScroll(s.top, "CreditsList", new Rect(63f, 230f, 990f, 1730f), 230f + contentH);
+            float y = 250f;
+            Txt(list, "By", "A GAME BY", new Rect(63f, y, 990f, 50f), fBold, 32f, C.TextDim);
+            Txt(list, "Author", "ALI OSMAN KESKIN", new Rect(63f, y + 50f, 990f, 80f), fExtra, 60f, Color.white, localize: false);
+            Txt(list, "Tools", "Made with Unity and Blender. All other models, textures and UI were made for this game.",
+                new Rect(103f, y + 140f, 910f, 110f), fMedium, 30f, C.TextSoft, wrap: true);
+            y += 300f;
+            int n = 0;
+            foreach (var (section, lines) in sections)
+            {
+                Txt(list, "Head" + n, section, new Rect(63f, y + 30f, 990f, 70f), fExtra, 46f, C.Gold);
+                Line(list, new Rect(363f, y + 102f, 390f, 2f), Hex("#3B4A70"));
+                y += headH;
+                foreach (string l in lines)
+                {
+                    var t = Txt(list, "Line" + n++, l, new Rect(83f, y, 950f, lineH), fMedium, 30f, C.TextSoft, localize: false);
+                    t.enableAutoSizing = true;   // uzun kayıt adları satıra sığsın
+                    t.fontSizeMin = 20f;
+                    t.fontSizeMax = 30f;
+                    y += lineH;
+                }
+                y += 30f;
+            }
         }
 
         // ---------------------------------------------------------------------

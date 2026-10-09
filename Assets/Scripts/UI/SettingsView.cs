@@ -15,6 +15,8 @@ namespace Jumpline.UI
         [SerializeField] private SegmentedControl graphicsQuality;
         [SerializeField] private Slider sensitivitySlider;
         [SerializeField] private SwitchToggle vibrationToggle;
+        [SerializeField] private SwitchToggle leftHandedToggle;
+        [SerializeField] private SwitchToggle contrastToggle;
 
         private void Awake()
         {
@@ -28,6 +30,8 @@ namespace Jumpline.UI
                 SaveManager.Vibration = v;
                 if (v) Haptics.Pulse();
             });
+            if (leftHandedToggle != null) leftHandedToggle.Toggle.onValueChanged.AddListener(v => SaveManager.LeftHanded = v);
+            if (contrastToggle != null) contrastToggle.Toggle.onValueChanged.AddListener(v => SaveManager.HighContrast = v);
         }
 
         private void OnEnable()
@@ -40,6 +44,8 @@ namespace Jumpline.UI
             sensitivitySlider.SetValueWithoutNotify(SaveManager.Sensitivity);
             vibrationToggle.Toggle.SetIsOnWithoutNotify(SaveManager.Vibration);
             vibrationToggle.Snap();
+            if (leftHandedToggle != null) { leftHandedToggle.Toggle.SetIsOnWithoutNotify(SaveManager.LeftHanded); leftHandedToggle.Snap(); }
+            if (contrastToggle != null) { contrastToggle.Toggle.SetIsOnWithoutNotify(SaveManager.HighContrast); contrastToggle.Snap(); }
         }
 
         private void OnDisable() => SaveManager.Flush();

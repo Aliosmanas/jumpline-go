@@ -134,6 +134,14 @@ namespace Jumpline.Core
             { "CONTROLS", "KONTROLLER" },
             { "Sensitivity", "Hassasiyet" },
             { "Vibration", "Titreşim" },
+            { "Left-handed", "Solak modu" },
+            { "High contrast", "Kontrastlı mod" },
+            { "CREDITS", "JENERİK" },
+            { "SOUNDS", "SESLER" },
+            { "MUSIC", "MÜZİK" },
+            { "3D AND TEXTURES", "3D VE DOKULAR" },
+            { "A GAME BY", "BİR OYUNU" },
+            { "Made with Unity and Blender. All other models, textures and UI were made for this game.", "Unity ve Blender ile yapıldı. Diğer tüm modeller, dokular ve arayüz bu oyun için üretildi." },
             { "LANGUAGE", "DİL" },
             { "HELP", "YARDIM" },
             { "LEGAL", "YASAL" },
@@ -152,8 +160,8 @@ namespace Jumpline.Core
             // Yardım / yasal
             { "HOW TO PLAY", "NASIL OYNANIR" },
             {
-                "Your runner moves forward on its own.\n\nHOLD the screen to charge your jump.\nRELEASE to jump.\n\nA short press is a small hop, a long press is a big jump. Read the obstacles ahead and time your release.\n\nHit an obstacle and the run ends. Retry instantly and beat the level!",
-                "Koşucun kendiliğinden ileri koşar.\n\nZıplamayı şarj etmek için ekrana BASILI TUT.\nZıplamak için BIRAK.\n\nKısa basış küçük zıplama, uzun basış büyük zıplamadır. Öndeki engelleri oku ve bırakma anını iyi ayarla.\n\nEngele çarparsan koşu biter. Hemen tekrar dene ve bölümü geç!"
+                "Your runner moves forward on its own.\n\nSWIPE UP to jump.\nSWIPE DOWN to slide, or to drop fast from the air.\nSWIPE LEFT / RIGHT to change lanes.\n\nWhen Tepegoz chases you, tap THROW to hit him with melons. Four hits and he falls!\n\nCrash into an obstacle and the run ends. Retry instantly and beat the level!",
+                "Koşucun kendiliğinden ileri koşar.\n\nZıplamak için YUKARI KAYDIR.\nKaymak ya da havadan hızlı inmek için AŞAĞI KAYDIR.\nŞerit değiştirmek için SAĞA / SOLA KAYDIR.\n\nTepegöz kovalarken AT düğmesiyle ona karpuz fırlat. Dört isabette düşer!\n\nEngele çarparsan koşu biter. Hemen tekrar dene ve bölümü geç!"
             },
             { "PRIVACY POLICY", "GİZLİLİK POLİTİKASI" },
             {
