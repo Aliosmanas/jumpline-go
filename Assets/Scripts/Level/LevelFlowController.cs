@@ -52,7 +52,16 @@ namespace Jumpline.Level
         [SerializeField, Min(5f)] private float clearAhead = 35f;
         [SerializeField] private WorldSwitcher worldSwitcher;
 
+        [Header("Canavar kovalaması (kampanya)")]
+        [Tooltip("Canavar: kaçarsa bölüm kaybedilir, yenilirse bölüm biter.")]
+        [SerializeField] private Jumpline.Boss.BossChase boss;
+        [Tooltip("Oyun bitti paneli başlığı (canavar kaçınca \"TEPEGÖZ KAÇTI!\" olur).")]
+        [SerializeField] private TMP_Text failReasonLabel;
+        [Tooltip("Kovalamada gizlenen bölüm ilerleme çubuğu ve mod yazısı.")]
+        [SerializeField] private GameObject[] hideDuringChase;
+
         private State state;
+        private Color? failTitleColor;
 
         private void Awake()
         {
@@ -66,6 +75,11 @@ namespace Jumpline.Level
             if (player != null) player.Died += FailLevel;
             if (reviveGemsButton != null) reviveGemsButton.onClick.AddListener(ReviveWithGems);
             if (reviveAdButton != null) reviveAdButton.interactable = false;   // reklam ileride
+            if (boss != null)
+            {
+                boss.Escaped += FailLevel;
+                boss.Defeated += CompleteLevel;
+            }
         }
 
         private void Start()
@@ -82,6 +96,8 @@ namespace Jumpline.Level
             Show(pausePanel, false);
             Show(completePanel, false);
             Show(failPanel, false);
+            bool chase = boss != null && boss.gameObject.activeSelf;
+            if (hideDuringChase != null) foreach (var g in hideDuringChase) if (g != null) g.SetActive(!chase);
         }
 
         private void Update()
@@ -126,6 +142,7 @@ namespace Jumpline.Level
             if (GameSession.Mode == RunMode.Campaign && lastLevel) reward += "\n" + Localization.Get("ALL LEVELS COMPLETE!");
             SaveManager.Flush();
 
+            Time.timeScale = 0f;   // ödül ekranı açıkken dünya durur
             rewardText.text = reward;
             nextButton.gameObject.SetActive(GameSession.Mode == RunMode.Campaign && !lastLevel);
             Show(completePanel, true);
@@ -135,14 +152,22 @@ namespace Jumpline.Level
         {
             if (state == State.Finished) return;
             state = State.Finished;
+            bool escaped = boss != null && boss.IsEscaped && (player == null || !player.IsDead);
+            if (escaped) Time.timeScale = 0f;   // canavar kaçtı: koşucu yaşıyor, panel açıkken dünya dursun
             RefreshRevive();
             Show(failPanel, true);
+            if (failReasonLabel != null)   // başlık: "OYUN BİTTİ" ya da "TEPEGÖZ KAÇTI!" (panel açıldıktan sonra; çeviri bileşeni ezmesin)
+            {
+                if (failTitleColor == null) failTitleColor = failReasonLabel.color;
+                failReasonLabel.text = Localization.Get(escaped ? "TEPEGOZ ESCAPED!" : "GAME OVER");
+                failReasonLabel.color = escaped ? new Color(1f, 0.36f, 0.3f) : failTitleColor.Value;
+            }
         }
 
         private void RefreshRevive()
         {
             bool canAfford = SaveManager.Gems >= reviveGemCost;
-            if (reviveGemsButton != null) reviveGemsButton.interactable = canAfford && player != null;
+            if (reviveGemsButton != null) reviveGemsButton.interactable = canAfford && player != null && CanRevive;
             if (reviveGemsLabel != null) reviveGemsLabel.text = Localization.Format("CONTINUE · {0}", reviveGemCost);
             if (gemBalanceLabel != null)
                 gemBalanceLabel.text = Localization.Format("YOUR GEMS: {0}", SaveManager.Gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture));
@@ -151,12 +176,15 @@ namespace Jumpline.Level
         /// <summary>50 elmas ver, ölünen yerden 3-2-1 geri sayımla devam et.</summary>
         private void ReviveWithGems()
         {
-            if (state != State.Finished || player == null || !player.IsDead) return;
+            if (state != State.Finished || player == null || !CanRevive) return;
             if (SaveManager.Gems < reviveGemCost) return;
             SaveManager.Gems -= reviveGemCost;
             SaveManager.Flush();
             StartCoroutine(ReviveRoutine());
         }
+
+        /// <summary>Devam edilebilir mi: koşucu öldü ya da canavar kaçtı (yenilmediyse).</summary>
+        private bool CanRevive => player.IsDead || (boss != null && boss.IsEscaped);
 
         private System.Collections.IEnumerator ReviveRoutine()
         {
@@ -165,7 +193,8 @@ namespace Jumpline.Level
             Vector3 safe = worldSwitcher != null ? worldSwitcher.SafeRevivePoint(p) : new Vector3(p.x, 0f, p.z);
             foreach (var sp in FindObjectsByType<ObstacleSpawner>(FindObjectsSortMode.None))
                 if (sp.isActiveAndEnabled) sp.ClearRange(safe.z - 8f, safe.z + clearAhead);
-            player.Revive(safe);
+            if (player.IsDead) player.Revive(safe);
+            if (boss != null && boss.gameObject.activeSelf) boss.Recover();
             Time.timeScale = 0f;                                   // geri sayım boyunca dünya donuk
             if (countdownLabel != null)
             {

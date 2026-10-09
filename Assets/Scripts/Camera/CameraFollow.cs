@@ -51,6 +51,9 @@ namespace Jumpline.CameraSystem
             Snap();
         }
 
+        /// <summary>Dışarıdan sarsıntı (canavar isabeti, kükreme). 1 = çarpma sarsıntısı kadar.</summary>
+        public void Shake(float strength) => impulse = Mathf.Max(impulse, crashShake * strength);
+
         /// <summary>Yumuşatmayı atla (ışınlanma sonrası).</summary>
         public void Snap()
         {

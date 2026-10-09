@@ -18,7 +18,7 @@ namespace Jumpline.EditorTools
     /// panelleri. Oyuncu ve engeller gelene kadar akış TEST butonlarıyla denenir.
     /// Menü: Jumpline → Build Gameplay Scene.
     /// </summary>
-    public static class GameplaySceneBuilder
+    public static partial class GameplaySceneBuilder
     {
         public const string ScenePath = "Assets/Scenes/Levels/Gameplay.unity";
         private const string GroundMaterialPath = "Assets/Art/Materials/Ground.mat";
@@ -80,6 +80,7 @@ namespace Jumpline.EditorTools
                 Set(score, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
                 Set(score, "label", scoreLabel);
             }
+            BuildBossChase(runner, follow, switcher, streetObs.GetComponent<ObstacleSpawner>(), up, down, canvas.GetComponent<LevelFlowController>());
             SetArray(switcher, "streetExtras", new Object[] { streetObs });
             SetArray(switcher, "rooftopExtras", new Object[] { roofObs });
             // ölünce oyun bitti paneli (LevelFlowController.FailLevel)
@@ -1264,7 +1265,10 @@ namespace Jumpline.EditorTools
             Panel(top, "LevelPill", new Rect(308f, 50f, 500f, 92f), Hex("#1B2236", 0.9f), Hex("#2A3556", 0.9f), 46f, Hex("#7083B3"));
             var level = Txt(top, "LevelLabel", "LEVEL 1", new Rect(308f, 50f, 500f, 92f), fExtra, 46f, Color.white, localize: false);
             var mode = Txt(top, "ModeLabel", "", new Rect(308f, 150f, 500f, 44f), fBold, 28f, C.TextGrey, localize: false);
-            ProgressBar(top, "Progress", new Rect(258f, 210f, 600f, 24f), 0f);
+            var progress = ProgressBar(top, "Progress", new Rect(258f, 210f, 600f, 24f), 0f);
+            hudTop = top;
+            hudBot = bot;
+            chaseHidden = new[] { mode.gameObject, progress.parent.gameObject };   // ProgressBar dolguyu döndürür; iz ebeveyn
 
             var pausePanel = Panel(top, "PauseButton", new Rect(953f, 40f, 123f, 123f), Hex("#4F1B2E"), Hex("#2E3A5E"), 18f, Hex("#7C8DB8"));
             Icon(pausePanel, "player-pause", new Rect(975f, 62f, 79f, 79f), Color.white);
@@ -1303,6 +1307,7 @@ namespace Jumpline.EditorTools
             Button menu2 = BoxButton(completeBox, "MainMenu", new Rect(213f, 1230f, 690f, 120f), "MAIN MENU", 44f);
 
             CanvasGroup failGroup = Overlay(safe, "FailPanel", "GAME OVER", 820f, out Box failBox);
+            Set(flow, "failReasonLabel", failBox.rt.Find("Title").GetComponent<TextMeshProUGUI>());   // kaçınca başlık değişir
             var gemBalance = Txt(failBox, "GemBalance", "", new Rect(213f, 690f, 690f, 50f), fBold, 30f, Hex("#BFD8FF"), localize: false);
             Button reviveAd = BoxButton(failBox, "ReviveAd", new Rect(213f, 750f, 690f, 110f), "WATCH AD · CONTINUE (SOON)", 32f);
             Button reviveGems = BoxButton(failBox, "ReviveGems", new Rect(213f, 875f, 690f, 110f), "CONTINUE · 50", 40f, out TextMeshProUGUI reviveLabel, false);

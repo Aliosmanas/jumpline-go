@@ -188,6 +188,15 @@ namespace Jumpline.Core
             { "YOUR GEMS: {0}", "ELMASIN: {0}" },
             { "PLAY AGAIN", "BAŞTAN OYNA" },
             { "SCORE", "PUAN" },
+
+            // Canavar kovalaması
+            { "TEPEGOZ ESCAPED!", "TEPEGÖZ KAÇTI!" },
+            { "DODGED!", "KAÇINDI!" },
+            { "TO THE ROOFTOPS! FOLLOW IT!", "ÇATILARA KAÇTI! PEŞİNDEN GİT!" },
+            { "IT'S FURIOUS! WATCH ITS DODGE!", "ÖFKELENDİ! KAÇINMASINA DİKKAT!" },
+            { "LAST HEART!", "SON KALP!" },
+            { "ESCAPING!", "KAÇIYOR!" },
+            { "THROW", "AT" },
             { "SWIPE UP: JUMP   ·   DOWN: SLIDE\nLEFT / RIGHT: CHANGE LANE", "YUKARI KAYDIR: ZIPLA   ·   AŞAĞI: KAY\nSAĞA / SOLA: ŞERİT DEĞİŞTİR" },
             {
                 "The runner and obstacles come next.\nUse the test buttons to try the flow.",

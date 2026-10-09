@@ -90,6 +90,9 @@ namespace Jumpline.Level
         private int orderIndex;
         private int loop;
 
+        /// <summary>Canavar kovalamasında parkurun portal satırları yok sayılır (çatıya canavarla birlikte gidilir).</summary>
+        public bool IgnoreCoursePortal { get; set; }
+
         private float OriginX => switcher == null ? 0f : rooftop ? switcher.RooftopOriginX : switcher.StreetOriginX;
         private float Ground => switcher == null ? 0f : rooftop ? switcher.RooftopGround : switcher.StreetGround;
 
@@ -177,7 +180,7 @@ namespace Jumpline.Level
                 int lane = mirror ? -row.lane : row.lane;
                 if (row.id == "portal")
                 {
-                    if (coursePortal != null) coursePortal.PlaceAt(rz, lane);
+                    if (coursePortal != null && !IgnoreCoursePortal) coursePortal.PlaceAt(rz, lane);
                     continue;
                 }
                 if (!TryGetSet(row.id, out AssetSet set)) continue;
