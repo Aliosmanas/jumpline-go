@@ -15,6 +15,13 @@ namespace Jumpline.EditorTools
         private const int Height = 2000;
         private const string OutDir = "Logs/MenuCaptures";
 
+        /// <summary>Toplu mod: ana menü sahnesini açıp tüm ekranları çeker (-executeMethod).</summary>
+        public static void CaptureFromBatch()
+        {
+            UnityEditor.SceneManagement.EditorSceneManager.OpenScene(MainMenuBuilder.ScenePath);
+            CaptureAll();
+        }
+
         [MenuItem("Jumpline/Capture Menu Screens")]
         public static void CaptureAll()
         {

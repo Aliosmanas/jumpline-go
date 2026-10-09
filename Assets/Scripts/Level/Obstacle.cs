@@ -116,6 +116,19 @@ namespace Jumpline.Level
             return false;
         }
 
+        /// <summary>Gövdeyle (ayak..kafa) çakışan tavan/bariyer engeli (yoksa null) — güçler parçalar.</summary>
+        public static Obstacle CeilingHit(float x, float z, float feet, float head)
+        {
+            for (int i = 0; i < Active.Count; i++)
+            {
+                Obstacle o = Active[i];
+                if (o.Type != Obstacle.Kind.Ceiling || !o.TryHeight(x, z, out float bottom)) continue;
+                float top = o.Thickness > 0f ? bottom + o.Thickness : float.PositiveInfinity;
+                if (head > bottom && feet < top) return o;
+            }
+            return null;
+        }
+
         /// <summary>(x,z) noktasındaki en alçak tavan (yoksa +∞).</summary>
         public static float CeilingAt(float x, float z)
         {

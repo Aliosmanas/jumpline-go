@@ -315,6 +315,7 @@ namespace Jumpline.Level
         {
             Obstacle o = Take(template);
             o.transform.position = new Vector3(x, Ground, z);
+            o.enabled = true;   // güçle parçalanıp kapatılmış olabilir
             o.gameObject.SetActive(true);
             active.Add(o);
         }

@@ -18,6 +18,11 @@ namespace Jumpline.Level
         [Tooltip("Kapalı şablon (Coin.fbx).")]
         [SerializeField] private GameObject coinTemplate;
         [SerializeField] private ParticleSystem pickupFx;
+        [Tooltip("Mıknatıs / 2x altın gücü (yoksa etkisiz).")]
+        [SerializeField] private PowerUps powerUps;
+        [Tooltip("Mıknatıs: önde bu kadar (m) ve yanlarda bu kadar (m) içindeki paralar çekilir.")]
+        [SerializeField] private Vector2 magnetReach = new Vector2(14f, 5.5f);
+        [SerializeField, Min(1f)] private float magnetSpeed = 30f;
 
         [Header("Dizi")]
         [Tooltip("Her 100 m'ye düşen dizi sayısı.")]
@@ -133,6 +138,8 @@ namespace Jumpline.Level
             Vector3 p = player.transform.position;
             float head = player.IsSliding ? 1.0f : 1.7f;
             Quaternion spin = Quaternion.Euler(0f, spinSpeed * Time.deltaTime, 0f);
+            bool magnet = powerUps != null && powerUps.IsActive(PowerUpType.Magnet) && !player.IsDead;
+            Vector3 chest = p + Vector3.up * 1.1f;
             for (int i = active.Count - 1; i >= 0; i--)
             {
                 Transform c = active[i];
@@ -140,8 +147,15 @@ namespace Jumpline.Level
                 if (cp.z < p.z - despawnBehind) { Release(i); continue; }
                 c.rotation = spin * c.rotation;
                 if (player.IsDead) continue;
-                if (Mathf.Abs(cp.x - p.x) < pickupRadius && Mathf.Abs(cp.z - p.z) < pickupRadius &&
-                    cp.y > p.y - 0.3f && cp.y < p.y + head + 0.3f)
+                bool pulled = magnet && cp.z - p.z < magnetReach.x && cp.z > p.z - 2f && Mathf.Abs(cp.x - p.x) < magnetReach.y;
+                if (pulled)
+                {
+                    cp = Vector3.MoveTowards(cp, chest, (magnetSpeed + player.RunSpeed) * Time.deltaTime);
+                    c.position = cp;
+                }
+                if ((pulled && (cp - chest).sqrMagnitude < 0.7f) ||
+                    (Mathf.Abs(cp.x - p.x) < pickupRadius && Mathf.Abs(cp.z - p.z) < pickupRadius &&
+                    cp.y > p.y - 0.3f && cp.y < p.y + head + 0.3f))
                 {
                     if (pickupFx != null)
                     {
@@ -149,7 +163,7 @@ namespace Jumpline.Level
                         pickupFx.Emit(10);
                     }
                     Release(i);
-                    RunCoins++;
+                    RunCoins += powerUps != null ? powerUps.CoinMultiplier : 1;
                     Collected?.Invoke(RunCoins);
                 }
             }

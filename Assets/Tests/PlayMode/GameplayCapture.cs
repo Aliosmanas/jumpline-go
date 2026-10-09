@@ -201,6 +201,28 @@ namespace Jumpline.Tests
         }
 
         [UnityTest]
+        public IEnumerator CapturePowerUps()
+        {
+            GameSession.Mode = RunMode.QuickRace;
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.ObstacleSpawner>(FindObjectsSortMode.None))
+                sp.ClearRange(-1e6f, 140f);
+            var field = Object.FindAnyObjectByType<Jumpline.Level.PowerUpField>();
+            typeof(Jumpline.Level.PowerUpField).GetField("nextDistance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(field, 5f);
+            yield return new WaitForSeconds(4.2f);
+            Shot("powerup_01_box");
+            var pu = Object.FindAnyObjectByType<PowerUps>();
+            pu.Activate(PowerUpType.Magnet);
+            yield return new WaitForSeconds(0.6f);
+            pu.Activate(PowerUpType.DoubleGold);
+            yield return new WaitForSeconds(1.2f);
+            Shot("powerup_02_hud");
+            Assert.Pass();
+        }
+
+        [UnityTest]
         public IEnumerator CaptureChase()
         {
             GameSession.Mode = RunMode.Campaign;

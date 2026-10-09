@@ -172,9 +172,10 @@ namespace Jumpline.EditorTools
             Line(s.top, new Rect(40f, 479f, 288f, 2f), Hex("#4E546B"));
             var bars = new List<Dictionary<string, object>>
             {
-                StatRow(s.top, "speed", "SPEED", 520f),
-                StatRow(s.top, "jump", "JUMP", 649f),
-                StatRow(s.top, "momentum", "MOMENTUM", 802f),
+                StatRow(s.top, "magnet", "MAGNET", 515f),
+                StatRow(s.top, "shield", "SHIELD", 640f),
+                StatRow(s.top, "double_gold", "DOUBLE GOLD", 765f),
+                StatRow(s.top, "speed_boost", "SPEED BOOST", 890f),
             };
 
             Txt(s.top, "GearHeader", "GEAR", new Rect(862f, 420f, 213f, 56f), fBold, 34f, Hex("#C9CCD6"));
@@ -223,7 +224,7 @@ namespace Jumpline.EditorTools
             var value = Txt(parent, id + "Value", "0", new Rect(225f, y, 100f, 40f), fBold, 28f, Hex("#E2E4EA"), TextAlignmentOptions.Right, localize: false);
             RectTransform fill = ProgressBar(parent, id + "Bar", new Rect(42f, y + 43f, 286f, 24f), 0.5f);
             var tier = Txt(parent, id + "Tier", "", new Rect(45f, y + 70f, 280f, 36f), fMedium, 26f, Hex("#B5B9C6"), TextAlignmentOptions.Left, localize: false);
-            return new Dictionary<string, object> { { "statId", id }, { "value", value }, { "tier", tier }, { "fill", fill }, { "fullWidth", 280f } };
+            return new Dictionary<string, object> { { "statId", id }, { "value", value }, { "tier", tier }, { "fill", fill }, { "fullWidth", 280f }, { "valueFormat", "{0} SEC" } };
         }
 
         private static TMP_Text GearSlot(Box parent, string name, float y, string kind, string item, string icon, string gearSlot)
@@ -893,21 +894,22 @@ namespace Jumpline.EditorTools
             var gold = Txt(s.top, "GoldText", "GOLD: 5000", new Rect(296f, 246f, 430f, 66f), fExtra, 42f, C.Gold, TextAlignmentOptions.Right, localize: false);
             Icon(s.top, "coin", new Rect(744f, 246f, 66f, 66f), Color.white);
 
-            string[] ids = { "speed", "jump", "momentum" };
-            string[] titles = { "SPEED", "JUMP", "MOMENTUM" };
+            Txt(s.top, "DurationsHeader", "POWER-UP DURATIONS", new Rect(63f, 330f, 990f, 50f), fBold, 34f, Hex("#C9CCD6"));
             var rows = new List<Dictionary<string, object>>();
-            for (int i = 0; i < ids.Length; i++)
+            for (int i = 0; i < PowerUpRows.Length; i++)
             {
-                float y = 360f + i * 410f;
-                var sec = Section(s.top, titles[i], titles[i], new Rect(63f, y, 990f, 380f));
-                RectTransform fill = ProgressBar(sec, "Bar", new Rect(123f, y + 140f, 870f, 30f), 0.5f);
-                var value = Txt(sec, "Value", "0", new Rect(123f, y + 185f, 400f, 50f), fExtra, 38f, Color.white, TextAlignmentOptions.Left, localize: false);
-                var level = Txt(sec, "Level", "", new Rect(593f, y + 185f, 400f, 50f), fBold, 32f, C.TextGrey, TextAlignmentOptions.Right, localize: false);
-                var tier = Txt(sec, "Tier", "", new Rect(323f, y + 185f, 470f, 50f), fMedium, 30f, Hex("#B5B9C6"), localize: false);
-                Button button = BoxButton(sec, "UpgradeButton", new Rect(308f, y + 260f, 500f, 92f), "", 36f, out TextMeshProUGUI cost, false);
+                var pu = PowerUpRows[i];
+                float y = 395f + i * 345f;
+                var sec = Section(s.top, pu.id, pu.title, new Rect(63f, y, 990f, 325f));
+                Icon(sec, pu.icon, new Rect(93f, y + 108f, 180f, 180f), Color.white);
+                Txt(sec, "Desc", pu.desc, new Rect(300f, y + 104f, 720f, 40f), fMedium, 28f, Hex("#B5B9C6"), TextAlignmentOptions.Left);
+                RectTransform fill = ProgressBar(sec, "Bar", new Rect(300f, y + 152f, 720f, 28f), 0.5f);
+                var value = Txt(sec, "Value", "0", new Rect(300f, y + 186f, 300f, 46f), fExtra, 36f, Color.white, TextAlignmentOptions.Left, localize: false);
+                var level = Txt(sec, "Level", "", new Rect(620f, y + 186f, 400f, 46f), fBold, 30f, C.TextGrey, TextAlignmentOptions.Right, localize: false);
+                Button button = BoxButton(sec, "UpgradeButton", new Rect(400f, y + 240f, 520f, 76f), "", 32f, out TextMeshProUGUI cost, false);
                 rows.Add(new Dictionary<string, object>
                 {
-                    { "bar", new Dictionary<string, object> { { "statId", ids[i] }, { "value", value }, { "tier", tier }, { "level", level }, { "fill", fill }, { "fullWidth", 864f } } },
+                    { "bar", new Dictionary<string, object> { { "statId", pu.id }, { "value", value }, { "level", level }, { "fill", fill }, { "fullWidth", 714f }, { "valueFormat", "{0} SEC" } } },
                     { "button", button },
                     { "cost", cost },
                 });
@@ -994,6 +996,11 @@ namespace Jumpline.EditorTools
             catalog.SetItems(DefaultItems()); // içerik bu dosyada tanımlı; her üretimde yenilenir
             EditorUtility.SetDirty(catalog);
             stats = GetOrCreateAsset<CharacterStats>(StatsPath, s => s.SetStats(DefaultStats()));
+            if (stats.Find("magnet") == null)   // eski özellik listesi (hız/zıplama/ivme) → güç süreleri
+            {
+                stats.SetStats(DefaultStats());
+                EditorUtility.SetDirty(stats);
+            }
         }
 
         private static List<ShopItem> DefaultItems()
@@ -1057,12 +1064,21 @@ namespace Jumpline.EditorTools
             };
         }
 
+        /// <summary>Güç süreleri (sn): 5 kademe, her kademe +2 sn (yol haritası aşama 05). Maliyet = taban × (kademe+1).</summary>
         private static List<StatDefinition> DefaultStats() => new List<StatDefinition>
         {
-            // Başlangıç değerleri referanstaki çubuklarla aynı (150 High, 60 Medium, 120 Very High).
-            new StatDefinition { id = "speed", displayName = "SPEED", baseValue = 150, perLevel = 3, maxValue = 180, maxLevel = 10, upgradeCostBase = 500 },
-            new StatDefinition { id = "jump", displayName = "JUMP", baseValue = 60, perLevel = 5, maxValue = 110, maxLevel = 10, upgradeCostBase = 500 },
-            new StatDefinition { id = "momentum", displayName = "MOMENTUM", baseValue = 120, perLevel = 1, maxValue = 130, maxLevel = 10, upgradeCostBase = 400 },
+            new StatDefinition { id = "magnet", displayName = "MAGNET", baseValue = 8, perLevel = 2, maxValue = 18, maxLevel = 5, upgradeCostBase = 600 },
+            new StatDefinition { id = "shield", displayName = "SHIELD", baseValue = 8, perLevel = 2, maxValue = 18, maxLevel = 5, upgradeCostBase = 700 },
+            new StatDefinition { id = "double_gold", displayName = "DOUBLE GOLD", baseValue = 10, perLevel = 2, maxValue = 20, maxLevel = 5, upgradeCostBase = 800 },
+            new StatDefinition { id = "speed_boost", displayName = "SPEED BOOST", baseValue = 5, perLevel = 2, maxValue = 15, maxLevel = 5, upgradeCostBase = 900 },
+        };
+
+        private static readonly (string id, string title, string icon, string desc)[] PowerUpRows =
+        {
+            ("magnet", "MAGNET", "magnet", "Pulls nearby coins to you."),
+            ("shield", "SHIELD", "shield", "Absorbs one crash."),
+            ("double_gold", "DOUBLE GOLD", "double_gold", "Every coin counts twice."),
+            ("speed_boost", "SPEED BOOST", "speed_boost", "Run faster, smash through obstacles."),
         };
     }
 }

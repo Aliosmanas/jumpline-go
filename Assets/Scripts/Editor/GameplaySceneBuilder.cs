@@ -80,6 +80,7 @@ namespace Jumpline.EditorTools
                 Set(score, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
                 Set(score, "label", scoreLabel);
             }
+            BuildPowerUps(runner, coins);
             BuildBossChase(runner, follow, switcher, streetObs.GetComponent<ObstacleSpawner>(), up, down, canvas.GetComponent<LevelFlowController>());
             SetArray(switcher, "streetExtras", new Object[] { streetObs });
             SetArray(switcher, "rooftopExtras", new Object[] { roofObs });

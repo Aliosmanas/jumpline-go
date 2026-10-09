@@ -69,6 +69,8 @@ namespace Jumpline.Boss
         [SerializeField, Min(0f)] private float hitPull = 12f;
         [Tooltip("İsabet çekmesinin uygulanma hızı (m/sn) — canavar sendeleyerek yavaşlar.")]
         [SerializeField, Min(1f)] private float pullRate = 22f;
+        [Tooltip("Hız gücündeyken mesafe saniyede bu kadar kapanır.")]
+        [SerializeField, Min(0f)] private float speedBoostClose = 2.6f;
         [Tooltip("Koşucu yandan çarpıp sendeleyince mesafe bu kadar açılır.")]
         [SerializeField, Min(0f)] private float stumblePush = 6f;
         [Tooltip("Girişte canavarın başlangıç mesafesine kaçma hızı (m/sn).")]
@@ -285,6 +287,7 @@ namespace Jumpline.Boss
         private void UpdateGap(float dt)
         {
             gap += PhaseValue(driftPerPhase) * dt;
+            if (player.PowerUpsRef != null && player.PowerUpsRef.IsActive(PowerUpType.SpeedBoost)) gap -= speedBoostClose * dt;
             if (pull > 0f)
             {
                 float step = Mathf.Min(pull, pullRate * dt);

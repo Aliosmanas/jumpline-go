@@ -108,6 +108,8 @@ namespace Jumpline.Player
 
         [Header("Görsel")]
         [SerializeField] private Animator animator;
+        [Tooltip("Etkin güçler (hız çarpanı, kalkan/hızla çarpma emme).")]
+        [SerializeField] private PowerUps powerUps;
 
         private State state = State.Running;
         private float verticalVelocity;
@@ -151,6 +153,7 @@ namespace Jumpline.Player
         public float Charge01 => 0f;      // eski HUD uyumluluğu (şarj yok)
         /// <summary>false: kaydırma/tuş yok sayılır (final sinematiği). Koşu sürer.</summary>
         public bool InputEnabled { get; set; } = true;
+        public PowerUps PowerUpsRef => powerUps;
         public float RunSpeed => currentSpeed;
         /// <summary>Bu koşuda katedilen yol (m).</summary>
         public float Distance => distance;
@@ -442,6 +445,7 @@ namespace Jumpline.Player
             distance += currentSpeed * dt;
             // doyan hız eğrisi: başta belirgin, sonra yavaş artar; tavan maxSpeed (ani 2x yok)
             currentSpeed = runSpeed + (Mathf.Max(runSpeed, maxSpeed) - runSpeed) * (1f - Mathf.Exp(-aliveTime / speedTimeConstant));
+            if (powerUps != null) currentSpeed *= powerUps.SpeedMultiplier;
             int level = Mathf.FloorToInt((SpeedFactor - 1f) / speedBannerStep + 0.0001f);
             if (level > speedLevel)
             {
@@ -520,6 +524,14 @@ namespace Jumpline.Player
         private void Crash(ref Vector3 p, float prevY)
         {
             Obstacle hit = ObstacleField.SolidAt(p.x, p.z);
+            if (hit == null || ObstacleField.SurfaceAt(p.x, p.z, groundHeight) <= p.y + stepUp)
+                hit = ObstacleField.CeilingHit(p.x, p.z, p.y, p.y + (state == State.Sliding ? slideHeadHeight : headHeight)) ?? hit;
+            if (powerUps != null && powerUps.TryAbsorb(hit, currentSpeed))
+            {
+                p.y = Mathf.Max(prevY, groundHeight);   // engel parçalandı: koşmaya devam
+                transform.position = p;
+                return;
+            }
             if (hit != null && hit.TryGetComponent(out Breakable breakable)) breakable.Break(currentSpeed);
             p.y = prevY;    // yüksekliği koru (yan şeridin araç tavanına ışınlanma hatası düzeltildi)
             p.z -= 0.25f;   // engelin içine girmesin

@@ -13,25 +13,32 @@ MonoBehaviour:
   m_Name: CharacterStats
   m_EditorClassIdentifier: Jumpline::Jumpline.Player.CharacterStats
   stats:
-  - id: speed
-    displayName: SPEED
-    baseValue: 150
-    perLevel: 3
-    maxValue: 180
-    maxLevel: 10
-    upgradeCostBase: 500
-  - id: jump
-    displayName: JUMP
-    baseValue: 60
-    perLevel: 5
-    maxValue: 110
-    maxLevel: 10
-    upgradeCostBase: 500
-  - id: momentum
-    displayName: MOMENTUM
-    baseValue: 120
-    perLevel: 1
-    maxValue: 130
-    maxLevel: 10
-    upgradeCostBase: 400
+  - id: magnet
+    displayName: MAGNET
+    baseValue: 8
+    perLevel: 2
+    maxValue: 18
+    maxLevel: 5
+    upgradeCostBase: 600
+  - id: shield
+    displayName: SHIELD
+    baseValue: 8
+    perLevel: 2
+    maxValue: 18
+    maxLevel: 5
+    upgradeCostBase: 700
+  - id: double_gold
+    displayName: DOUBLE GOLD
+    baseValue: 10
+    perLevel: 2
+    maxValue: 20
+    maxLevel: 5
+    upgradeCostBase: 800
+  - id: speed_boost
+    displayName: SPEED BOOST
+    baseValue: 5
+    perLevel: 2
+    maxValue: 15
+    maxLevel: 5
+    upgradeCostBase: 900
   tierThresholds: {x: 0.35, y: 0.6, z: 0.85}
