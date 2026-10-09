@@ -23,22 +23,48 @@ namespace Jumpline.Tests
                 Assert.IsNotNull(bank.FindTrack(id)?.clip, "müzik eksik: " + id);
         }
 
+        /// <summary>Çalan müzik parçası sayısı (efekt döngüleri hariç).</summary>
+        private static int PlayingMusic()
+        {
+            var bank = Resources.Load<SoundBank>("SoundBank");
+            int n = 0;
+            foreach (var src in AudioManager.Instance.GetComponents<AudioSource>())
+            {
+                if (!src.isPlaying || src.clip == null) continue;
+                foreach (string id in new[] { "street", "roof", "menu", "boss", "saz" })
+                    if (bank.FindTrack(id)?.clip == src.clip && src.volume > 0.001f) { n++; break; }
+            }
+            return n;
+        }
+
         [UnityTest]
-        public IEnumerator Gameplay_PlaysStreetMusicAndSaz()
+        public IEnumerator Gameplay_PlaysExactlyOneMusicTrack()
         {
             GameSession.Mode = RunMode.Campaign;
             UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return new WaitForSeconds(2f);
             Assert.IsNotNull(Object.FindAnyObjectByType<GameplayAudio>(), "GameplayAudio yok");
-            int playing = 0;
-            foreach (var src in AudioManager.Instance.GetComponents<AudioSource>())
-                if (src.isPlaying && src.loop && src.clip != null) playing++;
-            Assert.GreaterOrEqual(playing, 2, "müzik + saz katmanı (+ adımlar) çalmalı");
+            Assert.AreEqual(1, PlayingMusic(), "tek müzik çalmalı (üst üste parça yok)");
             AudioManager.Play("coin");
             AudioManager.Play("roar");
             yield return null;
             LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator Music_InterruptedCrossFade_LeavesOneTrack()
+        {
+            var a = AudioManager.Instance;
+            a.Music("street", 1f);
+            yield return new WaitForSecondsRealtime(0.4f);
+            a.Music("roof", 1f);          // ilk geçiş bitmeden
+            yield return new WaitForSecondsRealtime(0.3f);
+            a.Music("boss", 1f);          // ikinci geçiş de bitmeden
+            yield return new WaitForSecondsRealtime(1.5f);
+            Assert.AreEqual(1, PlayingMusic(), "yarıda kesilen geçişten sonra tek parça kalmalı");
+            a.Music(null, 0.1f);
+            yield return new WaitForSecondsRealtime(0.3f);
         }
     }
 }

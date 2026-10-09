@@ -7,7 +7,7 @@ namespace Jumpline.Audio
 {
     /// <summary>
     /// Oyun sahnesinin sesleri ve müziği — olaylara bağlanır (kod içinde ses çağrısı dağılmasın):
-    ///  Müzik: sokak "Rojê Nû" + kısık saz katmanı · çatı "Moon Over Fez" · canavarın öfke/son kalp fazı ve köprü
+    ///  Müzik: sokak "Rojê Nû" (saz katmanı kaldırıldı: farklı tempoda iki parça üst üste biniyordu) · çatı "Moon Over Fez" · canavarın öfke/son kalp fazı ve köprü
     ///  "Kingdom - Ancient" · bölüm sonu "Anthem of Victory" (bir kez).
     ///  Efekt: adım döngüsü (koşu hızıyla perde), zıplama, kayma, para, sendeleme, çarpma, zipline, portal,
     ///  atış, karpuz isabeti, kalp düşmesi, kükreme, fırlatılan sandık, güç toplama.
@@ -65,7 +65,7 @@ namespace Jumpline.Audio
             if (flow != null) flow.LevelCompleted += OnComplete;
             A.StopStinger();
             A.Music("street", 0.8f);
-            A.Layer("saz");
+            A.Layer(null);
         }
 
         private void OnDestroy()
@@ -82,7 +82,7 @@ namespace Jumpline.Audio
             if (switcher != null && switcher.InArena) { bossMusic = true; A.Music("boss"); A.Layer(null); return; }
             if (bossMusic) return;
             A.Music(street ? "street" : "roof");
-            A.Layer(street ? "saz" : null);
+            A.Layer(null);
         }
 
         private void OnPhase(BossChase.Phase phase)

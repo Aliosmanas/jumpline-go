@@ -29,11 +29,11 @@ MonoBehaviour:
     cooldown: 0.1
   - id: coin
     clip: {fileID: 8300000, guid: b56559f6c777f7c4abbcaa98d369aa04, type: 3}
-    volume: 0.55
+    volume: 0.42
     pitch: 1.05
     pitchJitter: 0.06
     maxDuration: 0
-    cooldown: 0.035
+    cooldown: 0.07
   - id: jump
     clip: {fileID: 8300000, guid: 357ca33f143abd24d96f205fead8ffd4, type: 3}
     volume: 0.7
@@ -57,10 +57,10 @@ MonoBehaviour:
     cooldown: 0.25
   - id: crash
     clip: {fileID: 8300000, guid: 619feeea6e44df64e8cf8c144d51beb5, type: 3}
-    volume: 1
+    volume: 0.95
     pitch: 1
     pitchJitter: 0.03
-    maxDuration: 1.6
+    maxDuration: 1.2
     cooldown: 0.3
   - id: crate
     clip: {fileID: 8300000, guid: e5e5c008b4991e5428dbf77834b1ba7d, type: 3}
@@ -71,7 +71,7 @@ MonoBehaviour:
     cooldown: 0.12
   - id: footsteps
     clip: {fileID: 8300000, guid: 3249153f00af6e745a4da5ec46972b36, type: 3}
-    volume: 0.35
+    volume: 0.24
     pitch: 1
     pitchJitter: 0
     maxDuration: 0

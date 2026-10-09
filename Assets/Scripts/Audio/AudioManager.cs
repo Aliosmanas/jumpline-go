@@ -157,7 +157,14 @@ namespace Jumpline.Audio
             if (id == currentTrack) return;
             currentTrack = id;
             SoundBank.Track tr = id != null && bank != null ? bank.FindTrack(id) : null;
-            if (fade != null) StopCoroutine(fade);
+            if (fade != null)
+            {
+                // yarıda kalan geçiş: susmakta olanı hemen kes, gelmekte olanı "çalan" say (iki parça üst üste binmesin)
+                StopCoroutine(fade);
+                music.Stop();
+                (music, musicB) = (musicB, music);
+                fade = null;
+            }
             fade = StartCoroutine(CrossFade(tr, fadeTime));
         }
 
