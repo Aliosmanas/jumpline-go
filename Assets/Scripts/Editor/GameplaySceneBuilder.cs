@@ -42,7 +42,7 @@ namespace Jumpline.EditorTools
             // alçak ve yakın takip + geniş açı: zemin hızla akar (koşu hissi), 3 şerit yine ekranda
             cam.transform.SetPositionAndRotation(new Vector3(0f, 3.3f, -6.2f), Quaternion.Euler(16f, 0f, 0f));
             cam.fieldOfView = 70f;
-            cam.farClipPlane = 260f;
+            cam.farClipPlane = 165f;   // sis 150 m'de tam kapanır; ötesini çizmek boşa (telefonda pahalı)
             cam.clearFlags = CameraClearFlags.Skybox;
             cam.backgroundColor = Hex("#E6CFAE");
             RenderSettings.skybox = SunsetSky();
@@ -150,6 +150,7 @@ namespace Jumpline.EditorTools
                 PlaceSigns(seg.transform);
                 if (i == 0) PlaceLandmark(seg.transform, "Landmark_DortAyakliMinare", new Vector3(14f, 0f, 28f));
                 if (i == 2) PlaceLandmark(seg.transform, "Landmark_UluCamiMinaret", new Vector3(-16f, 0f, 40f));
+                SegmentCombiner.Combine(seg.transform);   // performans: sabit mesh'ler malzemeye göre tek çizim
             }
             return root;
         }
@@ -334,6 +335,7 @@ namespace Jumpline.EditorTools
                 // performans: gece sahnesinde yalnızca rota binası gölge düşürür
                 foreach (var r in mod.GetComponentsInChildren<Renderer>(true))
                     if (r.name != "Roof_Route") r.shadowCastingMode = ShadowCastingMode.Off;
+                SegmentCombiner.Combine(mod.transform);
             }
             var recycler = root.gameObject.AddComponent<StreetRecycler>();
             Set(recycler, "player", runner);
