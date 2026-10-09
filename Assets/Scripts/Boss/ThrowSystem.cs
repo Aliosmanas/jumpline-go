@@ -24,6 +24,7 @@ namespace Jumpline.Boss
             [Tooltip("Yolda duran ve uçan görsel (kapalı şablon).")] public GameObject template;
             [Tooltip("Arayüz ikonu adı (UIKit Icons).")] public Sprite icon;
             [Tooltip("Çıkma ağırlığı.")] public float weight;
+            [Tooltip("Kırılınca (karpuz: kırmızı-yeşil parçalar, testi: bakır kıymıklar). Boşsa genel efekt.")] public ParticleSystem smashFx;
         }
 
         [SerializeField] private PlayerController player;
@@ -132,6 +133,8 @@ namespace Jumpline.Boss
                 Transform t = Take(kind);
                 float y = g + hoverHeight;
                 t.position = new Vector3(x, y, z);
+                var trail = t.GetComponentInChildren<TrailRenderer>();
+                if (trail != null) trail.Clear();   // havuzdan gelirken eski yerden iz çekmesin
                 pickups.Add(new Pickup { t = t, kind = kind, baseY = y });
                 return true;
             }
@@ -173,7 +176,7 @@ namespace Jumpline.Boss
                     Release(pk.kind, pk.t);
                     pickups.RemoveAt(i);
                     if (held.Count < maxHeld) held.Push(pk.kind);
-                    Haptics.Pulse();
+                    Haptics.Pulse(Haptics.Light, 120);
                     PickedUp?.Invoke();
                     Changed?.Invoke();
                 }
@@ -213,6 +216,9 @@ namespace Jumpline.Boss
             shots.Add(new Shot { t = t, kind = kind, x = x, z = p.z + 0.8f, y0 = p.y + 1.5f, travelled = 0f, total = total });
             if (boss != null && boss.Visible) boss.IncomingThrow(player.Lane, total / throwSpeed);
             Thrown?.Invoke();
+            Haptics.Pulse(Haptics.Light, 90);
+            var trail = t.GetComponentInChildren<TrailRenderer>();
+            if (trail != null) trail.Clear();
             Changed?.Invoke();
         }
 
@@ -233,7 +239,7 @@ namespace Jumpline.Boss
                 bool reached = boss != null && boss.Visible && boss.IsChasing && !s.resolved && s.z >= boss.Position.z - 0.6f;
                 if (reached)
                 {
-                    if (boss.TryHit(s.x)) { Smash(s.t.position); Finish(i, s); continue; }
+                    if (boss.TryHit(s.x)) { Smash(s.t.position, s.kind, 1.4f); Finish(i, s); continue; }
                     s.resolved = true;                   // ıskaladı: yanından geçip yere düşer
                     s.y0 = y;
                     s.travelled = 0f;
@@ -241,7 +247,7 @@ namespace Jumpline.Boss
                 }
                 if (k >= 1f && (s.resolved || boss == null || !boss.Visible || !boss.IsChasing))
                 {
-                    Smash(new Vector3(s.x, player.GroundHeight + 0.2f, s.z));
+                    Smash(new Vector3(s.x, player.GroundHeight + 0.2f, s.z), s.kind, 0.8f);
                     Finish(i, s);
                     continue;
                 }
@@ -249,11 +255,19 @@ namespace Jumpline.Boss
             }
         }
 
-        private void Smash(Vector3 at)
+        private void Smash(Vector3 at, int kind, float strength)
         {
-            if (smashFx == null) return;
-            smashFx.transform.position = at;
-            smashFx.Emit(30);
+            ParticleSystem fx = kinds[kind].smashFx != null ? kinds[kind].smashFx : smashFx;
+            if (fx != null)
+            {
+                fx.transform.position = at;
+                fx.Emit(Mathf.RoundToInt(34 * strength));
+            }
+            if (smashFx != null && fx != smashFx)   // parıltı
+            {
+                smashFx.transform.position = at;
+                smashFx.Emit(Mathf.RoundToInt(12 * strength));
+            }
         }
 
         private void Finish(int i, Shot s)

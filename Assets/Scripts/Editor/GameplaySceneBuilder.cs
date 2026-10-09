@@ -1246,6 +1246,18 @@ namespace Jumpline.EditorTools
             var sparks = MakeSparks(hand != null ? hand : model.transform, "ZiplineSparks");
             if (hand == null) sparks.transform.localPosition = new Vector3(0f, 2.2f, 0f);
             Set(player, "ziplineSparks", sparks);
+            // kayma tozu: ayak hizasında, geriye savrulan sıcak toz + birkaç kıvılcım
+            var dust = MakeBurst(model.transform, "SlideDust", Hex("#E6CFAE"), Hex("#FFD27A"), 1.2f, 3.2f, 0.4f);
+            dust.transform.localPosition = new Vector3(0f, 0.15f, -0.2f);
+            var dm = dust.main;
+            dm.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.22f);
+            dm.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.55f);
+            var dsh = dust.shape;
+            dsh.shapeType = ParticleSystemShapeType.Cone;
+            dsh.angle = 35f;
+            dsh.radius = 0.25f;
+            dust.transform.localRotation = Quaternion.Euler(-160f, 0f, 0f);   // geriye ve yukarı
+            Set(player, "slideFx", dust);
             return model.transform;
         }
 

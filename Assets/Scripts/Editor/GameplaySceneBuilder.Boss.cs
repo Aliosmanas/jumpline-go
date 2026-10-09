@@ -90,6 +90,14 @@ namespace Jumpline.EditorTools
             var portalFx = MakeBurst(root.transform, "BossPortalFx", Hex("#C9A2FF"), Hex("#55CFFF"), 2f, 6f, 0.2f);
             Set(boss, "hitFx", hit);
             Set(boss, "portalFx", portalFx);
+            var land = MakeBurst(root.transform, "BossLandDust", Hex("#D8C3A0"), Hex("#9C8B74"), 2f, 5f, 0.3f);
+            land.GetComponent<ParticleSystemRenderer>().sharedMaterial = SplashMaterial();
+            land.GetComponent<ParticleSystemRenderer>().renderMode = ParticleSystemRenderMode.Billboard;
+            var lm = land.main;
+            lm.startColor = new ParticleSystem.MinMaxGradient(new Color(0.85f, 0.76f, 0.62f, 0.8f), new Color(0.6f, 0.53f, 0.45f, 0.6f));
+            lm.startSize = new ParticleSystem.MinMaxCurve(0.4f, 1.1f);
+            lm.startLifetime = new ParticleSystem.MinMaxCurve(0.4f, 0.9f);
+            Set(boss, "landFx", land);
 
             // fırlatılan engel: sokak üreticisinin sandık yığını şablonu (aşılabilir, kırılır)
             var spso = new SerializedObject(street);
@@ -115,6 +123,18 @@ namespace Jumpline.EditorTools
                 vis.transform.localPosition = Vector3.zero;
                 vis.transform.localScale = src.localScale * scale;
                 foreach (var r in vis.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+                var trail = holder.AddComponent<TrailRenderer>();   // uçarken kısa iz
+                trail.time = 0.18f;
+                trail.minVertexDistance = 0.2f;
+                trail.widthCurve = new AnimationCurve(new Keyframe(0f, 0.45f), new Keyframe(1f, 0f));
+                trail.sharedMaterial = FxMaterial();
+                trail.colorGradient = new Gradient
+                {
+                    colorKeys = new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(child == "Karpuz" ? Hex("#9BE07A") : Hex("#FFB35C"), 1f) },
+                    alphaKeys = new[] { new GradientAlphaKey(0.7f, 0f), new GradientAlphaKey(0f, 1f) },
+                };
+                trail.shadowCastingMode = ShadowCastingMode.Off;
+                trail.emitting = true;
                 holder.SetActive(false);
                 return holder;
             }
@@ -122,7 +142,10 @@ namespace Jumpline.EditorTools
             var jug = Template("Testi", 1.0f);
             var so = new SerializedObject(throws);
             var kinds = so.FindProperty("kinds");
-            var defs = new (string id, GameObject t, string icon, float w)[] { ("karpuz", melon, "throw_melon", 0.6f), ("testi", jug, "throw_jug", 0.4f) };
+            var melonFx = MakeChunks(throwsGo.transform, "MelonSmashFx", Hex("#E8334A"), Hex("#2F7A35"));
+            var jugFx = MakeBurst(throwsGo.transform, "JugSmashFx", Hex("#FFB35C"), Hex("#C46A33"), 3f, 9f, 1.2f);
+            var defs = new (string id, GameObject t, string icon, float w, ParticleSystem fx)[]
+                { ("karpuz", melon, "throw_melon", 0.6f, melonFx), ("testi", jug, "throw_jug", 0.4f, jugFx) };
             kinds.arraySize = defs.Length;
             for (int i = 0; i < defs.Length; i++)
             {
@@ -131,6 +154,7 @@ namespace Jumpline.EditorTools
                 e.FindPropertyRelative("template").objectReferenceValue = defs[i].t;
                 e.FindPropertyRelative("icon").objectReferenceValue = Icons.TryGetValue(defs[i].icon, out var sp) ? sp : null;
                 e.FindPropertyRelative("weight").floatValue = defs[i].w;
+                e.FindPropertyRelative("smashFx").objectReferenceValue = defs[i].fx;
             }
             so.ApplyModifiedPropertiesWithoutUndo();
             Set(throws, "pickupFx", MakeBurst(throwsGo.transform, "PickupFx", Hex("#FFF3B0"), Hex("#7CFF8A"), 1.5f, 4f, 0.4f));
@@ -245,6 +269,23 @@ namespace Jumpline.EditorTools
             Set(hud, "throwGroup", group);
             Set(hud, "throwIcon", icon);
             Set(hud, "throwCount", count);
+        }
+
+        /// <summary>Karpuz parçaları: iri kırmızı/yeşil kütleler (alfa, dönen), yerçekimiyle düşer.</summary>
+        private static ParticleSystem MakeChunks(Transform parent, string name, Color flesh, Color rind)
+        {
+            var fx = MakeBurst(parent, name, flesh, rind, 3f, 8f, 2.2f);
+            var r = fx.GetComponent<ParticleSystemRenderer>();
+            r.sharedMaterial = SplashMaterial();
+            r.renderMode = ParticleSystemRenderMode.Billboard;
+            var m = fx.main;
+            m.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.38f);
+            m.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 1.1f);
+            m.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            var rot = fx.rotationOverLifetime;
+            rot.enabled = true;
+            rot.z = new ParticleSystem.MinMaxCurve(-6f, 6f);
+            return fx;
         }
 
         /// <summary>Su sıçraması: yumuşak beyaz damla/köpük (alfa karışımlı, suyun üstünde görünür).</summary>

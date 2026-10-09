@@ -165,6 +165,42 @@ namespace Jumpline.Tests
         }
 
         [UnityTest]
+        public IEnumerator CaptureThrowHit()
+        {
+            GameSession.Mode = RunMode.Campaign;
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.ObstacleSpawner>(FindObjectsSortMode.None))
+            {
+                sp.ClearRange(-1e6f, 1e6f);
+                sp.enabled = false;
+            }
+            var boss = Object.FindAnyObjectByType<BossChase>();
+            var player = Object.FindAnyObjectByType<PlayerController>();
+            var throws = Object.FindAnyObjectByType<ThrowSystem>();
+            yield return new WaitForSeconds(4.5f);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var held = (System.Collections.Generic.Stack<int>)typeof(ThrowSystem).GetField("held", flags).GetValue(throws);
+            for (int k = 0; k < 2; k++)
+            {
+                held.Push(k);
+                typeof(BossChase).GetField("lane", flags).SetValue(boss, player.Lane);
+                typeof(BossChase).GetField("telegraphUntil", flags).SetValue(boss, -1f);
+                typeof(BossChase).GetField("nextLaneChange", flags).SetValue(boss, Time.time + 30f);
+                throws.Throw();
+                yield return new WaitForSeconds(0.3f);
+                Shot("throw_" + k + "_flight");
+                int hearts = boss.Hearts;
+                for (float t = 0f; t < 2f && boss.Hearts == hearts; t += Time.deltaTime) yield return null;
+                yield return new WaitForSecondsRealtime(0.12f);
+                Shot("throw_" + k + "_hit");
+                yield return new WaitForSeconds(2f);
+            }
+            Assert.Pass();
+        }
+
+        [UnityTest]
         public IEnumerator CaptureChase()
         {
             GameSession.Mode = RunMode.Campaign;

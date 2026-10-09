@@ -80,6 +80,8 @@ namespace Jumpline.Player
         [Tooltip("Halattan bırakınca aşağı başlangıç hızı.")]
         [SerializeField] private float ziplineReleaseVelocity = 1.5f;
         [SerializeField] private ParticleSystem ziplineSparks;
+        [Tooltip("Kayarken ayak altından toz/kıvılcım (kayma süresince akar).")]
+        [SerializeField] private ParticleSystem slideFx;
 
         [Header("Ölüm (geriye savrulma)")]
         [Tooltip("Çarpınca geriye savrulma hızı (m/sn).")]
@@ -301,6 +303,7 @@ namespace Jumpline.Player
                 }
             }
 
+            if (state == State.Sliding && slideFx != null && Time.frameCount % 2 == 0) slideFx.Emit(2);
             // tavan / bariyer: gövde (ayak..kafa) sur kapısının ya da kalasın içine giriyorsa çarpar; kayarken kafa alçak
             float head = state == State.Sliding ? slideHeadHeight : headHeight;
             if (ObstacleField.HitsCeiling(p.x, p.z, p.y, p.y + head))
@@ -393,6 +396,7 @@ namespace Jumpline.Player
 
         private void StartSlide()
         {
+            if (slideFx != null) slideFx.Emit(24);
             slideQueued = false;
             state = State.Sliding;
             slideEnd = Time.time + slideDuration;
@@ -426,6 +430,7 @@ namespace Jumpline.Player
             lane = laneFrom;
             if (Time.time - lastStumble < stumbleCooldown) return;
             lastStumble = Time.time;
+            Jumpline.Core.Haptics.Pulse(Jumpline.Core.Haptics.Medium, 150);
             currentSpeed *= stumbleSlow;    // UpdateSpeed hedef hıza yumuşakça geri çıkarır
             if (state == State.Running) Trigger(LandTrigger);   // kısa sendeleme (diz kırma)
             Stumbled?.Invoke();
@@ -525,6 +530,7 @@ namespace Jumpline.Player
             verticalVelocity = knockbackUp;
             gravityNow = gravity;
             if (ziplineSparks != null) ziplineSparks.Stop();
+            Jumpline.Core.Haptics.Pulse(Jumpline.Core.Haptics.Heavy, 255);
             Trigger(DeathTrigger);
             if (deathSlowMo < 1f && deathSlowMoTime > 0f)
             {

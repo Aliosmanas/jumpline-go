@@ -45,6 +45,10 @@ namespace Jumpline.Boss
         [SerializeField] private Color hitFlash = new Color(1f, 0.25f, 0.2f, 1f);
         [SerializeField] private ParticleSystem hitFx;
         [SerializeField] private ParticleSystem portalFx;
+        [Tooltip("Fırlatılan engel yere düşünce toz.")]
+        [SerializeField] private ParticleSystem landFx;
+        [Tooltip("İsabette kısa duraklama (gerçek sn) — vuruş hissi.")]
+        [SerializeField, Min(0f)] private float hitStop = 0.07f;
 
         [Header("Kalpler")]
         [SerializeField, Range(1, 8)] private int maxHearts = 4;
@@ -370,7 +374,8 @@ namespace Jumpline.Boss
             flashUntil = Time.time + 0.35f;
             if (hitFx != null) { hitFx.transform.position = transform.position + Vector3.up * 2.4f; hitFx.Emit(40); }
             if (cameraFollow != null) cameraFollow.Shake(0.5f);
-            Haptics.Pulse();
+            Haptics.Pulse(hearts > 0 ? Haptics.Medium : Haptics.Heavy, 220);
+            if (hitStop > 0f && hearts > 0) StartCoroutine(HitStop());
             Anim(hearts > 0 ? "Hit" : "Defeat");
             Hit?.Invoke();
             HeartsChanged?.Invoke(hearts, maxHearts);
@@ -495,6 +500,7 @@ namespace Jumpline.Boss
             throwStart = -1f;
             if (landingMarker != null) landingMarker.gameObject.SetActive(false);
             if (cameraFollow != null) cameraFollow.Shake(0.25f);
+            if (landFx != null) { landFx.transform.position = to + Vector3.up * 0.2f; landFx.Emit(26); }
             nextThrow = Time.time + Random.Range(throwInterval.x, throwInterval.y) / Mathf.Max(0.1f, PhaseValue(throwRatePerPhase));
         }
 
@@ -579,6 +585,14 @@ namespace Jumpline.Boss
             nextThrow = Time.time + Random.Range(throwInterval.x, throwInterval.y);
             ApplyVisibility();
             Anim("Run");
+        }
+
+        private System.Collections.IEnumerator HitStop()
+        {
+            if (Time.timeScale < 0.99f) yield break;   // başka bir yavaşlatma varken karışma
+            Time.timeScale = 0.05f;
+            yield return new WaitForSecondsRealtime(hitStop);
+            if (Time.timeScale > 0.01f) Time.timeScale = 1f;   // duraklatılmadıysa
         }
 
         /// <summary>Final sinematiği bitti: bölüm tamam.</summary>
