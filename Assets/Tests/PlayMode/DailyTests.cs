@@ -70,8 +70,10 @@ namespace Jumpline.Tests
             yield return new WaitForSeconds(1f);
             Assert.Greater(m.thief.transform.position.z - player.transform.position.z, 10f, "hırsız önde kaçar");
             // hırsızı koşucunun şeridine al ve düşürt → koşucu üstünden geçince toplanır
+            typeof(DailyMission).GetField("nextLane", F).SetValue(dm, Time.time + 60f);   // hırsız şerit değiştirmesin
             typeof(DailyMission).GetField("lane", F).SetValue(dm, player.Lane);
             yield return new WaitForSeconds(0.6f);
+            typeof(DailyMission).GetField("lane", F).SetValue(dm, player.Lane);
             typeof(DailyMission).GetMethod("TryDrop", F).Invoke(dm, null);
             for (float t = 0f; t < 3f && dm.Collected == 0; t += Time.deltaTime) yield return null;
             Assert.AreEqual(1, dm.Collected, "düşürülen nesne toplandı");

@@ -84,7 +84,7 @@ def export(objs, path, armature=False):
 def thief():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     hs = importlib.import_module("bl_ext.user_default.mpfb.services.humanservice").HumanService
-    info = {"clothes": ["male_casualsuit02/male_casualsuit02.mhclo"], "color_adjustments": {}, "expressions": [], "makeup": [],
+    info = {"clothes": ["male_casualsuit02/male_casualsuit02.mhclo", "shoes02/shoes02.mhclo"], "color_adjustments": {}, "expressions": [], "makeup": [],
             "targets": [], "alternative_materials": {}, "eyebrows": "", "eyelashes": "", "eyes": "", "eyes_material_settings": {},
             "eyes_material_type": "MAKESKIN", "hair": "", "proxy": "", "rig": "game_engine", "skin_material_settings": {},
             "skin_material_type": "NONE", "skin_mhmat": "", "teeth": "", "tongue": "",
