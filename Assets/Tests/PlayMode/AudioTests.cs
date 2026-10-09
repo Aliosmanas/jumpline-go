@@ -27,6 +27,7 @@ namespace Jumpline.Tests
         public IEnumerator Gameplay_PlaysStreetMusicAndSaz()
         {
             GameSession.Mode = RunMode.Campaign;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return new WaitForSeconds(2f);
             Assert.IsNotNull(Object.FindAnyObjectByType<GameplayAudio>(), "GameplayAudio yok");

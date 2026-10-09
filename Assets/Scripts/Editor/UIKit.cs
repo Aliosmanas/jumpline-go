@@ -757,6 +757,8 @@ namespace Jumpline.EditorTools
                         case string s: sub.stringValue = s; break;
                         case float f: sub.floatValue = f; break;
                         case int n: sub.intValue = n; break;
+                        case bool bo: sub.boolValue = bo; break;
+                        case Color col: sub.colorValue = col; break;
                         case Dictionary<string, object> nested:
                             foreach (var nkv in nested)
                             {

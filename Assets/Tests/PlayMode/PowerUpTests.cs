@@ -19,6 +19,7 @@ namespace Jumpline.Tests
         public IEnumerator Load()
         {
             GameSession.Mode = RunMode.QuickRace;   // canavarsız: yalın koşu
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;

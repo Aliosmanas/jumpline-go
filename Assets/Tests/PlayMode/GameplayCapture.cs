@@ -55,6 +55,7 @@ namespace Jumpline.Tests
         public IEnumerator CaptureBossCloseup()
         {
             GameSession.Mode = RunMode.Campaign;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
@@ -99,6 +100,7 @@ namespace Jumpline.Tests
         public IEnumerator CaptureBossPoses()
         {
             GameSession.Mode = RunMode.Campaign;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
@@ -136,6 +138,7 @@ namespace Jumpline.Tests
         public IEnumerator CaptureFinale()
         {
             GameSession.Mode = RunMode.Campaign;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
@@ -168,6 +171,7 @@ namespace Jumpline.Tests
         public IEnumerator CaptureThrowHit()
         {
             GameSession.Mode = RunMode.Campaign;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
@@ -204,6 +208,7 @@ namespace Jumpline.Tests
         public IEnumerator CapturePowerUps()
         {
             GameSession.Mode = RunMode.QuickRace;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
@@ -223,9 +228,29 @@ namespace Jumpline.Tests
         }
 
         [UnityTest]
+        public IEnumerator CaptureIntro()
+        {
+            UnityEngine.PlayerPrefs.DeleteKey("jl.introSeen");
+            GameSession.Mode = RunMode.Campaign;
+            SceneManager.LoadScene("Gameplay");
+            yield return new WaitForSecondsRealtime(2.2f);
+            Shot("intro_01");
+            var tap = GameObject.Find("TapArea").GetComponent<UnityEngine.UI.Button>();
+            for (int i = 0; i < 6; i++) { tap.onClick.Invoke(); yield return new WaitForSecondsRealtime(0.15f); }
+            yield return new WaitForSecondsRealtime(2.2f);
+            Shot("intro_02");
+            tap.onClick.Invoke(); yield return new WaitForSecondsRealtime(0.2f); tap.onClick.Invoke();
+            yield return new WaitForSecondsRealtime(2.5f);
+            Shot("intro_03");
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1);
+            Assert.Pass();
+        }
+
+        [UnityTest]
         public IEnumerator CaptureChase()
         {
             GameSession.Mode = RunMode.Campaign;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;

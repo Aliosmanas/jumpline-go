@@ -94,7 +94,7 @@ namespace Jumpline.Level
 
         private void Start()
         {
-            Time.timeScale = 1f;
+            if (!IntroSequence.Playing) Time.timeScale = 1f;   // açılış konuşması sürüyorsa dünya donuk kalır
             state = State.Playing;
             levelLabel.text = Localization.Format("LEVEL {0}", GameSession.Level);
             modeLabel.text = Localization.Get(GameSession.Mode switch
@@ -133,7 +133,7 @@ namespace Jumpline.Level
 
         public void Pause()
         {
-            if (state != State.Playing) return;
+            if (state != State.Playing || IntroSequence.Playing) return;
             state = State.Paused;
             Time.timeScale = 0f;
             Show(pausePanel, true);
