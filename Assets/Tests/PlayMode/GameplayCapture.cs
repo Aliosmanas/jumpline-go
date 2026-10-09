@@ -247,6 +247,40 @@ namespace Jumpline.Tests
         }
 
         [UnityTest]
+        public IEnumerator CaptureDaily()
+        {
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1);
+            GameSession.Mode = RunMode.Daily;
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.ObstacleSpawner>(FindObjectsSortMode.None))
+                sp.ClearRange(-1e6f, 120f);
+            yield return new WaitForSecondsRealtime(2.5f);
+            Shot("daily_01_dialogue");
+            var tap = GameObject.Find("TapArea").GetComponent<UnityEngine.UI.Button>();
+            for (int i = 0; i < 12 && Time.timeScale < 0.5f; i++) { tap.onClick.Invoke(); yield return new WaitForSecondsRealtime(0.25f); }
+            yield return new WaitForSeconds(3f);
+            Shot("daily_02_chase");
+            // diğer hırsız: elle aç (iki görünüşü de görmek için)
+            var dm = Object.FindAnyObjectByType<Jumpline.Level.DailyMission>();
+            var missions = (Jumpline.Level.DailyMission.Mission[])typeof(Jumpline.Level.DailyMission).GetField("missions", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(dm);
+            var cur = (Jumpline.Level.DailyMission.Mission)typeof(Jumpline.Level.DailyMission).GetField("m", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(dm);
+            foreach (var mm in missions)
+                if (mm.thief != cur.thief) { mm.thief.SetActive(true); mm.thief.transform.position = cur.thief.transform.position + new Vector3(2.2f, 0f, -4f); }
+            yield return new WaitForSeconds(0.2f);
+            var cam = new GameObject("DCam").AddComponent<Camera>();
+            cam.enabled = false;
+            cam.fieldOfView = 35f;
+            Vector3 c = cur.thief.transform.position;
+            cam.transform.position = c + new Vector3(5f, 2.2f, -7f);
+            cam.transform.LookAt(c + new Vector3(1f, 0.9f, -2f));
+            foreach (var cv in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None)) cv.enabled = false;
+            Shot("daily_03_thieves", cam);
+            Assert.Pass();
+        }
+
+        [UnityTest]
         public IEnumerator CaptureChase()
         {
             GameSession.Mode = RunMode.Campaign;

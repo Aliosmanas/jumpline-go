@@ -90,6 +90,7 @@ namespace Jumpline.EditorTools
             BuildBossChase(runner, follow, switcher, streetObs.GetComponent<ObstacleSpawner>(), up, down, canvas.GetComponent<LevelFlowController>());
             BuildGameplayAudio(runner, coins, switcher, canvas.GetComponent<LevelFlowController>());
             BuildStory(safe, runner);
+            BuildDailyMission(runner, canvas.GetComponent<LevelFlowController>());
             SetArray(switcher, "streetExtras", new Object[] { streetObs });
             SetArray(switcher, "rooftopExtras", new Object[] { roofObs });
             // ölünce oyun bitti paneli (LevelFlowController.FailLevel)

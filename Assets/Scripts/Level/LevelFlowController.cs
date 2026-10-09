@@ -94,7 +94,7 @@ namespace Jumpline.Level
 
         private void Start()
         {
-            if (!IntroSequence.Playing) Time.timeScale = 1f;   // açılış konuşması sürüyorsa dünya donuk kalır
+            if (!IntroSequence.Playing && !Jumpline.UI.DialogueBox.Blocking) Time.timeScale = 1f;   // konuşma sürüyorsa dünya donuk kalır
             state = State.Playing;
             levelLabel.text = Localization.Format("LEVEL {0}", GameSession.Level);
             modeLabel.text = Localization.Get(GameSession.Mode switch
@@ -108,7 +108,9 @@ namespace Jumpline.Level
             Show(failPanel, false);
             bool chase = boss != null && boss.gameObject.activeSelf;
             bool quick = GameSession.Mode == RunMode.QuickRace;
-            if (hideDuringChase != null) foreach (var g in hideDuringChase) if (g != null) g.SetActive(!chase && !quick);
+            bool daily = GameSession.Mode == RunMode.Daily;
+            if (hideDuringChase != null) foreach (var g in hideDuringChase) if (g != null) g.SetActive(!chase && !quick && !daily);
+            if (daily) levelLabel.text = Localization.Get("DAILY CHALLENGE");
             if (quickRaceOnly != null) foreach (var g in quickRaceOnly) if (g != null) g.SetActive(quick);
             if (quick) levelLabel.text = Localization.Get("QUICK RACE");   // sonsuz: bölüm numarası yok
         }
@@ -133,7 +135,7 @@ namespace Jumpline.Level
 
         public void Pause()
         {
-            if (state != State.Playing || IntroSequence.Playing) return;
+            if (state != State.Playing || IntroSequence.Playing || Jumpline.UI.DialogueBox.Blocking) return;
             state = State.Paused;
             Time.timeScale = 0f;
             Show(pausePanel, true);

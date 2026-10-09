@@ -50,6 +50,10 @@ namespace Jumpline.UI
         private bool advance;
 
         public bool IsOpen { get; private set; }
+        /// <summary>Dokunma bekleyen konuşma sürüyor (açılış, görev): dünya donuk kalmalı.</summary>
+        public static bool Blocking { get; private set; }
+
+        private void OnDestroy() => Blocking = false;
 
         private void Awake()
         {
@@ -64,6 +68,7 @@ namespace Jumpline.UI
             foreach (Line l in lines) queue.Enqueue(l);
             onDone = done;
             StopAllCoroutines();
+            Blocking = true;
             StartCoroutine(Run());
         }
 
@@ -77,6 +82,7 @@ namespace Jumpline.UI
 
         public void Close()
         {
+            Blocking = false;
             StopAllCoroutines();
             StartCoroutine(Fade(0f, false));
             IsOpen = false;
@@ -98,6 +104,7 @@ namespace Jumpline.UI
             }
             yield return Fade(0f);
             IsOpen = false;
+            Blocking = false;
             onDone?.Invoke();
         }
 

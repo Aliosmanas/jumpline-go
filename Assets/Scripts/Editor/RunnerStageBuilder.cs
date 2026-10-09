@@ -104,7 +104,7 @@ namespace Jumpline.EditorTools
         }
 
         /// <summary>MPFB "game_engine" iskeleti → Unity Humanoid kemik eşlemesi.</summary>
-        private static HumanDescription BuildHumanDescription(HumanDescription desc)
+        internal static HumanDescription BuildHumanDescription(HumanDescription desc)
         {
             var map = new Dictionary<string, string>
             {
