@@ -86,8 +86,9 @@ namespace Jumpline.Tests
         public IEnumerator Durations_ComeFromUpgrades()
         {
             yield return null;
-            Assert.AreEqual(8f, pu.DurationOf(PowerUpType.Magnet), 0.01f, "mıknatıs taban süre 8 sn");
-            Assert.AreEqual(5f, pu.DurationOf(PowerUpType.SpeedBoost), 0.01f);
+            // taban + kademe × 2 sn (oyuncunun kayıtlı geliştirmesine göre)
+            Assert.AreEqual(8f + 2f * Jumpline.Save.SaveManager.GetStatLevel("magnet"), pu.DurationOf(PowerUpType.Magnet), 0.01f, "mıknatıs süresi");
+            Assert.AreEqual(5f + 2f * Jumpline.Save.SaveManager.GetStatLevel("speed_boost"), pu.DurationOf(PowerUpType.SpeedBoost), 0.01f);
         }
     }
 }
