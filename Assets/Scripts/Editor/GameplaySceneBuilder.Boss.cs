@@ -26,6 +26,7 @@ namespace Jumpline.EditorTools
         public const string SahmeranPath = BossDir + "/Sahmeran.fbx";
         public const string HumbabaPath = BossDir + "/Humbaba.fbx";
         public const string StoneGuardianPath = BossDir + "/StoneGuardian.fbx";
+        public const string VanMonsterPath = BossDir + "/VanMonster.fbx";
         /// <summary>Bölüm canavarları (efsane kimliği, model, canlandırıcı) — Blender/scripts/build_*.py.</summary>
         private static readonly (string legend, string path, string controller)[] BossModels =
         {
@@ -33,6 +34,7 @@ namespace Jumpline.EditorTools
             ("sahmeran", SahmeranPath, BossDir + "/Sahmeran.controller"),
             ("humbaba", HumbabaPath, BossDir + "/Humbaba.controller"),
             ("stone_guardian", StoneGuardianPath, BossDir + "/StoneGuardian.controller"),
+            ("van_monster", VanMonsterPath, BossDir + "/VanMonster.controller"),
         };
         private static readonly System.Collections.Generic.List<Jumpline.Level.LevelDirector.BossBody> bossBodies = new();
         private static readonly System.Collections.Generic.List<Image> bossIconImages = new();
@@ -56,6 +58,7 @@ namespace Jumpline.EditorTools
             ConfigureBossImport(SahmeranPath);
             ConfigureBossImport(HumbabaPath);
             ConfigureBossImport(StoneGuardianPath);
+            ConfigureBossImport(VanMonsterPath);
             var controller = SetupTepegozAnimations();
             var player = runner.GetComponent<Jumpline.Player.PlayerController>();
 
@@ -244,9 +247,9 @@ namespace Jumpline.EditorTools
             // kalpler (canavarın yüzü solda)
             bossIconImages.Clear();
             bossIconImages.Add(Icon(top, "boss_head", new Rect(300f, 146f, 84f, 84f), Color.white));
-            var hearts = new Image[4];
+            var hearts = new Image[6];   // bölüme göre 4-6 kalp (LevelSpec.bossHearts); fazlası gizlenir
             for (int i = 0; i < hearts.Length; i++)
-                hearts[i] = Icon(top, "heart", new Rect(394f + i * 86f, 150f, 76f, 76f), Color.white);
+                hearts[i] = Icon(top, "heart", new Rect(392f + i * 60f, 156f, 56f, 56f), Color.white);
 
             // mesafe: koşucu (sol) ←→ canavar; dolgu uzadıkça kırmızılaşır
             const float mx = 318f, my = 244f, mw = 410f, mh = 26f;
@@ -524,7 +527,7 @@ namespace Jumpline.EditorTools
             if (AssetImporter.GetAtPath(path) is not ModelImporter imp) return;
             EnsureFolder(BossMatDir);
             imp.importCameras = imp.importLights = false;
-            imp.importAnimation = path == TepegozPath || path == SahmeranPath || path == HumbabaPath || path == StoneGuardianPath;   // canavarların animasyonları kalır
+            imp.importAnimation = path == TepegozPath || path == SahmeranPath || path == HumbabaPath || path == StoneGuardianPath || path == VanMonsterPath;   // canavarların animasyonları kalır
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { BossMatDir }))
             {
                 var m = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
@@ -557,6 +560,8 @@ namespace Jumpline.EditorTools
                 ("HB_Mane", "#7A3A16", 0f, 0.15f, 0f), ("HB_Horn", "#E6DABB", 0f, 0.55f, 0f), ("HB_Bark", "#3E2E1C", 0f, 0.1f, 0f),
                 ("SG_Skin", "#FFFFFF", 0f, 0.1f, 0f), ("SG_Capital", "#FFFFFF", 0f, 0.1f, 0f), ("SG_Dark", "#8C8170", 0f, 0.1f, 0f),
                 ("SG_Glow", "#38E0D0", 3f, 0.7f, 0f),
+                ("VM_Scales", "#FFFFFF", 0f, 0.4f, 0f), ("VM_Belly", "#5E8C7A", 0f, 0.45f, 0f), ("VM_Bone", "#E8E0C6", 0f, 0.6f, 0f),
+                ("VM_Eye", "#C8FF3A", 3f, 0.8f, 0f), ("VM_Spine", "#1E7A6E", 0.6f, 0.65f, 0f),
             };
             var skinTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Tepegoz_Skin.png");
             var clothTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Pestemal.png");
@@ -575,6 +580,7 @@ namespace Jumpline.EditorTools
                 if (d.name == "SM_Hair") mat.SetFloat("_Cull", 0f);   // tek katman saç perdesi
                 if (d.name == "HB_Skin") mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Humbaba_Skin.png"));
                 if (d.name == "HB_Bark") mat.SetFloat("_Cull", 0f);
+                if (d.name == "VM_Scales") mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/VanMonster_Scales.png"));
                 if (d.name == "SG_Skin" || d.name == "SG_Capital") mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/StoneGuardian_Skin.png"));
                 if (d.name == "TG_Cloth" && clothTex != null)
                 {

@@ -31,8 +31,8 @@ namespace Jumpline.Tests
             Assert.AreEqual(8, nodes.Length, "8 durak");
             Assert.IsFalse(nodes[0].lockIcon.activeSelf, "1. bölüm açık");
             Assert.IsTrue(nodes[0].portrait.activeSelf, "1. bölümde Tepegöz portresi");
-            Assert.IsTrue(nodes[4].lockIcon.activeSelf, "5. bölüm kilitli (canavarı yok)");
-            Assert.IsFalse(string.IsNullOrEmpty(nodes[4].status.text), "5. bölüm yakında yazar");
+            Assert.IsTrue(nodes[5].lockIcon.activeSelf, "6. bölüm kilitli (canavarı yok)");
+            Assert.IsFalse(string.IsNullOrEmpty(nodes[5].status.text), "6. bölüm yakında yazar");
             int on = 0;
             foreach (var s in nodes[0].stars) if (s.color.r > 0.9f) on++;
             Assert.AreEqual(Mathf.Max(2, before), on, "yıldızlar kayıttan");
