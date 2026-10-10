@@ -201,6 +201,10 @@ namespace Jumpline.Core
             // Canavar kovalaması
             { "TEPEGOZ ESCAPED!", "TEPEGÖZ KAÇTI!" },
             { "{0} ESCAPED!", "{0} KAÇTI!" },
+            { "Mardin. The Book of Legends trembles... a new page is glowing in golden light.", "Mardin. Efsaneler Kitabı titriyor... yeni bir sayfa altın ışıkla parlıyor." },
+            { "Who dares to wake the Queen of Serpents? These honey-stone streets are mine now!", "Yılanların Şahı'nı uyandırmaya kim cüret eder? Bu bal rengi taş sokaklar artık benim!" },
+            { "Nephew, that is Shahmaran! She is faster than the giant. Keep throwing, never let her slip away!", "Yeğenim, o Şahmeran! Devden de hızlı. Atmaya devam et, sakın kaçırma!" },
+            { "Back into the book you go, Your Majesty!", "Kitabına geri dön, Majesteleri!" },
             { "DODGED!", "KAÇINDI!" },
             { "TO THE ROOFTOPS! FOLLOW IT!", "ÇATILARA KAÇTI! PEŞİNDEN GİT!" },
             { "IT'S FURIOUS! WATCH ITS DODGE!", "ÖFKELENDİ! KAÇINMASINA DİKKAT!" },

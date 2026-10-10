@@ -7,7 +7,8 @@ using UnityEngine.UI;
 namespace Jumpline.Level
 {
     /// <summary>
-    /// Açılış sahnesi (hikâye D — Efsaneler Kitabı), ilk kampanya koşusundan önce bir kez: portreli konuşma, oyun donuk.
+    /// Açılış sahnesi (hikâye D — Efsaneler Kitabı): her bölümün ilk kampanya koşusundan önce bir kez portreli konuşma
+    /// (bölüm 1: kitap açılır, Tepegöz kaçar; bölüm 2: Mardin'de Şahmeran), oyun donuk.
     /// "Atla" ile geçilebilir. Bitince ya da atlanınca kayda işlenir; sonra koşu başlar (canavar kükrer).
     /// </summary>
     public class IntroSequence : MonoBehaviour
@@ -17,6 +18,19 @@ namespace Jumpline.Level
         [SerializeField] private Button skipButton;
 
         public static bool Seen => PlayerPrefs.GetInt("jl.introSeen", 0) == 1;
+        private static string SeenKey(int level) => level <= 1 ? "jl.introSeen" : "jl.introSeen." + level;
+        public static bool SeenLevel(int level) => PlayerPrefs.GetInt(SeenKey(level), 0) == 1;
+
+        public static readonly DialogueBox.Line[] Level2Lines =
+        {
+            new DialogueBox.Line("narrator", "Mardin. The Book of Legends trembles... a new page is glowing in golden light."),
+            new DialogueBox.Line("sahmeran", "Who dares to wake the Queen of Serpents? These honey-stone streets are mine now!"),
+            new DialogueBox.Line("cayci", "Nephew, that is Shahmaran! She is faster than the giant. Keep throwing, never let her slip away!"),
+            new DialogueBox.Line("hero", "Back into the book you go, Your Majesty!"),
+        };
+
+        /// <summary>Bölümün açılış satırları (yoksa null).</summary>
+        public static DialogueBox.Line[] LinesFor(int level) => level <= 1 ? Lines : level == 2 ? Level2Lines : null;
         public static void Reset() { PlayerPrefs.DeleteKey("jl.introSeen"); PlayerPrefs.Save(); }
 
         public static readonly DialogueBox.Line[] Lines =
@@ -29,13 +43,15 @@ namespace Jumpline.Level
         };
 
         private bool finished;
+        private int level = 1;
 
         /// <summary>Açılış oynuyor (LevelFlowController zamanı başlatmasın).</summary>
         public static bool Playing { get; private set; }
 
         private void Awake()
         {
-            if (Seen || GameSession.Mode != RunMode.Campaign || dialogue == null) { Hide(); enabled = false; return; }
+            level = GameSession.Level;
+            if (SeenLevel(level) || LinesFor(level) == null || GameSession.Mode != RunMode.Campaign || dialogue == null) { Hide(); enabled = false; return; }
             Time.timeScale = 0f;   // koşu açılış bitene kadar başlamaz
             Playing = true;
             if (backdrop != null) { backdrop.alpha = 1f; backdrop.blocksRaycasts = true; }
@@ -45,7 +61,7 @@ namespace Jumpline.Level
         private void Start()
         {
             if (!enabled) return;
-            dialogue.Play(new List<DialogueBox.Line>(Lines), Finish);
+            dialogue.Play(new List<DialogueBox.Line>(LinesFor(level)), Finish);
         }
 
         private void Finish()
@@ -53,7 +69,7 @@ namespace Jumpline.Level
             if (finished) return;
             finished = true;
             Playing = false;
-            PlayerPrefs.SetInt("jl.introSeen", 1);
+            PlayerPrefs.SetInt(SeenKey(level), 1);
             PlayerPrefs.Save();
             dialogue.Close();
             Hide();

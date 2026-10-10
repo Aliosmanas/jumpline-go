@@ -316,6 +316,7 @@ namespace Jumpline.Tests
         {
             GameSession.Mode = RunMode.Campaign;
             GameSession.Level = 2;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen.2", 1);
             UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
             SceneManager.LoadScene("Gameplay");
             yield return null;

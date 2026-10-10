@@ -29,5 +29,24 @@ namespace Jumpline.Tests
             Assert.AreSame(cfg.GetLevel(3), director.Current, "seçili bölüm uygulanmalı");
             GameSession.Level = 1;
         }
+
+        [UnityTest]
+        public IEnumerator Level2_PlaysMardinIntroOnce()
+        {
+            PlayerPrefs.SetInt("jl.introSeen", 1);
+            PlayerPrefs.SetInt("jl.tutorialDone", 1);
+            PlayerPrefs.DeleteKey("jl.introSeen.2");
+            GameSession.Mode = RunMode.Campaign;
+            GameSession.Level = 2;
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            Assert.IsTrue(IntroSequence.Playing, "bölüm 2 açılış konuşması oynamalı");
+            Assert.AreEqual("sahmeran", IntroSequence.LinesFor(2)[1].speaker);
+            Object.FindAnyObjectByType<IntroSequence>().SendMessage("Finish");
+            Assert.IsTrue(IntroSequence.SeenLevel(2), "bir kez gösterilir");
+            Assert.AreEqual(1f, Time.timeScale, "konuşma bitince koşu başlar");
+            GameSession.Level = 1;
+        }
     }
 }

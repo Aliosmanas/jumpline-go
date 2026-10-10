@@ -10,6 +10,7 @@ namespace Jumpline.EditorTools
         public static void ResetStory()
         {
             PlayerPrefs.DeleteKey("jl.introSeen");
+            for (int lv = 2; lv <= 8; lv++) PlayerPrefs.DeleteKey("jl.introSeen." + lv);
             PlayerPrefs.DeleteKey("jl.tutorialDone");
             PlayerPrefs.DeleteKey("jl.dailyClaim");
             PlayerPrefs.Save();
