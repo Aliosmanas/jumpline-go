@@ -33,6 +33,8 @@ namespace Jumpline.Core
             [Min(0.1f)] public float bossLaneRate = 1f;
             [Tooltip("Kaçma (atıştan sıyrılma) olasılığına eklenen değer (-1..1).")]
             [Range(-1f, 1f)] public float bossDodgeBonus;
+            [Tooltip("Kükreme sesinin perdesi (1 = Tepegöz; düşük = iri, yüksek = tıslama).")]
+            [Range(0.4f, 2f)] public float roarPitch = 1f;
         }
 
         [SerializeField] private LevelSpec[] levels = Array.Empty<LevelSpec>();

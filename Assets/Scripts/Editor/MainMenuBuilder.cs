@@ -1117,6 +1117,11 @@ namespace Jumpline.EditorTools
                     city = stops[i].city, legend = stops[i].legend, displayName = stops[i].name, built = i < built,
                     bossThrowRate = personality[stops[i].legend].t, bossLaneRate = personality[stops[i].legend].l,
                     bossDodgeBonus = personality[stops[i].legend].d,
+                    roarPitch = stops[i].legend switch
+                    {
+                        "sahmeran" => 1.45f, "humbaba" => 0.8f, "stone_guardian" => 0.62f, "van_monster" => 1.25f,
+                        "karakoncolos" => 1.12f, "lamassu" => 0.9f, "dragon" => 0.7f, _ => 1f,
+                    },
                     runSpeed = 11f + 0.6f * i, maxSpeed = 18f + 0.7f * i,
                     obstacleGap = new Vector2(Mathf.Max(7f, 11f - 0.55f * i), Mathf.Max(11f, 17f - 0.8f * i)),
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,

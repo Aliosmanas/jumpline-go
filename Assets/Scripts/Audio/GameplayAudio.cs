@@ -28,6 +28,8 @@ namespace Jumpline.Audio
         private bool finished;
 
         private static AudioManager A => AudioManager.Instance;
+        /// <summary>Bölümün canavarına göre kükreme perdesi (LevelDirector).</summary>
+        private static float Roar => Jumpline.Level.LevelDirector.Active != null ? Jumpline.Level.LevelDirector.Active.roarPitch : 1f;
 
         private void Start()
         {
@@ -54,12 +56,12 @@ namespace Jumpline.Audio
             bool chase = boss != null && boss.gameObject.activeSelf;
             if (chase)
             {
-                A.Sfx("roar", 0.9f);
+                A.Sfx("roar", 0.9f, Roar);
                 boss.Hit += () => { A.Sfx("splat"); A.Sfx("heart_lost", 0.8f); };
                 boss.Dodged += () => A.Sfx("throw", 0.5f, 0.8f);
                 boss.PhaseChanged += OnPhase;
-                boss.Defeating += () => A.Sfx("roar", 1f, 0.8f);
-                boss.Escaped += () => A.Sfx("roar", 0.7f, 1.15f);
+                boss.Defeating += () => A.Sfx("roar", 1f, 0.8f * Roar);
+                boss.Escaped += () => A.Sfx("roar", 0.7f, 1.15f * Roar);
                 boss.ObstacleLanded += () => A.Sfx("crate", 0.55f);
             }
             if (flow != null) flow.LevelCompleted += OnComplete;
@@ -87,10 +89,10 @@ namespace Jumpline.Audio
 
         private void OnPhase(BossChase.Phase phase)
         {
-            if (phase == BossChase.Phase.Rooftop) A.Sfx("roar", 0.8f, 1.05f);
+            if (phase == BossChase.Phase.Rooftop) A.Sfx("roar", 0.8f, 1.05f * Roar);
             if (phase < BossChase.Phase.Fury || bossMusic || finished) return;
             bossMusic = true;   // öfke fazından itibaren gerilim müziği
-            A.Sfx("roar", 1f);
+            A.Sfx("roar", 1f, Roar);
             A.Music("boss");
             A.Layer(null);
         }

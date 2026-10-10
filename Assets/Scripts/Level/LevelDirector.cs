@@ -40,10 +40,16 @@ namespace Jumpline.Level
 
         public GameConfig.LevelSpec Current { get; private set; }
 
+        /// <summary>Bu koşunun bölüm tanımı (sesler vb. için; sahne yokken null).</summary>
+        public static GameConfig.LevelSpec Active { get; private set; }
+
+        private void OnDestroy() { if (Active == Current) Active = null; }
+
         private void Awake()
         {
             if (config == null) return;
             Current = config.GetLevel(GameSession.Level);
+            Active = Current;
             if (player != null) player.SetSpeeds(Current.runSpeed, Current.maxSpeed);
             if (spawners != null) foreach (var s in spawners) if (s != null) s.SetGap(Current.obstacleGap);
             if (boss != null)
