@@ -97,6 +97,22 @@ namespace Jumpline.EditorTools
             Set(director, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
             SetArray(director, "spawners", new Object[] { streetObs.GetComponent<ObstacleSpawner>(), roofObs.GetComponent<ObstacleSpawner>() });
             Set(director, "boss", Object.FindAnyObjectByType<Jumpline.Boss.BossChase>(FindObjectsInactive.Include));
+            Set(director, "flow", canvas.GetComponent<LevelFlowController>());
+            var dso = new SerializedObject(director);
+            var arr = dso.FindProperty("bodies");
+            arr.arraySize = bossBodies.Count;
+            for (int i = 0; i < bossBodies.Count; i++)
+            {
+                var e = arr.GetArrayElementAtIndex(i);
+                e.FindPropertyRelative("legend").stringValue = bossBodies[i].legend;
+                e.FindPropertyRelative("root").objectReferenceValue = bossBodies[i].root;
+                e.FindPropertyRelative("animator").objectReferenceValue = bossBodies[i].animator;
+                e.FindPropertyRelative("hand").objectReferenceValue = bossBodies[i].hand;
+                var rr = e.FindPropertyRelative("renderers");
+                rr.arraySize = bossBodies[i].renderers.Length;
+                for (int k = 0; k < rr.arraySize; k++) rr.GetArrayElementAtIndex(k).objectReferenceValue = bossBodies[i].renderers[k];
+            }
+            dso.ApplyModifiedPropertiesWithoutUndo();
             BuildProgressTracker(runner, coins, canvas.GetComponent<LevelFlowController>());
             Set(canvas.gameObject.AddComponent<Jumpline.UI.ContrastMode>(), "volume", Object.FindAnyObjectByType<UnityEngine.Rendering.Volume>());
             SetArray(switcher, "streetExtras", new Object[] { streetObs });

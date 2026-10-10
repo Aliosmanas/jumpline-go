@@ -163,6 +163,15 @@ namespace Jumpline.Level
             Show(pausePanel, false);
         }
 
+        private string legendName = "TEPEGOZ";
+
+        /// <summary>LevelDirector: bu bölümün efsanesi (kitap sayfası kimliği + ekranda görünen ad anahtarı).</summary>
+        public void SetLegend(string id, string displayKey)
+        {
+            if (!string.IsNullOrEmpty(id)) legendId = id;
+            if (!string.IsNullOrEmpty(displayKey)) legendName = displayKey;
+        }
+
         public void CompleteLevel()
         {
             if (state == State.Finished) return;
@@ -230,7 +239,7 @@ namespace Jumpline.Level
             if (failReasonLabel != null)   // başlık: "OYUN BİTTİ" ya da "TEPEGÖZ KAÇTI!" (panel açıldıktan sonra; çeviri bileşeni ezmesin)
             {
                 if (failTitleColor == null) failTitleColor = failReasonLabel.color;
-                failReasonLabel.text = Localization.Get(escaped ? "TEPEGOZ ESCAPED!" : "GAME OVER");
+                failReasonLabel.text = escaped ? Localization.Format("{0} ESCAPED!", Localization.Get(legendName)) : Localization.Get("GAME OVER");
                 failReasonLabel.color = escaped ? new Color(1f, 0.36f, 0.3f) : failTitleColor.Value;
                 if (GameSession.Mode == RunMode.QuickRace && score != null)   // Hızlı Yarış: puan ve rekor
                 {

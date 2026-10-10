@@ -15,6 +15,7 @@ MonoBehaviour:
   levels:
   - city: DIYARBAKIR
     legend: tepegoz
+    displayName: TEPEGOZ
     built: 1
     runSpeed: 11
     maxSpeed: 18
@@ -23,7 +24,8 @@ MonoBehaviour:
     bossDrift: 1
   - city: MARDIN
     legend: sahmeran
-    built: 0
+    displayName: SHAHMARAN
+    built: 1
     runSpeed: 11.6
     maxSpeed: 18.7
     obstacleGap: {x: 10.45, y: 16.2}
@@ -31,6 +33,7 @@ MonoBehaviour:
     bossDrift: 1.07
   - city: HASANKEYF
     legend: humbaba
+    displayName: HUMBABA
     built: 0
     runSpeed: 12.2
     maxSpeed: 19.4
@@ -39,6 +42,7 @@ MonoBehaviour:
     bossDrift: 1.14
   - city: SANLIURFA
     legend: stone_guardian
+    displayName: STONE GUARDIAN
     built: 0
     runSpeed: 12.8
     maxSpeed: 20.1
@@ -47,6 +51,7 @@ MonoBehaviour:
     bossDrift: 1.21
   - city: VAN
     legend: van_monster
+    displayName: VAN LAKE MONSTER
     built: 0
     runSpeed: 13.4
     maxSpeed: 20.8
@@ -55,6 +60,7 @@ MonoBehaviour:
     bossDrift: 1.28
   - city: KARS
     legend: karakoncolos
+    displayName: KARAKONCOLOS
     built: 0
     runSpeed: 14
     maxSpeed: 21.5
@@ -63,6 +69,7 @@ MonoBehaviour:
     bossDrift: 1.35
   - city: ???
     legend: lamassu
+    displayName: LAMASSU
     built: 0
     runSpeed: 14.6
     maxSpeed: 22.2
@@ -71,6 +78,7 @@ MonoBehaviour:
     bossDrift: 1.42
   - city: ???
     legend: dragon
+    displayName: THE DRAGON
     built: 0
     runSpeed: 15.2
     maxSpeed: 22.9

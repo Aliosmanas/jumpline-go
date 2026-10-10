@@ -1091,16 +1091,18 @@ namespace Jumpline.EditorTools
         /// </summary>
         private static GameConfig.LevelSpec[] DefaultLevels()
         {
-            (string city, string legend)[] stops =
+            (string city, string legend, string name)[] stops =
             {
-                ("DIYARBAKIR", "tepegoz"), ("MARDIN", "sahmeran"), ("HASANKEYF", "humbaba"), ("SANLIURFA", "stone_guardian"),
-                ("VAN", "van_monster"), ("KARS", "karakoncolos"), ("???", "lamassu"), ("???", "dragon"),
+                ("DIYARBAKIR", "tepegoz", "TEPEGOZ"), ("MARDIN", "sahmeran", "SHAHMARAN"), ("HASANKEYF", "humbaba", "HUMBABA"),
+                ("SANLIURFA", "stone_guardian", "STONE GUARDIAN"), ("VAN", "van_monster", "VAN LAKE MONSTER"),
+                ("KARS", "karakoncolos", "KARAKONCOLOS"), ("???", "lamassu", "LAMASSU"), ("???", "dragon", "THE DRAGON"),
             };
+            const int built = 2;   // canavarı hazır olan bölümler (Tepegöz, Şahmeran)
             var specs = new GameConfig.LevelSpec[stops.Length];
             for (int i = 0; i < stops.Length; i++)
                 specs[i] = new GameConfig.LevelSpec
                 {
-                    city = stops[i].city, legend = stops[i].legend, built = i == 0,
+                    city = stops[i].city, legend = stops[i].legend, displayName = stops[i].name, built = i < built,
                     runSpeed = 11f + 0.6f * i, maxSpeed = 18f + 0.7f * i,
                     obstacleGap = new Vector2(Mathf.Max(7f, 11f - 0.55f * i), Mathf.Max(11f, 17f - 0.8f * i)),
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,

@@ -180,6 +180,14 @@ namespace Jumpline.Boss
         public int Hearts => hearts;
         public int MaxHearts => maxHearts;
 
+        /// <summary>LevelDirector: bölümün canavar gövdesi (canlandırıcı, fırlatan el, vuruşta parlayan renderer'lar).</summary>
+        public void SetBody(Animator body, Transform hand, Renderer[] flash)
+        {
+            animator = body;
+            if (hand != null) throwHand = hand;
+            if (flash != null && flash.Length > 0) flashRenderers = flash;
+        }
+
         /// <summary>LevelDirector: kalp sayısı ve kaçma hızı çarpanı (koşu başlamadan).</summary>
         public void SetDifficulty(int hearts, float driftScale)
         {

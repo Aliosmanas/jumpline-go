@@ -310,5 +310,27 @@ namespace Jumpline.Tests
             Shot("chase_04_after");
             Assert.Pass();
         }
+
+        [UnityTest]
+        public IEnumerator CaptureSahmeran()
+        {
+            GameSession.Mode = RunMode.Campaign;
+            GameSession.Level = 2;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.ObstacleSpawner>())
+                sp.ClearRange(-1e6f, 95f);
+            yield return new WaitForSeconds(0.8f);
+            Shot("sahmeran_01_intro");
+            yield return new WaitForSeconds(4.5f);
+            Shot("sahmeran_02_chase");
+            Object.FindAnyObjectByType<BossChase>().TakeHit();
+            yield return new WaitForSeconds(0.25f);
+            Shot("sahmeran_03_hit");
+            GameSession.Level = 1;
+            Assert.Pass();
+        }
     }
 }

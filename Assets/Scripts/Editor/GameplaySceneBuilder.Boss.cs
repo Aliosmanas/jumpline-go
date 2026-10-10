@@ -23,6 +23,14 @@ namespace Jumpline.EditorTools
         private const string TepegozControllerPath = BossDir + "/Tepegoz.controller";
         private const float TepegozHeight = 3.6f;   // oyundaki boy (m): koşucunun ~2 katı
         private static readonly string[] BossClips = { "Idle", "Run", "Roar", "Throw", "Hit", "Defeat" };
+        public const string SahmeranPath = BossDir + "/Sahmeran.fbx";
+        /// <summary>Bölüm canavarları (efsane kimliği, model, canlandırıcı) — Blender/scripts/build_*.py.</summary>
+        private static readonly (string legend, string path, string controller)[] BossModels =
+        {
+            ("tepegoz", TepegozPath, TepegozControllerPath),
+            ("sahmeran", SahmeranPath, BossDir + "/Sahmeran.controller"),
+        };
+        private static readonly System.Collections.Generic.List<Jumpline.Level.LevelDirector.BossBody> bossBodies = new();
         private const string KarpuzTexPath = BossDir + "/Karpuz_Albedo.png";
 
         public const string BridgePath = "Assets/Art/Environment/Bridge/OnGozluBridge.fbx";
@@ -40,6 +48,7 @@ namespace Jumpline.EditorTools
             ConfigureBossImport(ThrowablesPath);
             ConfigureBossImport(TepegozBlockPath);
             ConfigureBossImport(TepegozPath);
+            ConfigureBossImport(SahmeranPath);
             var controller = SetupTepegozAnimations();
             var player = runner.GetComponent<Jumpline.Player.PlayerController>();
 
@@ -48,34 +57,45 @@ namespace Jumpline.EditorTools
             var boss = root.AddComponent<BossChase>();
             var visual = new GameObject("Visual").transform;
             visual.SetParent(root.transform, false);
-            var tgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TepegozPath);
-            if (tgPrefab == null) tgPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TepegozBlockPath);   // model yoksa kaba gövde
+            // bölüm canavarları: hepsi Visual altında hazır, LevelDirector bölüme göre birini açar
+            bossBodies.Clear();
             Renderer[] flash = new Renderer[0];
-            if (tgPrefab != null)
+            foreach (var (legend, path, ctrlPath) in BossModels)
             {
-                var body = (GameObject)PrefabUtility.InstantiatePrefab(tgPrefab, visual);
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null && legend == "tepegoz") prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TepegozBlockPath);   // model yoksa kaba gövde
+                if (prefab == null) continue;
+                var ctrl = path == TepegozPath ? controller : SetupBossAnimations(path, ctrlPath);
+                var body = (GameObject)PrefabUtility.InstantiatePrefab(prefab, visual);
+                body.name = legend;
                 body.transform.localPosition = Vector3.zero;   // FBX eksen dönüşü korunur
-                flash = body.GetComponentsInChildren<Renderer>();
-                Bounds b = flash[0].bounds;
-                foreach (var r in flash) b.Encapsulate(r.bounds);
+                var rends = body.GetComponentsInChildren<Renderer>();
+                Bounds b = rends[0].bounds;
+                foreach (var r in rends) b.Encapsulate(r.bounds);
                 float h = Mathf.Max(0.1f, b.max.y - body.transform.position.y);
                 body.transform.localScale *= TepegozHeight / h;
-                foreach (var r in flash)
+                foreach (var r in rends)
                 {
                     r.shadowCastingMode = ShadowCastingMode.On;
                     if (r is SkinnedMeshRenderer smr) { smr.updateWhenOffscreen = true; smr.quality = SkinQuality.Bone2; }
                 }
                 var anim = body.GetComponentInChildren<Animator>();
                 if (anim == null) anim = body.AddComponent<Animator>();
-                if (controller != null)
+                if (ctrl != null)
                 {
-                    anim.runtimeAnimatorController = controller;
+                    anim.runtimeAnimatorController = ctrl;
                     anim.applyRootMotion = false;
                     anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                    Set(boss, "animator", anim);
                 }
                 Transform hand = FindDeep(body.transform, "hand_r");
-                if (hand != null) Set(boss, "throwHand", hand);
+                bossBodies.Add(new Jumpline.Level.LevelDirector.BossBody { legend = legend, root = body, animator = ctrl != null ? anim : null, hand = hand, renderers = rends });
+                if (bossBodies.Count == 1)   // varsayılan (bölüm 1): sahnede doğrudan bağlı
+                {
+                    flash = rends;
+                    if (ctrl != null) Set(boss, "animator", anim);
+                    if (hand != null) Set(boss, "throwHand", hand);
+                }
+                else body.SetActive(false);
             }
             Set(boss, "player", player);
             Set(boss, "switcher", switcher);
@@ -392,9 +412,11 @@ namespace Jumpline.EditorTools
         }
 
         /// <summary>Tepegoz.fbx klipleri (Idle/Run döngü) + tetikleyicili controller (BossChase.Anim adları).</summary>
-        private static RuntimeAnimatorController SetupTepegozAnimations()
+        private static RuntimeAnimatorController SetupTepegozAnimations() => SetupBossAnimations(TepegozPath, TepegozControllerPath);
+
+        private static RuntimeAnimatorController SetupBossAnimations(string modelPath, string controllerPath)
         {
-            if (AssetImporter.GetAtPath(TepegozPath) is not ModelImporter imp) return null;
+            if (AssetImporter.GetAtPath(modelPath) is not ModelImporter imp) return null;
             imp.animationType = ModelImporterAnimationType.Generic;
             imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
             imp.importAnimation = true;
@@ -410,10 +432,10 @@ namespace Jumpline.EditorTools
             imp.clipAnimations = clips.ToArray();
             imp.SaveAndReimport();
             var byName = new System.Collections.Generic.Dictionary<string, AnimationClip>();
-            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(TepegozPath))
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(modelPath))
                 if (o is AnimationClip clip && !clip.name.StartsWith("__preview")) byName[clip.name] = clip;
-            AssetDatabase.DeleteAsset(TepegozControllerPath);
-            var ctrl = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(TepegozControllerPath);
+            AssetDatabase.DeleteAsset(controllerPath);
+            var ctrl = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
             var sm = ctrl.layers[0].stateMachine;
             var states = new System.Collections.Generic.Dictionary<string, UnityEditor.Animations.AnimatorState>();
             foreach (string n in BossClips)
@@ -493,7 +515,7 @@ namespace Jumpline.EditorTools
             if (AssetImporter.GetAtPath(path) is not ModelImporter imp) return;
             EnsureFolder(BossMatDir);
             imp.importCameras = imp.importLights = false;
-            imp.importAnimation = path == TepegozPath;   // canavarın animasyonları kalır
+            imp.importAnimation = path == TepegozPath || path == SahmeranPath;   // canavarların animasyonları kalır
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { BossMatDir }))
             {
                 var m = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
@@ -519,6 +541,9 @@ namespace Jumpline.EditorTools
                 ("TG_Skin", "#FFFFFF", 0f, 0.38f, 0f), ("TG_Eye", "#F2EEE4", 0f, 0.85f, 0f), ("TG_Iris", "#E0601F", 1.8f, 0.8f, 0f),
                 ("TG_Pupil", "#120808", 0f, 0.9f, 0f), ("TG_Cloth", "#FFFFFF", 0f, 0.12f, 0f), ("TG_Rope", "#6E5236", 0f, 0.1f, 0f),
                 ("TG_Brass", "#C9A04A", 0f, 0.65f, 0.9f),
+                ("SM_Skin", "#D9A47E", 0f, 0.42f, 0f), ("SM_Scales", "#FFFFFF", 0f, 0.55f, 0.35f), ("SM_Belly", "#E3C77A", 0f, 0.4f, 0f),
+                ("SM_Hair", "#16100C", 0f, 0.3f, 0f), ("SM_Gold", "#E2B24A", 0f, 0.75f, 1f), ("SM_Gem", "#2ED18A", 2f, 0.9f, 0f),
+                ("SM_Eye", "#F2EEE4", 0f, 0.85f, 0f), ("SM_Iris", "#C9B12A", 1.2f, 0.8f, 0f),
             };
             var skinTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Tepegoz_Skin.png");
             var clothTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Pestemal.png");
@@ -533,6 +558,8 @@ namespace Jumpline.EditorTools
                 mat.SetFloat("_Metallic", d.metal);
                 if (d.name == "K_Rind" && rind != null) mat.SetTexture("_BaseMap", rind);
                 if (d.name == "TG_Skin" && skinTex != null) mat.SetTexture("_BaseMap", skinTex);
+                if (d.name == "SM_Scales") mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Sahmeran_Scales.png"));
+                if (d.name == "SM_Hair") mat.SetFloat("_Cull", 0f);   // tek katman saç perdesi
                 if (d.name == "TG_Cloth" && clothTex != null)
                 {
                     mat.SetTexture("_BaseMap", clothTex);

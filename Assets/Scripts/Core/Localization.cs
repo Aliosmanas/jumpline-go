@@ -200,6 +200,7 @@ namespace Jumpline.Core
 
             // Canavar kovalaması
             { "TEPEGOZ ESCAPED!", "TEPEGÖZ KAÇTI!" },
+            { "{0} ESCAPED!", "{0} KAÇTI!" },
             { "DODGED!", "KAÇINDI!" },
             { "TO THE ROOFTOPS! FOLLOW IT!", "ÇATILARA KAÇTI! PEŞİNDEN GİT!" },
             { "IT'S FURIOUS! WATCH ITS DODGE!", "ÖFKELENDİ! KAÇINMASINA DİKKAT!" },

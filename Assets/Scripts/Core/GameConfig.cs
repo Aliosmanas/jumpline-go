@@ -13,6 +13,8 @@ namespace Jumpline.Core
         {
             public string city = "DIYARBAKIR";
             public string legend = "tepegoz";
+            [Tooltip("Ekranda görünen ad (çeviri anahtarı), ör. TEPEGOZ.")]
+            public string displayName = "TEPEGOZ";
             [Tooltip("Oynanabilir mi (canavarı/sahnesi hazır)? Değilse haritada 'yakında'.")]
             public bool built;
             [Min(1f)] public float runSpeed = 11f;
