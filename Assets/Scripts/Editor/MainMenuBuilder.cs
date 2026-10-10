@@ -1122,8 +1122,10 @@ namespace Jumpline.EditorTools
                         "sahmeran" => 1.45f, "humbaba" => 0.8f, "stone_guardian" => 0.62f, "van_monster" => 1.25f,
                         "karakoncolos" => 1.12f, "lamassu" => 0.9f, "dragon" => 0.7f, _ => 1f,
                     },
-                    runSpeed = 11f + 0.6f * i, maxSpeed = 18f + 0.7f * i,
-                    obstacleGap = new Vector2(Mathf.Max(7f, 11f - 0.55f * i), Mathf.Max(11f, 17f - 0.8f * i)),
+                    // denge (telefon testi: "çok zor"): yumuşak hız eğrisi, seyrek başlayan parkur
+                    runSpeed = 10.5f + 0.45f * i, maxSpeed = 16.5f + 0.6f * i,
+                    obstacleGap = new Vector2(Mathf.Max(8.5f, 12f - 0.45f * i), Mathf.Max(12.5f, 18f - 0.6f * i)),
+                    courseSpacing = 1.25f - 0.03f * i,
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,
                     stoneTint = stops[i].city == "MARDIN" ? new Color(2.1f, 1.75f, 1.2f)      // Mardin: bal rengi kalker
                               : stops[i].city == "HASANKEYF" ? new Color(1.75f, 1.35f, 1.05f)   // Hasankeyf: kırmızımsı kum taşı

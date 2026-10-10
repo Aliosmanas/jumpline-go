@@ -51,7 +51,7 @@ namespace Jumpline.Level
             Current = config.GetLevel(GameSession.Level);
             Active = Current;
             if (player != null) player.SetSpeeds(Current.runSpeed, Current.maxSpeed);
-            if (spawners != null) foreach (var s in spawners) if (s != null) s.SetGap(Current.obstacleGap);
+            if (spawners != null) foreach (var s in spawners) if (s != null) { s.SetGap(Current.obstacleGap); s.SetCourseSpacing(Current.courseSpacing); }
             if (boss != null)
             {
                 boss.SetDifficulty(Current.bossHearts, Current.bossDrift);

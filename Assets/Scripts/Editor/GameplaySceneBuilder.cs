@@ -922,7 +922,7 @@ namespace Jumpline.EditorTools
             Obstacle melon = V("MelonTruck", Obstacle.Kind.Solid, 1.0f, new[] { Seg(0f, 4f, 0.05f, 2.35f), Seg(4f, 10f, 2.35f), Seg(10f, 12f, 1.95f) });
             Obstacle cityBus = V("CityBus", Obstacle.Kind.Solid, 1.05f, new[] { Seg(-4.6f, 4.6f, 2.95f) });
             Obstacle patpat = V("PatPat", Obstacle.Kind.Solid, 0.7f, new[] { Seg(-1.35f, 1.35f, 1.15f) });
-            Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, new[] { Seg(0f, 3f, 0.1f, 1.6f), Seg(3f, 7.2f, 1.6f), Seg(7.2f, 8.1f, 2.55f), Seg(8.1f, 9.5f, 1.35f) });
+            Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, new[] { Seg(0f, 3f, 0.1f, 1.6f), Seg(3f, 6.8f, 1.6f), Seg(6.8f, 7.6f, 1.6f, 2.55f), Seg(7.6f, 8.1f, 2.55f), Seg(8.1f, 9.5f, 1.35f) });   // kabin önünde ön cam eğimi: üstte görünmez duvar yok
             Obstacle stop = V("BusStop", Obstacle.Kind.Solid, 0.95f, new[] { Seg(-1.55f, 1.55f, Solid) });
             Obstacle teaCart = V("TeaCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
             Obstacle simitCart = V("SimitCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.7f, 0.7f, Solid) });

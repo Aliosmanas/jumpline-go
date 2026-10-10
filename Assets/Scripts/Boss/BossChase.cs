@@ -97,7 +97,7 @@ namespace Jumpline.Boss
         [Header("Engel fırlatma (arkasına)")]
         [SerializeField] private Obstacle thrownTemplate;
         [SerializeField] private Transform landingMarker;
-        [SerializeField] private Vector2 throwInterval = new Vector2(8f, 13f);
+        [SerializeField] private Vector2 throwInterval = new Vector2(9.5f, 15f);   // denge: fırlatılan sandık biraz seyrek
         [Tooltip("Fazlara göre fırlatma sıklığı çarpanı (büyük = daha sık).")]
         [SerializeField] private float[] throwRatePerPhase = { 1f, 0.8f, 1.25f, 1.4f };
         [SerializeField, Min(0.1f)] private float throwWindUp = 0.55f;

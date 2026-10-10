@@ -30,7 +30,7 @@ namespace Jumpline.Player
         [SerializeField, Min(0f)] private float maxSpeed = 18f;
         [Tooltip("Hız eğrisi zaman sabiti (sn): hız = taban + (tavan − taban)·(1 − e^(−t/τ)). " +
                  "τ=110 → 30 sn 1.15x, 1 dk 1.27x, 2 dk 1.42x, 5 dk 1.6x. İlk dakikalar hızlı, sonra yavaşça doyar.")]
-        [SerializeField, Min(1f)] private float speedTimeConstant = 110f;
+        [SerializeField, Min(1f)] private float speedTimeConstant = 140f;   // denge: hız daha yavaş artar
         [Tooltip("\"HIZLANDI\" yazısı hız çarpanı her bu kadar arttığında çıkar (0.1 = %10).")]
         [SerializeField, Min(0.01f)] private float speedBannerStep = 0.1f;
         [Tooltip("Koşu animasyonunun bu hızda 1x oynadığı varsayılır; üstünde hızlanır.")]
@@ -58,9 +58,11 @@ namespace Jumpline.Player
 
         [Header("Yüzey / engel")]
         [Tooltip("Bu kadar yüksek basamağa koşarken çıkılır (rampa); daha yükseği çarpma.")]
-        [SerializeField, Min(0f)] private float stepUp = 0.3f;
+        [SerializeField, Min(0f)] private float stepUp = 0.35f;   // denge: alçak kenarlara takılıp ölme azalır
         [Tooltip("Koşarken bu kadar alçalan yüzeye yapışır (rampa inişi); daha fazlası düşüş.")]
         [SerializeField, Min(0f)] private float snapDown = 0.25f;
+        [Tooltip("Yerde tırmanış alt adımı (m): rampa yükselişi bu aralıklarla izlenir.")]
+        [SerializeField, Min(0.02f)] private float climbStep = 0.15f;
         [Tooltip("Ayaktan kafaya yükseklik (tavana çarpma).")]
         [SerializeField, Min(0.5f)] private float headHeight = 1.7f;
 
@@ -300,6 +302,18 @@ namespace Jumpline.Player
             }
             else
             {
+                // alt adımlı tırmanış: kare başına ilerleme küçük adımlara bölünür → rampa her kare hızında/hızda aynı
+                // (önceden büyük dt'de ya da yüksek hızda rampa "duvar" sayılıp ölünüyordu). Dik yüz yine çarpar.
+                float dz = currentSpeed * dt;
+                int steps = Mathf.Clamp(Mathf.CeilToInt(dz / climbStep), 1, 24);
+                float zFrom = p.z - dz, walk = prevY;
+                for (int i = 1; i < steps; i++)
+                {
+                    float si = ObstacleField.SurfaceAt(p.x, zFrom + dz * i / steps, groundHeight);
+                    if (si > walk + stepUp) break;            // dik yüz: son kontrol çarpmaya karar verir
+                    if (si >= walk - snapDown) walk = si;
+                }
+                if (walk > p.y) p.y = walk;
                 if (surface > p.y + stepUp)
                 {
                     Crash(ref p, prevY);

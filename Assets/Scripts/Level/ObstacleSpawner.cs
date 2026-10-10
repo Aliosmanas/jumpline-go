@@ -82,6 +82,11 @@ namespace Jumpline.Level
 
         /// <summary>LevelDirector: desenler arası boşluk (küçük = yoğun).</summary>
         public void SetGap(Vector2 value) => gap = value;
+
+        private float courseSpacing = 1f;
+
+        /// <summary>LevelDirector: hazır parkur satır aralığı çarpanı (1 = tasarım; büyük = seyrek, kolay).</summary>
+        public void SetCourseSpacing(float value) => courseSpacing = Mathf.Max(0.5f, value);
         [Tooltip("Portalın bu kadar önü/arkası boş kalır.")]
         [SerializeField, Min(0f)] private float portalClearance = 10f;
         [Tooltip("Çatıda engel konmayan modül içi aralık (zipline boşluğu + tutunma payı).")]
@@ -159,7 +164,7 @@ namespace Jumpline.Level
         {
             if (orderIndex >= order.Count) NextLoop();
             CourseSection sec = courseData.sections[order[orderIndex++]];
-            float stretch = 1f + stretchPerSpeed * (speedScale - 1f);
+            float stretch = (1f + stretchPerSpeed * (speedScale - 1f)) * courseSpacing;
             bool mirror = loop % 2 == 1;
             // trenler: aynı şeritte art arda araçlar tek blok (iç boşluklar sabit); blok aralığındaki diğer satırlar da bloğa bağlı
             var chainStartRaw = new float[3];
