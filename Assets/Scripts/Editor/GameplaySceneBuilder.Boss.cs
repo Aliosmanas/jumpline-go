@@ -27,6 +27,7 @@ namespace Jumpline.EditorTools
         public const string HumbabaPath = BossDir + "/Humbaba.fbx";
         public const string StoneGuardianPath = BossDir + "/StoneGuardian.fbx";
         public const string VanMonsterPath = BossDir + "/VanMonster.fbx";
+        public const string KarakoncolosPath = BossDir + "/Karakoncolos.fbx";
         /// <summary>Bölüm canavarları (efsane kimliği, model, canlandırıcı) — Blender/scripts/build_*.py.</summary>
         private static readonly (string legend, string path, string controller)[] BossModels =
         {
@@ -35,6 +36,7 @@ namespace Jumpline.EditorTools
             ("humbaba", HumbabaPath, BossDir + "/Humbaba.controller"),
             ("stone_guardian", StoneGuardianPath, BossDir + "/StoneGuardian.controller"),
             ("van_monster", VanMonsterPath, BossDir + "/VanMonster.controller"),
+            ("karakoncolos", KarakoncolosPath, BossDir + "/Karakoncolos.controller"),
         };
         private static readonly System.Collections.Generic.List<Jumpline.Level.LevelDirector.BossBody> bossBodies = new();
         private static readonly System.Collections.Generic.List<Image> bossIconImages = new();
@@ -59,6 +61,7 @@ namespace Jumpline.EditorTools
             ConfigureBossImport(HumbabaPath);
             ConfigureBossImport(StoneGuardianPath);
             ConfigureBossImport(VanMonsterPath);
+            ConfigureBossImport(KarakoncolosPath);
             var controller = SetupTepegozAnimations();
             var player = runner.GetComponent<Jumpline.Player.PlayerController>();
 
@@ -527,7 +530,7 @@ namespace Jumpline.EditorTools
             if (AssetImporter.GetAtPath(path) is not ModelImporter imp) return;
             EnsureFolder(BossMatDir);
             imp.importCameras = imp.importLights = false;
-            imp.importAnimation = path == TepegozPath || path == SahmeranPath || path == HumbabaPath || path == StoneGuardianPath || path == VanMonsterPath;   // canavarların animasyonları kalır
+            imp.importAnimation = path == TepegozPath || path == SahmeranPath || path == HumbabaPath || path == StoneGuardianPath || path == VanMonsterPath || path == KarakoncolosPath;   // canavarların animasyonları kalır
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { BossMatDir }))
             {
                 var m = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
@@ -562,6 +565,8 @@ namespace Jumpline.EditorTools
                 ("SG_Glow", "#38E0D0", 3f, 0.7f, 0f),
                 ("VM_Scales", "#FFFFFF", 0f, 0.4f, 0f), ("VM_Belly", "#5E8C7A", 0f, 0.45f, 0f), ("VM_Bone", "#E8E0C6", 0f, 0.6f, 0f),
                 ("VM_Eye", "#C8FF3A", 3f, 0.8f, 0f), ("VM_Spine", "#1E7A6E", 0.6f, 0.65f, 0f),
+                ("KK_Skin", "#5A5560", 0f, 0.2f, 0f), ("KK_Fur", "#2A211C", 0f, 0.05f, 0f), ("KK_Eye", "#7FE8FF", 3.5f, 0.8f, 0f),
+                ("KK_Horn", "#141012", 0f, 0.65f, 0f), ("KK_Ice", "#CFF4FF", 0.6f, 0.9f, 0f),
             };
             var skinTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Tepegoz_Skin.png");
             var clothTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Pestemal.png");

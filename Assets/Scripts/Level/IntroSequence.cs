@@ -53,8 +53,16 @@ namespace Jumpline.Level
             new DialogueBox.Line("hero", "No more hiding in the lake for you!"),
         };
 
+        public static readonly DialogueBox.Line[] Level6Lines =
+        {
+            new DialogueBox.Line("narrator", "Kars, the coldest night of zemheri. Snow covers the stone houses..."),
+            new DialogueBox.Line("karakoncolos", "Who walks outside on MY night? Answer my riddle... or run!"),
+            new DialogueBox.Line("cayci", "Karakoncolos! Never answer it, nephew, just keep running and throwing!"),
+            new DialogueBox.Line("hero", "No riddles today. Only melons!"),
+        };
+
         /// <summary>Bölümün açılış satırları (yoksa null).</summary>
-        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, 4 => Level4Lines, 5 => Level5Lines, _ => null };
+        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, 4 => Level4Lines, 5 => Level5Lines, 6 => Level6Lines, _ => null };
         public static void Reset() { PlayerPrefs.DeleteKey("jl.introSeen"); PlayerPrefs.Save(); }
 
         public static readonly DialogueBox.Line[] Lines =

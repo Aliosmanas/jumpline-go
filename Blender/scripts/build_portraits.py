@@ -331,6 +331,8 @@ if not ONLY or "stone_guardian" in ONLY:
     from_blend(os.path.join(BLEND, "stone_guardian.blend"), "stone_guardian", (0.3, 1.0, 0.15), 2.5, "#38E0D0", action="Idle", frame=0, lift=0.06, key_e=420, head_bone=True)
 if not ONLY or "van_monster" in ONLY:
     from_blend(os.path.join(BLEND, "van_monster.blend"), "van_monster", (0.55, 1.0, 0.12), 1.2, "#C8FF3A", action="Idle", frame=0, lift=0.0, key_e=420, head_bone=True)
+if not ONLY or "karakoncolos" in ONLY:
+    from_blend(os.path.join(BLEND, "karakoncolos.blend"), "karakoncolos", (0.3, 1.0, 0.12), 1.3, "#7FE8FF", action="Idle", frame=0, lift=0.02, key_e=440, head_bone=True)
 if not ONLY or "hero" in ONLY:
     from_blend(os.path.join(BLEND, "runner.blend"), "hero", (-0.4, 1.0, -0.05), 1.9, "#55CFFF")
 if not ONLY or "book" in ONLY:
