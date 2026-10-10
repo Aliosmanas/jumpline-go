@@ -39,8 +39,10 @@ namespace Jumpline.Level
         [SerializeField] private Button nextButton;
 
         [Header("Devam et (ölünce)")]
-        [Tooltip("Elmasla devam bedeli (şimdilik 50; ilerde ekonomiyle ayarlanacak).")]
-        [SerializeField, Min(0)] private int reviveGemCost = 50;
+        [Tooltip("İlk devam fiyatı (elmas); aynı koşuda her devam bunu ikiye katlar (25 → 50 → 100).")]
+        [SerializeField, Min(0)] private int reviveGemCost = 25;
+        [Tooltip("Bölüm sonunda yıldız başına ek altın.")]
+        [SerializeField, Min(0)] private int goldPerStar = 50;
         [SerializeField] private Button reviveGemsButton;
         [Tooltip("Reklam izleyerek devam — reklam henüz yok, buton pasif.")]
         [SerializeField] private Button reviveAdButton;
@@ -83,6 +85,7 @@ namespace Jumpline.Level
         public event System.Action LevelCompleted;
         private Color? failTitleColor;
         private int revives;
+        private int ReviveCost => reviveGemCost << Mathf.Min(revives, 4);
 
         private void Awake()
         {
@@ -167,8 +170,17 @@ namespace Jumpline.Level
             int level = GameSession.Level;
             SaveManager.UnlockUpTo(Mathf.Min(level + 1, config.LevelCount));
 
-            SaveManager.Gold += config.LevelRewardGold;
-            string reward = Localization.Format("+{0} GOLD", config.LevelRewardGold);
+            int stars = 0;
+            if (GameSession.Mode == RunMode.Campaign)
+            {
+                stars = 1;                                                                   // bitirdin
+                if (revives == 0) stars++;                                                   // elmasla devam etmeden
+                if (revives == 0 && throws != null && throws.ThrowsMade <= threeStarThrows) stars++;   // az atışla
+                SaveManager.SubmitStars(level, stars);
+            }
+            int gold = config.LevelRewardGold + stars * goldPerStar;   // ekonomi (aşama 13): yıldız başına ek altın
+            SaveManager.Gold += gold;
+            string reward = Localization.Format("+{0} GOLD", gold);
             if (GameSession.Mode == RunMode.Daily && !SaveManager.DailyClaimedToday)
             {
                 SaveManager.Gems += config.DailyRewardGems;
@@ -192,14 +204,6 @@ namespace Jumpline.Level
             if (GameSession.Mode == RunMode.Campaign && lastLevel) reward += "\n" + Localization.Get("ALL LEVELS COMPLETE!");
             SaveManager.Flush();
 
-            int stars = 0;
-            if (GameSession.Mode == RunMode.Campaign)
-            {
-                stars = 1;                                                                   // bitirdin
-                if (revives == 0) stars++;                                                   // elmasla devam etmeden
-                if (revives == 0 && throws != null && throws.ThrowsMade <= threeStarThrows) stars++;   // az atışla
-                SaveManager.SubmitStars(level, stars);
-            }
             if (starImages != null)
                 for (int i = 0; i < starImages.Length; i++)
                     if (starImages[i] != null)
@@ -240,9 +244,9 @@ namespace Jumpline.Level
 
         private void RefreshRevive()
         {
-            bool canAfford = SaveManager.Gems >= reviveGemCost;
+            bool canAfford = SaveManager.Gems >= ReviveCost;
             if (reviveGemsButton != null) reviveGemsButton.interactable = canAfford && player != null && CanRevive;
-            if (reviveGemsLabel != null) reviveGemsLabel.text = Localization.Format("CONTINUE · {0}", reviveGemCost);
+            if (reviveGemsLabel != null) reviveGemsLabel.text = Localization.Format("CONTINUE · {0}", ReviveCost);
             if (gemBalanceLabel != null)
             {
                 string gems = Localization.Format("YOUR GEMS: {0}", SaveManager.Gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture));
@@ -256,8 +260,8 @@ namespace Jumpline.Level
         private void ReviveWithGems()
         {
             if (state != State.Finished || player == null || !CanRevive) return;
-            if (SaveManager.Gems < reviveGemCost) return;
-            SaveManager.Gems -= reviveGemCost;
+            if (SaveManager.Gems < ReviveCost) return;
+            SaveManager.Gems -= ReviveCost;
             SaveManager.Flush();
             revives++;
             StartCoroutine(ReviveRoutine());

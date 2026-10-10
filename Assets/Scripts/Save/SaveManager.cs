@@ -40,8 +40,8 @@ namespace Jumpline.Save
         public const float DefaultSensitivity = 0.55f;
         public const int GraphicsQualityCount = 4; // Low, Med, High, Ultra
         public const int DefaultGraphicsQuality = 1;
-        public const int DefaultGold = 5000;
-        public const int DefaultGems = 250;
+        public const int DefaultGold = 500;    // ekonomi (aşama 13): kostüm almak hedef olsun; eski kayıtlar etkilenmez
+        public const int DefaultGems = 50;
         public const string DefaultSkin = "rookie";
         public const string DefaultLanguage = "en";
 

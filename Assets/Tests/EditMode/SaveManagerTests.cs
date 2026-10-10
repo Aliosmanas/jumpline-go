@@ -120,9 +120,9 @@ namespace Jumpline.Tests
         [Test]
         public void Shop_BuySkin_DeductsAndOwns()
         {
-            var skin = new ShopItem { id = TestSkin, category = ItemCategory.Skin, currency = CurrencyType.Gems, price = 200 };
+            var skin = new ShopItem { id = TestSkin, category = ItemCategory.Skin, currency = CurrencyType.Gems, price = 40 };
             Assert.AreEqual(PurchaseResult.Success, ShopService.TryPurchase(skin));
-            Assert.AreEqual(SaveManager.DefaultGems - 200, SaveManager.Gems);
+            Assert.AreEqual(SaveManager.DefaultGems - 40, SaveManager.Gems);
             Assert.IsTrue(SaveManager.IsOwned(TestSkin));
             Assert.AreEqual(PurchaseResult.AlreadyOwned, ShopService.TryPurchase(skin));
             Assert.IsTrue(ShopService.TryEquip(skin));
