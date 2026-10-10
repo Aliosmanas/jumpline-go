@@ -61,8 +61,16 @@ namespace Jumpline.Level
             new DialogueBox.Line("hero", "No riddles today. Only melons!"),
         };
 
+        public static readonly DialogueBox.Line[] Level7Lines =
+        {
+            new DialogueBox.Line("narrator", "The book opens on a page with no name. A lost city of golden gates rises from the sand..."),
+            new DialogueBox.Line("lamassu", "I am the guardian of the gate. No one passes. Not even the one who carries the book!"),
+            new DialogueBox.Line("cayci", "A winged guardian! Its wings make it fast, nephew. Use every speed boost you find!"),
+            new DialogueBox.Line("hero", "Then I'll just have to be faster than wings!"),
+        };
+
         /// <summary>Bölümün açılış satırları (yoksa null).</summary>
-        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, 4 => Level4Lines, 5 => Level5Lines, 6 => Level6Lines, _ => null };
+        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, 4 => Level4Lines, 5 => Level5Lines, 6 => Level6Lines, 7 => Level7Lines, _ => null };
         public static void Reset() { PlayerPrefs.DeleteKey("jl.introSeen"); PlayerPrefs.Save(); }
 
         public static readonly DialogueBox.Line[] Lines =

@@ -28,6 +28,7 @@ namespace Jumpline.EditorTools
         public const string StoneGuardianPath = BossDir + "/StoneGuardian.fbx";
         public const string VanMonsterPath = BossDir + "/VanMonster.fbx";
         public const string KarakoncolosPath = BossDir + "/Karakoncolos.fbx";
+        public const string LamassuPath = BossDir + "/Lamassu.fbx";
         /// <summary>Bölüm canavarları (efsane kimliği, model, canlandırıcı) — Blender/scripts/build_*.py.</summary>
         private static readonly (string legend, string path, string controller)[] BossModels =
         {
@@ -37,6 +38,7 @@ namespace Jumpline.EditorTools
             ("stone_guardian", StoneGuardianPath, BossDir + "/StoneGuardian.controller"),
             ("van_monster", VanMonsterPath, BossDir + "/VanMonster.controller"),
             ("karakoncolos", KarakoncolosPath, BossDir + "/Karakoncolos.controller"),
+            ("lamassu", LamassuPath, BossDir + "/Lamassu.controller"),
         };
         private static readonly System.Collections.Generic.List<Jumpline.Level.LevelDirector.BossBody> bossBodies = new();
         private static readonly System.Collections.Generic.List<Image> bossIconImages = new();
@@ -62,6 +64,7 @@ namespace Jumpline.EditorTools
             ConfigureBossImport(StoneGuardianPath);
             ConfigureBossImport(VanMonsterPath);
             ConfigureBossImport(KarakoncolosPath);
+            ConfigureBossImport(LamassuPath);
             var controller = SetupTepegozAnimations();
             var player = runner.GetComponent<Jumpline.Player.PlayerController>();
 
@@ -530,7 +533,7 @@ namespace Jumpline.EditorTools
             if (AssetImporter.GetAtPath(path) is not ModelImporter imp) return;
             EnsureFolder(BossMatDir);
             imp.importCameras = imp.importLights = false;
-            imp.importAnimation = path == TepegozPath || path == SahmeranPath || path == HumbabaPath || path == StoneGuardianPath || path == VanMonsterPath || path == KarakoncolosPath;   // canavarların animasyonları kalır
+            imp.importAnimation = path == TepegozPath || path == SahmeranPath || path == HumbabaPath || path == StoneGuardianPath || path == VanMonsterPath || path == KarakoncolosPath || path == LamassuPath;   // canavarların animasyonları kalır
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { BossMatDir }))
             {
                 var m = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
@@ -567,6 +570,9 @@ namespace Jumpline.EditorTools
                 ("VM_Eye", "#C8FF3A", 3f, 0.8f, 0f), ("VM_Spine", "#1E7A6E", 0.6f, 0.65f, 0f),
                 ("KK_Skin", "#5A5560", 0f, 0.2f, 0f), ("KK_Fur", "#2A211C", 0f, 0.05f, 0f), ("KK_Eye", "#7FE8FF", 3.5f, 0.8f, 0f),
                 ("KK_Horn", "#141012", 0f, 0.65f, 0f), ("KK_Ice", "#CFF4FF", 0.6f, 0.9f, 0f),
+                ("LM_Skin", "#B98A62", 0f, 0.4f, 0f), ("LM_Eye", "#F2EEE4", 0f, 0.8f, 0f), ("LM_Lapis", "#1F3E8C", 0.3f, 0.65f, 0.2f),
+                ("LM_Gold", "#E2B24A", 0f, 0.75f, 1f), ("LM_Hair", "#1A1210", 0f, 0.3f, 0f), ("LM_Wing", "#D9C7A0", 0f, 0.4f, 0f),
+                ("LM_Hoof", "#2A2420", 0f, 0.5f, 0f),
             };
             var skinTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Tepegoz_Skin.png");
             var clothTex = AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Pestemal.png");
@@ -584,7 +590,7 @@ namespace Jumpline.EditorTools
                 if (d.name == "SM_Scales") mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Sahmeran_Scales.png"));
                 if (d.name == "SM_Hair") mat.SetFloat("_Cull", 0f);   // tek katman saç perdesi
                 if (d.name == "HB_Skin") mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/Humbaba_Skin.png"));
-                if (d.name == "HB_Bark") mat.SetFloat("_Cull", 0f);
+                if (d.name == "HB_Bark" || d.name == "LM_Wing" || d.name == "LM_Lapis") mat.SetFloat("_Cull", 0f);
                 if (d.name == "VM_Scales") mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/VanMonster_Scales.png"));
                 if (d.name == "SG_Skin" || d.name == "SG_Capital") mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(BossDir + "/StoneGuardian_Skin.png"));
                 if (d.name == "TG_Cloth" && clothTex != null)

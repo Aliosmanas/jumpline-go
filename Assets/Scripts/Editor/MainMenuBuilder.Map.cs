@@ -22,7 +22,7 @@ namespace Jumpline.EditorTools
             ("SANLIURFA", "STONE GUARDIAN", "Assets/Art/UI/Portraits/stone_guardian.png"),
             ("VAN", "VAN LAKE MONSTER", "Assets/Art/UI/Portraits/van_monster.png"),
             ("KARS", "KARAKONCOLOS", "Assets/Art/UI/Portraits/karakoncolos.png"),
-            ("???", "LAMASSU", null),
+            ("???", "LAMASSU", "Assets/Art/UI/Portraits/lamassu.png"),
             ("???", "THE DRAGON", null),
         };
 

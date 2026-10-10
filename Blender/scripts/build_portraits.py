@@ -333,6 +333,8 @@ if not ONLY or "van_monster" in ONLY:
     from_blend(os.path.join(BLEND, "van_monster.blend"), "van_monster", (0.55, 1.0, 0.12), 1.2, "#C8FF3A", action="Idle", frame=0, lift=0.0, key_e=420, head_bone=True)
 if not ONLY or "karakoncolos" in ONLY:
     from_blend(os.path.join(BLEND, "karakoncolos.blend"), "karakoncolos", (0.3, 1.0, 0.12), 1.3, "#7FE8FF", action="Idle", frame=0, lift=0.02, key_e=440, head_bone=True)
+if not ONLY or "lamassu" in ONLY:
+    from_blend(os.path.join(BLEND, "lamassu.blend"), "lamassu", (0.3, 1.0, 0.12), 1.5, "#E2B24A", action="Idle", frame=0, lift=0.05, key_e=420, head_bone=True)
 if not ONLY or "hero" in ONLY:
     from_blend(os.path.join(BLEND, "runner.blend"), "hero", (-0.4, 1.0, -0.05), 1.9, "#55CFFF")
 if not ONLY or "book" in ONLY:

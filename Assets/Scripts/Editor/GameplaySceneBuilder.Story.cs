@@ -94,6 +94,7 @@ namespace Jumpline.EditorTools
                 Speaker("stone_guardian", "STONE GUARDIAN", "stone_guardian", "#2C6E6A", true),
                 Speaker("van_monster", "VAN LAKE MONSTER", "van_monster", "#155A55", true),
                 Speaker("karakoncolos", "KARAKONCOLOS", "karakoncolos", "#2B3A55", true),
+                Speaker("lamassu", "LAMASSU", "lamassu", "#1F3E8C", true),
                 Speaker("cayci", "TEA UNCLE", "cayci", "#7A3B1C", false),
                 Speaker("thief", "PURSE-SNATCHER", "thief", "#30343C", true),
                 Speaker("cat", "SUR CAT", "cat", "#C46A1E", true),
