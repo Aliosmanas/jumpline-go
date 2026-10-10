@@ -1106,6 +1106,7 @@ namespace Jumpline.EditorTools
                     runSpeed = 11f + 0.6f * i, maxSpeed = 18f + 0.7f * i,
                     obstacleGap = new Vector2(Mathf.Max(7f, 11f - 0.55f * i), Mathf.Max(11f, 17f - 0.8f * i)),
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,
+                    stoneTint = stops[i].city == "MARDIN" ? new Color(2.1f, 1.75f, 1.2f) : Color.white,   // Mardin: bal rengi kalker
                 };
             return specs;
         }

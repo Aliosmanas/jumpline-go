@@ -98,6 +98,9 @@ namespace Jumpline.EditorTools
             SetArray(director, "spawners", new Object[] { streetObs.GetComponent<ObstacleSpawner>(), roofObs.GetComponent<ObstacleSpawner>() });
             Set(director, "boss", Object.FindAnyObjectByType<Jumpline.Boss.BossChase>(FindObjectsInactive.Include));
             Set(director, "flow", canvas.GetComponent<LevelFlowController>());
+            SetArray(director, "stoneMaterials", new[] { "S_Basalt", "S_BasaltTrim", "S_Paving", "S_Curb" }
+                .Select(n => (Object)AssetDatabase.LoadAssetAtPath<Material>($"{StreetMatDir}/{n}.mat")).Where(m => m != null).ToArray());
+            SetArray(director, "worldRoots", new Object[] { street, rooftop });
             var dso = new SerializedObject(director);
             var arr = dso.FindProperty("bodies");
             arr.arraySize = bossBodies.Count;

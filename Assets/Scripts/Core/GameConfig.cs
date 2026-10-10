@@ -24,6 +24,8 @@ namespace Jumpline.Core
             [Range(1, 8)] public int bossHearts = 4;
             [Tooltip("Canavarın kaçma hızı çarpanı (1 = bölüm 1).")]
             [Min(0.1f)] public float bossDrift = 1f;
+            [Tooltip("Şehrin taş rengi: sokak/çatı taş malzemeleri bununla çarpılır (beyaz = Diyarbakır bazaltı).")]
+            public Color stoneTint = Color.white;
         }
 
         [SerializeField] private LevelSpec[] levels = Array.Empty<LevelSpec>();

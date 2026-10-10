@@ -30,6 +30,10 @@ namespace Jumpline.Level
         [SerializeField] private BossChase boss;
         [SerializeField] private LevelFlowController flow;
         [SerializeField] private BossBody[] bodies;
+        [Tooltip("Şehre göre renklenen taş malzemeleri (sokak, çatı).")]
+        [SerializeField] private Material[] stoneMaterials;
+        [Tooltip("Taşları aranacak kökler (Street, Rooftop).")]
+        [SerializeField] private Transform[] worldRoots;
 
         public GameConfig.LevelSpec Current { get; private set; }
 
@@ -42,6 +46,33 @@ namespace Jumpline.Level
             if (boss != null) boss.SetDifficulty(Current.bossHearts, Current.bossDrift);
             if (flow != null) flow.SetLegend(Current.legend, Current.displayName);
             ApplyBody(Current.legend);
+            ApplyStone(Current.stoneTint);
+        }
+
+        /// <summary>Taş malzemelerini bölüm rengiyle çarpılmış kopyalarla değiştirir (asıl dosyalar değişmez; birleştirmeden önce).</summary>
+        private void ApplyStone(Color tint)
+        {
+            if (tint == Color.white || stoneMaterials == null || worldRoots == null) return;
+            var swap = new System.Collections.Generic.Dictionary<Material, Material>();
+            foreach (var m in stoneMaterials)
+            {
+                if (m == null) continue;
+                var copy = new Material(m) { name = m.name + "_" + Current.city };
+                if (copy.HasProperty("_BaseColor")) copy.SetColor("_BaseColor", m.GetColor("_BaseColor") * tint);
+                swap[m] = copy;
+            }
+            foreach (var root in worldRoots)
+            {
+                if (root == null) continue;
+                foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+                {
+                    var mats = r.sharedMaterials;
+                    bool changed = false;
+                    for (int i = 0; i < mats.Length; i++)
+                        if (mats[i] != null && swap.TryGetValue(mats[i], out var c)) { mats[i] = c; changed = true; }
+                    if (changed) r.sharedMaterials = mats;
+                }
+            }
         }
 
         private void ApplyBody(string legend)
