@@ -1427,6 +1427,11 @@ namespace Jumpline.EditorTools
                 new EditorBuildSettingsScene(GameplaySceneBuilder.ScenePath, true),
             };
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+            // uygulama ikonu (Tools/make_store_assets.py → Assets/Art/UI/AppIcon.png)
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/UI/AppIcon.png");
+            if (icon != null)
+                PlayerSettings.SetIcons(UnityEditor.Build.NamedBuildTarget.Unknown, new[] { icon }, IconKind.Application);
+            PlayerSettings.productName = "JUMPLINE GO";
         }
 
         [MenuItem("Jumpline/Build All Scenes")]
