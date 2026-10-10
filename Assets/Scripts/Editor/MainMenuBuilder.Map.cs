@@ -23,7 +23,7 @@ namespace Jumpline.EditorTools
             ("VAN", "VAN LAKE MONSTER", "Assets/Art/UI/Portraits/van_monster.png"),
             ("KARS", "KARAKONCOLOS", "Assets/Art/UI/Portraits/karakoncolos.png"),
             ("???", "LAMASSU", "Assets/Art/UI/Portraits/lamassu.png"),
-            ("???", "THE DRAGON", null),
+            ("???", "THE DRAGON", "Assets/Art/UI/Portraits/dragon.png"),
         };
 
         private static void BuildMap(Screen s)

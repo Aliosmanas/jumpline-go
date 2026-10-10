@@ -1097,7 +1097,7 @@ namespace Jumpline.EditorTools
                 ("SANLIURFA", "stone_guardian", "STONE GUARDIAN"), ("VAN", "van_monster", "VAN LAKE MONSTER"),
                 ("KARS", "karakoncolos", "KARAKONCOLOS"), ("???", "lamassu", "LAMASSU"), ("???", "dragon", "THE DRAGON"),
             };
-            const int built = 7;   // canavarı hazır olan bölümler (… Van Gölü Canavarı, Karakoncolos)
+            const int built = 8;   // 8 efsanenin hepsi hazır   // canavarı hazır olan bölümler (… Van Gölü Canavarı, Karakoncolos)
             var specs = new GameConfig.LevelSpec[stops.Length];
             for (int i = 0; i < stops.Length; i++)
                 specs[i] = new GameConfig.LevelSpec
@@ -1112,6 +1112,7 @@ namespace Jumpline.EditorTools
                               : stops[i].city == "VAN" ? new Color(1.25f, 1.45f, 1.6f)          // Van: gri-mavi volkanik taş
                               : stops[i].city == "KARS" ? new Color(1.9f, 2.05f, 2.3f)          // Kars: karlı, soğuk
                               : stops[i].legend == "lamassu" ? new Color(2.0f, 1.65f, 1.1f)     // kayıp şehir: altın kum
+                              : stops[i].legend == "dragon" ? new Color(1.6f, 0.95f, 0.8f)      // ejderha yuvası: volkanik kızıl
                               : Color.white,
                 };
             return specs;

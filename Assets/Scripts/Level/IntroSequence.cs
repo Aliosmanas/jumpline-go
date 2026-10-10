@@ -69,8 +69,16 @@ namespace Jumpline.Level
             new DialogueBox.Line("hero", "Then I'll just have to be faster than wings!"),
         };
 
+        public static readonly DialogueBox.Line[] Level8Lines =
+        {
+            new DialogueBox.Line("narrator", "The last page. The Book of Legends burns with red light... the oldest legend is awake."),
+            new DialogueBox.Line("dragon", "Seven guardians you sent back. I am not a guardian. I AM THE BOOK'S FIRE!"),
+            new DialogueBox.Line("cayci", "The Dragon, nephew! This is the final chase. Everything you learned, use it now!"),
+            new DialogueBox.Line("hero", "One last page. Let's close this book for good!"),
+        };
+
         /// <summary>Bölümün açılış satırları (yoksa null).</summary>
-        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, 4 => Level4Lines, 5 => Level5Lines, 6 => Level6Lines, 7 => Level7Lines, _ => null };
+        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, 4 => Level4Lines, 5 => Level5Lines, 6 => Level6Lines, 7 => Level7Lines, 8 => Level8Lines, _ => null };
         public static void Reset() { PlayerPrefs.DeleteKey("jl.introSeen"); PlayerPrefs.Save(); }
 
         public static readonly DialogueBox.Line[] Lines =

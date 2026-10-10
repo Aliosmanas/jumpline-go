@@ -429,5 +429,24 @@ namespace Jumpline.Tests
             GameSession.Level = 1;
             Assert.Pass();
         }
+        [UnityTest]
+        public IEnumerator CaptureDragon()
+        {
+            GameSession.Mode = RunMode.Campaign;
+            GameSession.Level = 8;
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen.8", 1);
+            UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.ObstacleSpawner>())
+                sp.ClearRange(-1e6f, 95f);
+            yield return new WaitForSeconds(0.8f);
+            Shot("dragon_01_intro");
+            yield return new WaitForSeconds(4.5f);
+            Shot("dragon_02_chase");
+            GameSession.Level = 1;
+            Assert.Pass();
+        }
     }
 }
