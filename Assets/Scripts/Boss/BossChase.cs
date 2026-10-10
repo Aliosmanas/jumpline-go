@@ -188,6 +188,15 @@ namespace Jumpline.Boss
             if (flash != null && flash.Length > 0) flashRenderers = flash;
         }
 
+        /// <summary>LevelDirector: canavar karakteri — fırlatma ve şerit değiştirme sıklığı, atıştan sıyrılma eğilimi.</summary>
+        public void SetPersonality(float throwRate, float laneRate, float dodgeBonus)
+        {
+            throwInterval /= Mathf.Max(0.1f, throwRate);
+            laneChangeInterval /= Mathf.Max(0.1f, laneRate);
+            for (int i = 0; i < dodgeChance.Length; i++)
+                dodgeChance[i] = i < 2 && dodgeBonus <= 0f ? dodgeChance[i] : Mathf.Clamp01(dodgeChance[i] + dodgeBonus);
+        }
+
         /// <summary>LevelDirector: kalp sayısı ve kaçma hızı çarpanı (koşu başlamadan).</summary>
         public void SetDifficulty(int hearts, float driftScale)
         {

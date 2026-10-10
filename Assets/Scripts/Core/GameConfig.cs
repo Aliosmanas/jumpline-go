@@ -26,6 +26,13 @@ namespace Jumpline.Core
             [Min(0.1f)] public float bossDrift = 1f;
             [Tooltip("Şehrin taş rengi: sokak/çatı taş malzemeleri bununla çarpılır (beyaz = Diyarbakır bazaltı).")]
             public Color stoneTint = Color.white;
+            [Header("Canavar karakteri")]
+            [Tooltip("Fırlatma sıklığı çarpanı (1 = Tepegöz).")]
+            [Min(0.1f)] public float bossThrowRate = 1f;
+            [Tooltip("Şerit değiştirme sıklığı çarpanı (1 = Tepegöz).")]
+            [Min(0.1f)] public float bossLaneRate = 1f;
+            [Tooltip("Kaçma (atıştan sıyrılma) olasılığına eklenen değer (-1..1).")]
+            [Range(-1f, 1f)] public float bossDodgeBonus;
         }
 
         [SerializeField] private LevelSpec[] levels = Array.Empty<LevelSpec>();
@@ -44,7 +51,11 @@ namespace Jumpline.Core
         public LevelSpec GetLevel(int level) =>
             levels.Length == 0 ? new LevelSpec() : levels[Mathf.Clamp(level - 1, 0, levels.Length - 1)];
 
-        public void SetLevels(LevelSpec[] specs) => levels = specs;
+        public void SetLevels(LevelSpec[] specs)
+        {
+            levels = specs;
+            levelCount = Mathf.Max(1, specs.Length);   // bölüm sayısı = harita durağı sayısı
+        }
         public string MainMenuScene => mainMenuScene;
         public string GameplayScene => gameplayScene;
         public int LevelRewardGold => levelRewardGold;

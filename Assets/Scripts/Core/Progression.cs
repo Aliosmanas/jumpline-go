@@ -122,7 +122,7 @@ namespace Jumpline.Core
             new Task { id = "run3000", text = "Run {0} m", stat = Stat.Meters, target = 3000, gems = 5 },
             new Task { id = "coins150", text = "Collect {0} coins", stat = Stat.Coins, target = 150, gold = 150 },
             new Task { id = "coins400", text = "Collect {0} coins", stat = Stat.Coins, target = 400, gems = 5 },
-            new Task { id = "hits3", text = "Hit Tepegoz {0} times", stat = Stat.BossHits, target = 3, gold = 200 },
+            new Task { id = "hits3", text = "Hit a legend {0} times", stat = Stat.BossHits, target = 3, gold = 200 },
             new Task { id = "throws5", text = "Throw {0} items", stat = Stat.Throws, target = 5, gold = 120 },
             new Task { id = "jumps30", text = "Jump {0} times", stat = Stat.Jumps, target = 30, gold = 100 },
             new Task { id = "slides15", text = "Slide {0} times", stat = Stat.Slides, target = 15, gold = 100 },
@@ -187,11 +187,11 @@ namespace Jumpline.Core
 
         public static readonly Achievement[] Achievements =
         {
-            new Achievement { id = "beat_tepegoz", text = "Defeat Tepegoz", stat = Stat.BossWins, target = 1, gems = 20 },
+            new Achievement { id = "beat_tepegoz", text = "Defeat a legend", stat = Stat.BossWins, target = 1, gems = 20 },
             new Achievement { id = "three_star", text = "Win a level with 3 stars", stat = Stat.ThreeStarWins, target = 1, gems = 25 },
             new Achievement { id = "marathon", text = "Run {0} m in total", stat = Stat.Meters, target = 10000, gems = 15 },
             new Achievement { id = "coin_hoard", text = "Collect {0} coins in total", stat = Stat.Coins, target = 2000, gems = 15 },
-            new Achievement { id = "sharpshooter", text = "Hit Tepegoz {0} times in total", stat = Stat.BossHits, target = 40, gems = 20 },
+            new Achievement { id = "sharpshooter", text = "Hit legends {0} times in total", stat = Stat.BossHits, target = 40, gems = 20 },
             new Achievement { id = "quick_star", text = "Score {0} in Quick Race", stat = Stat.QuickBest, target = 20000, gems = 20 },
             new Achievement { id = "good_neighbour", text = "Complete {0} daily missions", stat = Stat.DailyMissions, target = 10, gems = 30 },
         };

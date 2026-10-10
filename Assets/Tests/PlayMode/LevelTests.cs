@@ -48,5 +48,36 @@ namespace Jumpline.Tests
             Assert.AreEqual(1f, Time.timeScale, "konuşma bitince koşu başlar");
             GameSession.Level = 1;
         }
+
+        [UnityTest]
+        public IEnumerator FinalLevel_PlaysEndingOnce()
+        {
+            PlayerPrefs.SetInt("jl.introSeen", 1);
+            PlayerPrefs.SetInt("jl.tutorialDone", 1);
+            PlayerPrefs.SetInt("jl.introSeen.8", 1);
+            PlayerPrefs.DeleteKey("jl.outroSeen");
+            GameSession.Mode = RunMode.Campaign;
+            GameSession.Level = 8;
+            SceneManager.LoadScene("Gameplay");
+            yield return null;
+            yield return null;
+            Object.FindAnyObjectByType<LevelFlowController>().CompleteLevel();
+            yield return null;
+            Assert.IsTrue(IntroSequence.OutroSeen, "oyun sonu konuşması bir kez gösterilir");
+            Assert.IsTrue(IntroSequence.Playing, "oyun sonu konuşması oynuyor");
+            GameSession.Level = 1;
+            Time.timeScale = 1f;
+        }
+
+        [Test]
+        public void Legends_HaveDistinctPersonalities()
+        {
+            var cfg = Resources.FindObjectsOfTypeAll<GameConfig>();
+            if (cfg.Length == 0) Assert.Ignore("GameConfig yüklü değil");
+            var stone = System.Array.Find(cfg[0].Levels, l => l.legend == "stone_guardian");
+            var dragon = System.Array.Find(cfg[0].Levels, l => l.legend == "dragon");
+            Assert.Less(stone.bossDodgeBonus, 0f, "Taş Bekçi sıyrılamaz");
+            Assert.Greater(dragon.bossThrowRate, 1.2f, "Ejderha sık atar");
+        }
     }
 }

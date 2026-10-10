@@ -107,6 +107,8 @@ namespace Jumpline.EditorTools
             Set(intro, "dialogue", box);
             Set(intro, "backdrop", backdrop);
             Set(intro, "skipButton", skip);
+            var flowForOutro = Object.FindAnyObjectByType<LevelFlowController>(FindObjectsInactive.Include);
+            if (flowForOutro != null) Set(flowForOutro, "outro", intro);   // oyun sonu konuşması (son bölüm)
 
             // --- öğretici: parmak/ok işareti + çaycı amca ---
             Box mid = Group(rootRt, "Middle", 0.5f);

@@ -77,6 +77,28 @@ namespace Jumpline.Level
             new DialogueBox.Line("hero", "One last page. Let's close this book for good!"),
         };
 
+        public static readonly DialogueBox.Line[] OutroLines =
+        {
+            new DialogueBox.Line("narrator", "The last page closes. Eight legends sleep again between the covers of the book."),
+            new DialogueBox.Line("cayci", "You did it, nephew! Come, the tea is still warm. The Sur is safe tonight."),
+            new DialogueBox.Line("hero", "Until someone opens the book again..."),
+            new DialogueBox.Line("narrator", "THE END... for now. Quick Race and the Daily Challenge are waiting for you!"),
+        };
+
+        public static bool OutroSeen => PlayerPrefs.GetInt("jl.outroSeen", 0) == 1;
+
+        /// <summary>Son bölüm bitince bir kez: kitap kapanır (bölüm sonu panelinin üstünde, dünya zaten donuk).</summary>
+        public void PlayOutro()
+        {
+            if (OutroSeen || dialogue == null) return;
+            PlayerPrefs.SetInt("jl.outroSeen", 1);
+            PlayerPrefs.Save();
+            Playing = true;
+            if (backdrop != null) { backdrop.alpha = 1f; backdrop.blocksRaycasts = true; }
+            dialogue.transform.SetAsLastSibling();
+            dialogue.Play(new List<DialogueBox.Line>(OutroLines), () => { Playing = false; dialogue.Close(); Hide(); });
+        }
+
         /// <summary>Bölümün açılış satırları (yoksa null).</summary>
         public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, 4 => Level4Lines, 5 => Level5Lines, 6 => Level6Lines, 7 => Level7Lines, 8 => Level8Lines, _ => null };
         public static void Reset() { PlayerPrefs.DeleteKey("jl.introSeen"); PlayerPrefs.Save(); }

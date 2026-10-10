@@ -46,7 +46,11 @@ namespace Jumpline.Level
             Current = config.GetLevel(GameSession.Level);
             if (player != null) player.SetSpeeds(Current.runSpeed, Current.maxSpeed);
             if (spawners != null) foreach (var s in spawners) if (s != null) s.SetGap(Current.obstacleGap);
-            if (boss != null) boss.SetDifficulty(Current.bossHearts, Current.bossDrift);
+            if (boss != null)
+            {
+                boss.SetDifficulty(Current.bossHearts, Current.bossDrift);
+                boss.SetPersonality(Current.bossThrowRate, Current.bossLaneRate, Current.bossDodgeBonus);
+            }
             if (flow != null) flow.SetLegend(Current.legend, Current.displayName);
             ApplyBody(Current.legend);
             ApplyStone(Current.stoneTint);

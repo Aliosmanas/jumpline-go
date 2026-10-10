@@ -164,6 +164,7 @@ namespace Jumpline.Level
         }
 
         private string legendName = "TEPEGOZ";
+        [SerializeField] private IntroSequence outro;
 
         /// <summary>LevelDirector: bu bölümün efsanesi (kitap sayfası kimliği + ekranda görünen ad anahtarı).</summary>
         public void SetLegend(string id, string displayKey)
@@ -225,6 +226,7 @@ namespace Jumpline.Level
             LevelCompleted?.Invoke();
             nextButton.gameObject.SetActive(GameSession.Mode == RunMode.Campaign && !lastLevel);
             Show(completePanel, true);
+            if (GameSession.Mode == RunMode.Campaign && lastLevel && outro != null) outro.PlayOutro();   // oyun sonu: kitap kapanır
         }
 
         public void FailLevel()

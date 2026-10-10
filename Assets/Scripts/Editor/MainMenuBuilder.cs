@@ -1097,12 +1097,26 @@ namespace Jumpline.EditorTools
                 ("SANLIURFA", "stone_guardian", "STONE GUARDIAN"), ("VAN", "van_monster", "VAN LAKE MONSTER"),
                 ("KARS", "karakoncolos", "KARAKONCOLOS"), ("???", "lamassu", "LAMASSU"), ("???", "dragon", "THE DRAGON"),
             };
-            const int built = 8;   // 8 efsanenin hepsi hazır   // canavarı hazır olan bölümler (… Van Gölü Canavarı, Karakoncolos)
+            const int built = 8;   // 8 efsanenin hepsi hazır
+            // canavar karakteri: (fırlatma, şerit, sıyrılma) — açılış konuşmalarındaki ipuçlarıyla uyumlu
+            var personality = new System.Collections.Generic.Dictionary<string, (float t, float l, float d)>
+            {
+                { "tepegoz", (1f, 1f, 0f) },
+                { "sahmeran", (1f, 1.5f, 0.1f) },          // kıvrak: sık şerit değiştirir
+                { "humbaba", (1.4f, 0.7f, -0.15f) },       // çok atar, yavaş döner (sırtı açık)
+                { "stone_guardian", (1.2f, 0.8f, -1f) },   // taş: hiç sıyrılamaz, ama çok kalpli
+                { "van_monster", (1f, 1.6f, 0.15f) },      // kaygan
+                { "karakoncolos", (1.3f, 1.3f, 0.1f) },
+                { "lamassu", (1.2f, 1.2f, 0.2f) },         // kanatlı: hızlı
+                { "dragon", (1.6f, 1.4f, 0.2f) },          // final
+            };   // canavarı hazır olan bölümler (… Van Gölü Canavarı, Karakoncolos)
             var specs = new GameConfig.LevelSpec[stops.Length];
             for (int i = 0; i < stops.Length; i++)
                 specs[i] = new GameConfig.LevelSpec
                 {
                     city = stops[i].city, legend = stops[i].legend, displayName = stops[i].name, built = i < built,
+                    bossThrowRate = personality[stops[i].legend].t, bossLaneRate = personality[stops[i].legend].l,
+                    bossDodgeBonus = personality[stops[i].legend].d,
                     runSpeed = 11f + 0.6f * i, maxSpeed = 18f + 0.7f * i,
                     obstacleGap = new Vector2(Mathf.Max(7f, 11f - 0.55f * i), Mathf.Max(11f, 17f - 0.8f * i)),
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,
