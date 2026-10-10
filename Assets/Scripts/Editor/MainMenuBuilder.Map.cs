@@ -18,7 +18,7 @@ namespace Jumpline.EditorTools
         {
             ("DIYARBAKIR", "TEPEGOZ", "Assets/Art/UI/Portraits/tepegoz.png"),
             ("MARDIN", "SHAHMARAN", "Assets/Art/UI/Portraits/sahmeran.png"),
-            ("HASANKEYF", "HUMBABA", null),
+            ("HASANKEYF", "HUMBABA", "Assets/Art/UI/Portraits/humbaba.png"),
             ("SANLIURFA", "STONE GUARDIAN", null),
             ("VAN", "VAN LAKE MONSTER", null),
             ("KARS", "KARAKONCOLOS", null),

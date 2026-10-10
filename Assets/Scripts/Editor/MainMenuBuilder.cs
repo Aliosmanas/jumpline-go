@@ -1097,7 +1097,7 @@ namespace Jumpline.EditorTools
                 ("SANLIURFA", "stone_guardian", "STONE GUARDIAN"), ("VAN", "van_monster", "VAN LAKE MONSTER"),
                 ("KARS", "karakoncolos", "KARAKONCOLOS"), ("???", "lamassu", "LAMASSU"), ("???", "dragon", "THE DRAGON"),
             };
-            const int built = 2;   // canavarı hazır olan bölümler (Tepegöz, Şahmeran)
+            const int built = 3;   // canavarı hazır olan bölümler (Tepegöz, Şahmeran, Humbaba)
             var specs = new GameConfig.LevelSpec[stops.Length];
             for (int i = 0; i < stops.Length; i++)
                 specs[i] = new GameConfig.LevelSpec
@@ -1106,7 +1106,9 @@ namespace Jumpline.EditorTools
                     runSpeed = 11f + 0.6f * i, maxSpeed = 18f + 0.7f * i,
                     obstacleGap = new Vector2(Mathf.Max(7f, 11f - 0.55f * i), Mathf.Max(11f, 17f - 0.8f * i)),
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,
-                    stoneTint = stops[i].city == "MARDIN" ? new Color(2.1f, 1.75f, 1.2f) : Color.white,   // Mardin: bal rengi kalker
+                    stoneTint = stops[i].city == "MARDIN" ? new Color(2.1f, 1.75f, 1.2f)      // Mardin: bal rengi kalker
+                              : stops[i].city == "HASANKEYF" ? new Color(1.75f, 1.35f, 1.05f)   // Hasankeyf: kırmızımsı kum taşı
+                              : Color.white,
                 };
             return specs;
         }

@@ -29,8 +29,16 @@ namespace Jumpline.Level
             new DialogueBox.Line("hero", "Back into the book you go, Your Majesty!"),
         };
 
+        public static readonly DialogueBox.Line[] Level3Lines =
+        {
+            new DialogueBox.Line("narrator", "Hasankeyf, on the banks of the Tigris. Ancient caves stare from the cliffs..."),
+            new DialogueBox.Line("humbaba", "I guarded the cedar forests before your cities had names! Leave my river!"),
+            new DialogueBox.Line("cayci", "Humbaba, the forest guardian! He is huge but slow to turn. Aim for his back!"),
+            new DialogueBox.Line("hero", "The book has room for one more page. Let's go!"),
+        };
+
         /// <summary>Bölümün açılış satırları (yoksa null).</summary>
-        public static DialogueBox.Line[] LinesFor(int level) => level <= 1 ? Lines : level == 2 ? Level2Lines : null;
+        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, _ => null };
         public static void Reset() { PlayerPrefs.DeleteKey("jl.introSeen"); PlayerPrefs.Save(); }
 
         public static readonly DialogueBox.Line[] Lines =
