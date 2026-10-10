@@ -12,6 +12,73 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fda31b517fcad3488243c223c456a49, type: 3}
   m_Name: GameConfig
   m_EditorClassIdentifier: Jumpline::Jumpline.Core.GameConfig
+  levels:
+  - city: DIYARBAKIR
+    legend: tepegoz
+    built: 1
+    runSpeed: 11
+    maxSpeed: 18
+    obstacleGap: {x: 11, y: 17}
+    bossHearts: 4
+    bossDrift: 1
+  - city: MARDIN
+    legend: sahmeran
+    built: 0
+    runSpeed: 11.6
+    maxSpeed: 18.7
+    obstacleGap: {x: 10.45, y: 16.2}
+    bossHearts: 4
+    bossDrift: 1.07
+  - city: HASANKEYF
+    legend: humbaba
+    built: 0
+    runSpeed: 12.2
+    maxSpeed: 19.4
+    obstacleGap: {x: 9.9, y: 15.4}
+    bossHearts: 4
+    bossDrift: 1.14
+  - city: SANLIURFA
+    legend: stone_guardian
+    built: 0
+    runSpeed: 12.8
+    maxSpeed: 20.1
+    obstacleGap: {x: 9.35, y: 14.6}
+    bossHearts: 5
+    bossDrift: 1.21
+  - city: VAN
+    legend: van_monster
+    built: 0
+    runSpeed: 13.4
+    maxSpeed: 20.8
+    obstacleGap: {x: 8.8, y: 13.8}
+    bossHearts: 5
+    bossDrift: 1.28
+  - city: KARS
+    legend: karakoncolos
+    built: 0
+    runSpeed: 14
+    maxSpeed: 21.5
+    obstacleGap: {x: 8.25, y: 13}
+    bossHearts: 5
+    bossDrift: 1.35
+  - city: ???
+    legend: lamassu
+    built: 0
+    runSpeed: 14.6
+    maxSpeed: 22.2
+    obstacleGap: {x: 7.7, y: 12.2}
+    bossHearts: 6
+    bossDrift: 1.42
+  - city: ???
+    legend: dragon
+    built: 0
+    runSpeed: 15.2
+    maxSpeed: 22.9
+    obstacleGap: {x: 7.15, y: 11.4}
+    bossHearts: 6
+    bossDrift: 1.49
   levelCount: 10
-  levelScenePrefix: Level_
   mainMenuScene: MainMenu
+  gameplayScene: Gameplay
+  levelRewardGold: 100
+  dailyRewardGems: 20

@@ -1072,6 +1072,8 @@ namespace Jumpline.EditorTools
         private static void LoadData()
         {
             config = GetOrCreateAsset<GameConfig>(ConfigPath, null);
+            config.SetLevels(DefaultLevels());   // bölüm tanımları bu dosyada; her üretimde yenilenir
+            EditorUtility.SetDirty(config);
             catalog = GetOrCreateAsset<ShopCatalog>(CatalogPath, null);
             catalog.SetItems(DefaultItems()); // içerik bu dosyada tanımlı; her üretimde yenilenir
             EditorUtility.SetDirty(catalog);
@@ -1081,6 +1083,29 @@ namespace Jumpline.EditorTools
                 stats.SetStats(DefaultStats());
                 EditorUtility.SetDirty(stats);
             }
+        }
+
+        /// <summary>
+        /// Efsaneler haritası (8 durak). Zorluk eğrisi: hız +0.6/bölüm, tavan +0.7, engel boşluğu daralır, canavar
+        /// kalbi 4→6, kaçış hızı artar. built: canavarı ve sahnesi hazır olanlar (şimdilik yalnız Tepegöz).
+        /// </summary>
+        private static GameConfig.LevelSpec[] DefaultLevels()
+        {
+            (string city, string legend)[] stops =
+            {
+                ("DIYARBAKIR", "tepegoz"), ("MARDIN", "sahmeran"), ("HASANKEYF", "humbaba"), ("SANLIURFA", "stone_guardian"),
+                ("VAN", "van_monster"), ("KARS", "karakoncolos"), ("???", "lamassu"), ("???", "dragon"),
+            };
+            var specs = new GameConfig.LevelSpec[stops.Length];
+            for (int i = 0; i < stops.Length; i++)
+                specs[i] = new GameConfig.LevelSpec
+                {
+                    city = stops[i].city, legend = stops[i].legend, built = i == 0,
+                    runSpeed = 11f + 0.6f * i, maxSpeed = 18f + 0.7f * i,
+                    obstacleGap = new Vector2(Mathf.Max(7f, 11f - 0.55f * i), Mathf.Max(11f, 17f - 0.8f * i)),
+                    bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,
+                };
+            return specs;
         }
 
         private static List<ShopItem> DefaultItems()

@@ -161,6 +161,13 @@ namespace Jumpline.Player
         public float RunSpeed => currentSpeed;
         /// <summary>Bu koşuda katedilen yol (m).</summary>
         public float Distance => distance;
+        /// <summary>LevelDirector: bölümün başlangıç ve tavan hızı (koşu başlamadan).</summary>
+        public void SetSpeeds(float run, float max)
+        {
+            runSpeed = run;
+            maxSpeed = Mathf.Max(run, max);
+        }
+
         public float SpeedFactor => runSpeed > 0f ? currentSpeed / runSpeed : 1f;
         public int Lane => lane;
         public float LaneWidth => laneWidth;

@@ -71,6 +71,9 @@ namespace Jumpline.Level
         [SerializeField, Min(2f)] private float despawnBehind = 15f;
         [Tooltip("Sıralar arası mesafe (taban hızda); hızla orantılı açılır.")]
         [SerializeField] private Vector2 gap = new Vector2(11f, 17f);
+
+        /// <summary>LevelDirector: desenler arası boşluk (küçük = yoğun).</summary>
+        public void SetGap(Vector2 value) => gap = value;
         [Tooltip("Portalın bu kadar önü/arkası boş kalır.")]
         [SerializeField, Min(0f)] private float portalClearance = 10f;
         [Tooltip("Çatıda engel konmayan modül içi aralık (zipline boşluğu + tutunma payı).")]

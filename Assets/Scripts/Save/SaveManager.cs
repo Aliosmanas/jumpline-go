@@ -144,7 +144,7 @@ namespace Jumpline.Save
         /// Geliştirici modu: altın/elmas sınırsız (harcama düşmez). Editörde ve Development build'de açık,
         /// yayın (release) build'inde otomatik kapalı.
         /// </summary>
-        public static bool UnlimitedCurrency = Debug.isDebugBuild;
+        public static bool UnlimitedCurrency = Application.isEditor;   // telefon yapılarında (test APK dahil) gerçek ekonomi
         public const int UnlimitedAmount = 999999;
 
         public static int Gold

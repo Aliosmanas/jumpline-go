@@ -92,6 +92,11 @@ namespace Jumpline.EditorTools
             BuildGameplayAudio(runner, coins, switcher, canvas.GetComponent<LevelFlowController>());
             BuildStory(safe, runner);
             BuildDailyMission(runner, canvas.GetComponent<LevelFlowController>());
+            var director = new GameObject("LevelDirector").AddComponent<LevelDirector>();   // bölüm zorluğu (GameConfig.LevelSpec)
+            Set(director, "config", config);
+            Set(director, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
+            SetArray(director, "spawners", new Object[] { streetObs.GetComponent<ObstacleSpawner>(), roofObs.GetComponent<ObstacleSpawner>() });
+            Set(director, "boss", Object.FindAnyObjectByType<Jumpline.Boss.BossChase>(FindObjectsInactive.Include));
             BuildProgressTracker(runner, coins, canvas.GetComponent<LevelFlowController>());
             Set(canvas.gameObject.AddComponent<Jumpline.UI.ContrastMode>(), "volume", Object.FindAnyObjectByType<UnityEngine.Rendering.Volume>());
             SetArray(switcher, "streetExtras", new Object[] { streetObs });

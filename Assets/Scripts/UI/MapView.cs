@@ -27,8 +27,9 @@ namespace Jumpline.UI
 
         [SerializeField] private GameConfig config;
         [SerializeField] private Node[] nodes;
+
+        private int BuiltLevels => config != null ? config.BuiltLevels : 1;
         [Tooltip("Şu an oynanabilir (yapılmış) bölüm sayısı; sonrası 'Yakında'.")]
-        [SerializeField, Min(1)] private int builtLevels = 1;
         [SerializeField] private Color starOn = Color.white;
         [SerializeField] private Color starOff = new Color(0.25f, 0.22f, 0.28f, 0.75f);
 
@@ -57,7 +58,7 @@ namespace Jumpline.UI
             for (int i = 0; i < nodes.Length; i++)
             {
                 Node n = nodes[i];
-                bool built = n.level <= builtLevels;
+                bool built = n.level <= BuiltLevels;
                 bool unlocked = built && SaveManager.IsLevelUnlocked(n.level);
                 int stars = SaveManager.GetStars(n.level);
                 if (n.lockIcon != null) n.lockIcon.SetActive(!unlocked);
@@ -83,7 +84,7 @@ namespace Jumpline.UI
         private void Play(int level)
         {
             var toast = GetComponentInParent<MenuNavigator>(true)?.Toast;
-            if (level > builtLevels) { toast?.Show(Localization.Get("THIS LEGEND IS COMING SOON!")); return; }
+            if (level > BuiltLevels) { toast?.Show(Localization.Get("THIS LEGEND IS COMING SOON!")); return; }
             if (!SaveManager.IsLevelUnlocked(level)) { toast?.Show(Localization.Get("BEAT THE PREVIOUS LEGEND FIRST!")); return; }
             SceneLoader.StartLevel(config, level, RunMode.Campaign);
         }

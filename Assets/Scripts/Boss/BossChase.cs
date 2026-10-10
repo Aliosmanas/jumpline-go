@@ -179,6 +179,13 @@ namespace Jumpline.Boss
         public bool IsDefeated => state == State.Defeated || state == State.Done;
         public int Hearts => hearts;
         public int MaxHearts => maxHearts;
+
+        /// <summary>LevelDirector: kalp sayısı ve kaçma hızı çarpanı (koşu başlamadan).</summary>
+        public void SetDifficulty(int hearts, float driftScale)
+        {
+            maxHearts = Mathf.Clamp(hearts, 1, 8);
+            for (int i = 0; i < driftPerPhase.Length; i++) driftPerPhase[i] *= driftScale;
+        }
         public float Gap => gap;
         /// <summary>0 = en yakın, 1 = kaçtı.</summary>
         public float Gap01 => Mathf.InverseLerp(minGap, escapeGap, gap);
