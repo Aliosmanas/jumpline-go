@@ -205,4 +205,5 @@ def main():
     print("HUMBABA_OK height=%.2f verts=%d actions=%s" % (height, len(body.data.vertices), made))
 
 
-main()
+if __name__ == "__main__":
+    main()

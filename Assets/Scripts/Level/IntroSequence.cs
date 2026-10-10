@@ -37,8 +37,16 @@ namespace Jumpline.Level
             new DialogueBox.Line("hero", "The book has room for one more page. Let's go!"),
         };
 
+        public static readonly DialogueBox.Line[] Level4Lines =
+        {
+            new DialogueBox.Line("narrator", "Sanliurfa. Beyond the city, ancient T-shaped stones stand on a hill older than history..."),
+            new DialogueBox.Line("stone_guardian", "TWELVE THOUSAND YEARS I STOOD. NOW... I WALK."),
+            new DialogueBox.Line("cayci", "A stone giant! Melons won't crack it, but each hit slows it down. Keep at it, nephew!"),
+            new DialogueBox.Line("hero", "Then I'll throw twice as many!"),
+        };
+
         /// <summary>Bölümün açılış satırları (yoksa null).</summary>
-        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, _ => null };
+        public static DialogueBox.Line[] LinesFor(int level) => level switch { <= 1 => Lines, 2 => Level2Lines, 3 => Level3Lines, 4 => Level4Lines, _ => null };
         public static void Reset() { PlayerPrefs.DeleteKey("jl.introSeen"); PlayerPrefs.Save(); }
 
         public static readonly DialogueBox.Line[] Lines =

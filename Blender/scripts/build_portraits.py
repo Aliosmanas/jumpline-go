@@ -327,6 +327,8 @@ if not ONLY or "sahmeran" in ONLY:
     from_blend(os.path.join(BLEND, "sahmeran.blend"), "sahmeran", (0.25, 1.0, 0.1), 0.95, "#2ED18A", action="Idle", frame=0, lift=0.02, key_e=400, head_bone=True)
 if not ONLY or "humbaba" in ONLY:
     from_blend(os.path.join(BLEND, "humbaba.blend"), "humbaba", (0.3, 1.0, 0.2), 1.25, "#FFB21E", action="Idle", frame=0, lift=0.0, key_e=400, head_bone=True)
+if not ONLY or "stone_guardian" in ONLY:
+    from_blend(os.path.join(BLEND, "stone_guardian.blend"), "stone_guardian", (0.3, 1.0, 0.15), 2.5, "#38E0D0", action="Idle", frame=0, lift=0.06, key_e=420, head_bone=True)
 if not ONLY or "hero" in ONLY:
     from_blend(os.path.join(BLEND, "runner.blend"), "hero", (-0.4, 1.0, -0.05), 1.9, "#55CFFF")
 if not ONLY or "book" in ONLY:
