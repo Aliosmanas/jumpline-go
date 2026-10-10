@@ -16,14 +16,21 @@ namespace Jumpline.EditorTools
     {
         public const string OutputPath = "Builds/Android/JumplineGo.apk";
 
+        /// <summary>Test APK'sı: sürüm yapısı + JL_TEST_BUILD (sınırsız altın/elmas).</summary>
         [MenuItem("Jumpline/Build Android APK")]
-        public static void BuildApk() => Build(false);
+        public static void BuildApk() => Build(false, true);
+
+        /// <summary>Mağaza adayı: gerçek ekonomi, test kısayolları yok.</summary>
+        [MenuItem("Jumpline/Build Android APK (Store)")]
+        public static void BuildStoreApk() => Build(false, false);
 
         /// <summary>Geliştirici yapısı: profilleyici/hata ayıklama açık, daha yavaş, köşede "Development Build".</summary>
         [MenuItem("Jumpline/Build Android APK (Development)")]
-        public static void BuildDevApk() => Build(true);
+        public static void BuildDevApk() => Build(true, true);
 
-        private static void Build(bool development)
+        private const string TestDefine = "JL_TEST_BUILD";
+
+        private static void Build(bool development, bool testBuild)
         {
             // Kullanıcı adındaki boşluk Java 17'nin geçici soketini bozar ("Unable to establish loopback connection"):
             // Gradle'a boşluksuz geçici klasör ver (alt süreçler bu ortamı devralır).
@@ -39,6 +46,11 @@ namespace Jumpline.EditorTools
             EditorUserBuildSettings.buildAppBundle = false;   // .apk (kabloyla yükleme)
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            var target = UnityEditor.Build.NamedBuildTarget.Android;
+            var defines = new System.Collections.Generic.List<string>(PlayerSettings.GetScriptingDefineSymbols(target).Split(';', System.StringSplitOptions.RemoveEmptyEntries));
+            defines.Remove(TestDefine);
+            if (testBuild) defines.Add(TestDefine);
+            PlayerSettings.SetScriptingDefineSymbols(target, string.Join(";", defines));
             PlayerSettings.SetIl2CppCompilerConfiguration(UnityEditor.Build.NamedBuildTarget.Android,
                 development ? Il2CppCompilerConfiguration.Debug : Il2CppCompilerConfiguration.Release);
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;

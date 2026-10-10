@@ -30,7 +30,7 @@ namespace Jumpline.EditorTools
         {
             SolidBackground(s);
             Link(Header(s.top, "LEGENDS MAP"), MenuLink.LinkAction.Back);
-            const float bottomY = 1400f, topY = 380f;
+            const float bottomY = 1420f, topY = 445f;   // üstteki durağın "KİLİTLİ" yazısı kural yazısına binmesin
             float step = (bottomY - topY) / (MapStops.Length - 1);
             var nodes = new System.Collections.Generic.List<(int level, Button b, Image[] stars, GameObject lockIcon, GameObject portrait, TMP_Text status)>();
             Vector2 prev = Vector2.zero;
@@ -88,7 +88,7 @@ namespace Jumpline.EditorTools
                     stars[k] = Icon(s.top, "star", new Rect(cx - 66f + k * 44f, cy + 80f, 44f, 44f), Color.white);
                 nodes.Add((i + 1, button, stars, lockIcon.gameObject, portraitGo, status));
             }
-            Txt(s.top, "StarRule", "3 STARS: WIN WITHOUT CONTINUE, IN 6 THROWS OR LESS", new Rect(40f, 300f, 1036f, 36f), fBold, 22f, Hex("#8C95AA"));
+            Txt(s.top, "StarRule", "3 STARS: WIN WITHOUT CONTINUE, IN 6 THROWS OR LESS", new Rect(40f, 300f, 1036f, 34f), fBold, 21f, Hex("#8C95AA"));
 
             var view = s.screen.gameObject.AddComponent<MapView>();
             Set(view, "config", config);

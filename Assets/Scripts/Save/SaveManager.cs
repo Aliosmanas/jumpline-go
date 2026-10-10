@@ -52,6 +52,9 @@ namespace Jumpline.Save
         {
             Migrate();
             VerifyCurrency();
+#if JL_TEST_BUILD
+            UnlimitedCurrency = true;   // test APK'sı (AndroidBuild.BuildApk): sınırsız altın/elmas; mağaza sürümünde yok
+#endif
         }
 
         /// <summary>
