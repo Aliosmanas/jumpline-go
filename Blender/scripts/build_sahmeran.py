@@ -326,18 +326,28 @@ def make_eyes(eyes, rig, mats, mi):
         r = max(0.011, min(r, 0.016))
         parts.append(add_sphere(f"EyeWhite{i}", c, r, mi["eye"], "head", rig, mats))
         parts.append(add_sphere(f"Iris{i}", c + Vector((0, -r * 0.82, 0)), r * 0.45, mi["iris"], "head", rig, mats, squash=1.0, seg=12))
+        brow = add_sphere(f"Brow{i}", c + Vector((0, -r * 0.95, r * 1.3)), r * 1.25, mi["hair"], "head", rig, mats, seg=10)
+        for v in brow.data.vertices:   # ince kemer kaş
+            d = v.co - (c + Vector((0, -r * 0.95, r * 1.3)))
+            v.co = c + Vector((0, -r * 0.95, r * 1.3)) + Vector((d.x * 1.3, d.y * 0.4, d.z * 0.25 - abs(d.x) * 0.25))
+        parts.append(brow)
     return parts
 
 
 def make_hair(body, rig, mats, mi):
     head, top, back, half = head_frame(body, rig)
-    c = Vector((0, head.y + 0.012, (head.z + top) * 0.5 + 0.012))
-    cap = add_sphere("HairCap", c, half * 1.12, mi["hair"], "head", rig, mats, squash=1.05, seg=20)
+    gi = body.vertex_groups["head"].index
+    hy = [v.co.y for v in body.data.vertices if any(g.group == gi and g.weight > 0.5 for g in v.groups)]
+    depth = (max(hy) - min(hy)) * 0.5
+    c = Vector((0, (max(hy) + min(hy)) * 0.5 + 0.004, (head.z + top) * 0.5 + 0.01))
+    cap = add_sphere("HairCap", c, half * 1.18, mi["hair"], "head", rig, mats, squash=1.1, seg=24)
+    for v in cap.data.vertices:   # başın derinliğine uy (baş genişliğinden uzun)
+        v.co.y = c.y + (v.co.y - c.y) * (depth * 1.2) / (half * 1.18)
     # yüzü açmak için ön-alt yarıyı kes
     me = cap.data
     bm = bmesh.new()
     bm.from_mesh(me)
-    kill = [v for v in bm.verts if v.co.y < c.y - half * 0.35 and v.co.z < c.z + half * 0.45]
+    kill = [v for v in bm.verts if v.co.y < c.y - depth * 0.3 and v.co.z < c.z + half * 0.12]   # alın saçla örtülü, yüz açık
     bmesh.ops.delete(bm, geom=kill, context="VERTS")
     bm.to_mesh(me)
     bm.free()

@@ -17,7 +17,7 @@ namespace Jumpline.EditorTools
         private static readonly (string city, string legend, string portrait)[] MapStops =
         {
             ("DIYARBAKIR", "TEPEGOZ", "Assets/Art/UI/Portraits/tepegoz.png"),
-            ("MARDIN", "SHAHMARAN", null),
+            ("MARDIN", "SHAHMARAN", "Assets/Art/UI/Portraits/sahmeran.png"),
             ("HASANKEYF", "HUMBABA", null),
             ("SANLIURFA", "STONE GUARDIAN", null),
             ("VAN", "VAN LAKE MONSTER", null),

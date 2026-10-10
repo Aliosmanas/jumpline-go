@@ -22,6 +22,7 @@ namespace Jumpline.Level
             public Animator animator;
             public Transform hand;
             public Renderer[] renderers;
+            public Sprite icon;
         }
 
         [SerializeField] private GameConfig config;
@@ -30,6 +31,8 @@ namespace Jumpline.Level
         [SerializeField] private BossChase boss;
         [SerializeField] private LevelFlowController flow;
         [SerializeField] private BossBody[] bodies;
+        [Tooltip("Göstergedeki canavar ikonları (bölümün canavarına göre değişir).")]
+        [SerializeField] private UnityEngine.UI.Image[] bossIcons;
         [Tooltip("Şehre göre renklenen taş malzemeleri (sokak, çatı).")]
         [SerializeField] private Material[] stoneMaterials;
         [Tooltip("Taşları aranacak kökler (Street, Rooftop).")]
@@ -82,6 +85,8 @@ namespace Jumpline.Level
             for (int i = 0; i < bodies.Length; i++) if (bodies[i].legend == legend) pick = i;
             for (int i = 0; i < bodies.Length; i++) if (bodies[i].root != null) bodies[i].root.SetActive(i == pick);
             if (boss != null) boss.SetBody(bodies[pick].animator, bodies[pick].hand, bodies[pick].renderers);
+            if (bodies[pick].icon != null && bossIcons != null)
+                foreach (var img in bossIcons) if (img != null) img.sprite = bodies[pick].icon;
         }
     }
 }

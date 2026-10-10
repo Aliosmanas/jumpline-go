@@ -31,6 +31,7 @@ namespace Jumpline.EditorTools
             ("sahmeran", SahmeranPath, BossDir + "/Sahmeran.controller"),
         };
         private static readonly System.Collections.Generic.List<Jumpline.Level.LevelDirector.BossBody> bossBodies = new();
+        private static readonly System.Collections.Generic.List<Image> bossIconImages = new();
         private const string KarpuzTexPath = BossDir + "/Karpuz_Albedo.png";
 
         public const string BridgePath = "Assets/Art/Environment/Bridge/OnGozluBridge.fbx";
@@ -88,7 +89,7 @@ namespace Jumpline.EditorTools
                     anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 }
                 Transform hand = FindDeep(body.transform, "hand_r");
-                bossBodies.Add(new Jumpline.Level.LevelDirector.BossBody { legend = legend, root = body, animator = ctrl != null ? anim : null, hand = hand, renderers = rends });
+                bossBodies.Add(new Jumpline.Level.LevelDirector.BossBody { legend = legend, root = body, animator = ctrl != null ? anim : null, hand = hand, renderers = rends, icon = legend == "tepegoz" ? Icons["boss_head"] : Portrait(legend) });
                 if (bossBodies.Count == 1)   // varsayılan (bölüm 1): sahnede doğrudan bağlı
                 {
                     flash = rends;
@@ -235,7 +236,8 @@ namespace Jumpline.EditorTools
             var hud = hudRoot.gameObject.AddComponent<Jumpline.UI.BossHud>();
 
             // kalpler (canavarın yüzü solda)
-            Icon(top, "boss_head", new Rect(300f, 146f, 84f, 84f), Color.white);
+            bossIconImages.Clear();
+            bossIconImages.Add(Icon(top, "boss_head", new Rect(300f, 146f, 84f, 84f), Color.white));
             var hearts = new Image[4];
             for (int i = 0; i < hearts.Length; i++)
                 hearts[i] = Icon(top, "heart", new Rect(394f + i * 86f, 150f, 76f, 76f), Color.white);
@@ -254,6 +256,7 @@ namespace Jumpline.EditorTools
             dotImg.color = Hex("#55CFFF");
             dotImg.raycastTarget = false;
             var marker = Icon(top, "boss_head", new Rect(mx + mw * 0.5f - 34f, my - 21f, 68f, 68f), Color.white);
+            bossIconImages.Add(marker);
             var warn = Txt(top, "GapWarning", "ESCAPING!", new Rect(mx, my + 34f, mw, 54f), fExtra, 40f, Hex("#FF4B3E"));
             warn.gameObject.SetActive(false);
 

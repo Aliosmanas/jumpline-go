@@ -115,6 +115,11 @@ namespace Jumpline.EditorTools
                 rr.arraySize = bossBodies[i].renderers.Length;
                 for (int k = 0; k < rr.arraySize; k++) rr.GetArrayElementAtIndex(k).objectReferenceValue = bossBodies[i].renderers[k];
             }
+            for (int i = 0; i < bossBodies.Count; i++)
+                arr.GetArrayElementAtIndex(i).FindPropertyRelative("icon").objectReferenceValue = bossBodies[i].icon;
+            var icons = dso.FindProperty("bossIcons");
+            icons.arraySize = bossIconImages.Count;
+            for (int i = 0; i < bossIconImages.Count; i++) icons.GetArrayElementAtIndex(i).objectReferenceValue = bossIconImages[i];
             dso.ApplyModifiedPropertiesWithoutUndo();
             BuildProgressTracker(runner, coins, canvas.GetComponent<LevelFlowController>());
             Set(canvas.gameObject.AddComponent<Jumpline.UI.ContrastMode>(), "volume", Object.FindAnyObjectByType<UnityEngine.Rendering.Volume>());

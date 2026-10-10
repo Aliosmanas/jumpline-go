@@ -1,5 +1,5 @@
 """
-Konuşma portreleri (DialogueBox) — 512 px şeffaf PNG → Assets/Art/UI/Portraits/{cayci,tepegoz,hero,book}.png
+Konuşma portreleri (DialogueBox) — 512 px şeffaf PNG → Assets/Art/UI/Portraits/{cayci,tepegoz,sahmeran,hero,book}.png
   • cayci  : ÇAYCI AMCA (kendi tasarımımız, bilge dayı arketipi; kimseye benzetilmez): MPFB yaşlı erkek (CC0) +
              kıvırcık kalpak, gri sakal/bıyık, kürk yakalı ceket, elinde pirinç tepsi ve iki ince belli çay bardağı.
   • tepegoz: tepegoz.blend (alt açıdan, tehditkâr).   • hero: runner.blend (şimdiki koşucu).
@@ -323,6 +323,8 @@ if not ONLY or "cayci" in ONLY:
     cayci()
 if not ONLY or "tepegoz" in ONLY:
     from_blend(os.path.join(BLEND, "tepegoz.blend"), "tepegoz", (0.3, 1.0, 0.28), 1.2, "#FF4A2A", action="Idle", frame=0, lift=-0.05, key_e=380, head_bone=True)
+if not ONLY or "sahmeran" in ONLY:
+    from_blend(os.path.join(BLEND, "sahmeran.blend"), "sahmeran", (0.25, 1.0, 0.1), 0.95, "#2ED18A", action="Idle", frame=0, lift=0.02, key_e=400, head_bone=True)
 if not ONLY or "hero" in ONLY:
     from_blend(os.path.join(BLEND, "runner.blend"), "hero", (-0.4, 1.0, -0.05), 1.9, "#55CFFF")
 if not ONLY or "book" in ONLY:
