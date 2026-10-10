@@ -294,8 +294,9 @@ namespace Jumpline.EditorTools
             Txt(btnRoot, "ThrowLabel", "THROW", new Rect(826f, 1764f, 250f, 56f), fExtra, 40f, Color.white, TextAlignmentOptions.Center, outlined);
             var badge = Panel(btnRoot, "CountBadge", new Rect(1010f, 1582f, 78f, 78f), Hex("#B3262E"), Hex("#FF4B5A"), 39f, Hex("#FFFFFF"));
             var count = Txt(badge, "Count", "x2", new Rect(1010f, 1582f, 78f, 78f), fExtra, 34f, Color.white, localize: false);
+            foreach (var g in btnRoot.go.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;   // süs katmanları dokunuşu yutmasın
             var hit = ring.go.GetComponent<Image>();
-            hit.raycastTarget = true;
+            hit.raycastTarget = true;   // tek dokunuş hedefi: halka (düğmenin tamamını kaplar)
             var button = MakeButton(ring, hit);
 
             Set(hud, "boss", boss);

@@ -28,9 +28,9 @@ namespace Jumpline.Core
         // Low, Med, High, Ultra (telefon)
         private static readonly Tier[] MobileTiers =
         {
-            new Tier { renderScale = 0.6f, msaa = 1, hdr = false, postFx = false, shadowDistance = 0f, shadowResolution = 512, fps = 60 },
-            new Tier { renderScale = 0.7f, msaa = 1, hdr = false, postFx = true, shadowDistance = 22f, shadowResolution = 512, fps = 60 },
-            new Tier { renderScale = 0.8f, msaa = 2, hdr = true, postFx = true, shadowDistance = 30f, shadowResolution = 1024, fps = 60 },
+            new Tier { renderScale = 0.72f, msaa = 1, hdr = false, postFx = false, shadowDistance = 0f, shadowResolution = 512, fps = 60 },
+            new Tier { renderScale = 0.85f, msaa = 1, hdr = false, postFx = true, shadowDistance = 22f, shadowResolution = 512, fps = 60 },
+            new Tier { renderScale = 1.0f, msaa = 4, hdr = true, postFx = true, shadowDistance = 40f, shadowResolution = 2048, fps = 60 },
             new Tier { renderScale = 1.0f, msaa = 2, hdr = true, postFx = true, shadowDistance = 30f, shadowResolution = 1024, fps = 60 },
         };
         private static readonly int[] DesktopLevel = { 0, 0, 1, 1 };   // ProjectSettings: 0 = Mobile, 1 = PC
@@ -38,6 +38,11 @@ namespace Jumpline.Core
 
         /// <summary>RAM'i bunun altında olan telefon ilk açılışta Low ile başlar (MB).</summary>
         private const int WeakDeviceMemoryMb = 4500;
+        /// <summary>RAM'i bunun üstündeki telefon ilk açılışta High ile başlar (MB).</summary>
+        private const int StrongDeviceMemoryMb = 7000;
+        private const string AutoTierKey = "jl.autoTier";
+        /// <summary>Otomatik seçim kuralı değişince artırılır (eski kayıtlar yeniden seçilir; elle seçim sonra yine geçerli).</summary>
+        private const int AutoTierVersion = 2;
         /// <summary>Uyarlamalı çözünürlüğün en düşük çarpanı.</summary>
         public const float MinDynamicScale = 0.7f;
 
@@ -51,8 +56,13 @@ namespace Jumpline.Core
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
-            if (OnDevice && !PlayerPrefs.HasKey(SaveManager.GraphicsQualityKey) && SystemInfo.systemMemorySize < WeakDeviceMemoryMb)
-                SaveManager.GraphicsQuality = 0;
+            // ilk açılış (ya da eski otomatik seçim): belleğe göre kademe — zayıf Low, orta Med, güçlü High
+            if (OnDevice && PlayerPrefs.GetInt(AutoTierKey, 0) < AutoTierVersion)
+            {
+                int mb = SystemInfo.systemMemorySize;
+                SaveManager.GraphicsQuality = mb < WeakDeviceMemoryMb ? 0 : mb < StrongDeviceMemoryMb ? 1 : 2;
+                PlayerPrefs.SetInt(AutoTierKey, AutoTierVersion);
+            }
             Apply(SaveManager.GraphicsQuality);
             SceneManager.sceneLoaded += (_, _) => ApplyCameras();
             PerformanceGovernor.Ensure();
@@ -101,6 +111,7 @@ namespace Jumpline.Core
             bool post = MobileTiers[current].postFx;
             foreach (Camera cam in Camera.allCameras)
             {
+                if (cam.targetTexture != null) continue;   // önizleme kameraları (menü vitrini): son işlem saydamlığı siler → kara kutu
                 var data = cam.GetUniversalAdditionalCameraData();
                 if (data != null) data.renderPostProcessing = post;
             }

@@ -235,7 +235,7 @@ namespace Jumpline.EditorTools
             var rt = AssetDatabase.LoadAssetAtPath<RenderTexture>(PreviewPath);
             if (rt == null)
             {
-                rt = new RenderTexture(PreviewSize, PreviewSize, 24, RenderTextureFormat.ARGB32) { name = "RunnerPreview", antiAliasing = 4 };
+                rt = new RenderTexture(PreviewSize, PreviewSize, 24, RenderTextureFormat.ARGB32) { name = "RunnerPreview", antiAliasing = 2 };
                 AssetDatabase.CreateAsset(rt, PreviewPath);
             }
 
@@ -251,6 +251,7 @@ namespace Jumpline.EditorTools
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0f, 0f, 0f, 0f);
             camera.allowHDR = false;
+            if (rt.antiAliasing > 2) { rt.Release(); rt.antiAliasing = 2; EditorUtility.SetDirty(rt); }   // mobil: 4x MSAA hem pahalı hem bazı GPU'larda kara
             camera.targetTexture = rt;
             camera.depth = -10f;
             var camData = camera.GetUniversalAdditionalCameraData();

@@ -32,6 +32,8 @@ namespace Jumpline.Level
         public float Thickness => thickness;
 
         public Kind Type => kind;
+        public Segment[] Segments => segments;
+        public float HalfWidth => halfWidth;
         public float MinZ => transform.position.z + (segments.Length > 0 ? segments[0].z0 : 0f);
         public float MaxZ => transform.position.z + (segments.Length > 0 ? segments[segments.Length - 1].z1 : 0f);
 

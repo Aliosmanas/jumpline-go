@@ -46,6 +46,14 @@ namespace Jumpline.Level
         [SerializeField] private Portal coursePortal;
 
         [Header("Şablonlar (sahnede kapalı duran örnekler)")]
+        [Header("Okunabilirlik işaretleri (ObstacleHint)")]
+        [SerializeField] private Material hintJump;
+        [SerializeField] private Material hintSlide;
+        [SerializeField] private Material hintBlock;
+        [Tooltip("Bu yükseklikten alçak katı engel 'zıpla' sayılır (m).")]
+        [SerializeField, Min(0.3f)] private float hintJumpClear = 1.45f;
+        [SerializeField, Min(0.3f)] private float hintLength = 2.2f;
+        [SerializeField, Min(0f)] private float hintGap = 0.6f;
         [SerializeField] private Obstacle[] low;
         [SerializeField] private Obstacle[] high;
         [SerializeField] private Obstacle[] walls;
@@ -320,6 +328,8 @@ namespace Jumpline.Level
             o.transform.position = new Vector3(x, Ground, z);
             o.enabled = true;   // güçle parçalanıp kapatılmış olabilir
             o.gameObject.SetActive(true);
+            bool inLanes = player == null || Mathf.Abs(x - OriginX) <= player.LaneWidth * 1.2f;   // kaldırımdaki süs direkleri işaretsiz
+            ObstacleHint.Apply(o, hintJumpClear, inLanes ? hintJump : null, inLanes ? hintSlide : null, inLanes ? hintBlock : null, hintLength, hintGap);
             active.Add(o);
         }
 

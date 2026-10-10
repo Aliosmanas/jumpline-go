@@ -69,6 +69,7 @@ namespace Jumpline.EditorTools
             Portal down = BuildPortal(runner, switcher, false, "PortalDown", Hex("#FF3C8E"));  // çatı → sokak (pembe)
             var (streetObs, roofObs) = BuildObstacles(runner, switcher, new[] { up, down });
             var coins = BuildCoins(runner);
+            BuildObstacleHints(streetObs.GetComponent<ObstacleSpawner>(), roofObs.GetComponent<ObstacleSpawner>());   // ▲ zıpla ▼ kay ✕ şerit
             Set(streetObs.GetComponent<ObstacleSpawner>(), "coins", coins);
             Set(roofObs.GetComponent<ObstacleSpawner>(), "coins", coins);
             if (coinLabel != null)
@@ -744,10 +745,8 @@ namespace Jumpline.EditorTools
             var vignette = profile.Add<Vignette>(true);
             vignette.intensity.Override(0.26f);
             vignette.smoothness.Override(0.45f);
-            var blur = profile.Add<MotionBlur>(true);          // kamera hızı → zemin/duvar akışı (koşu hissi)
-            blur.intensity.Override(0.22f);
-            blur.quality.Override(MotionBlurQuality.Low);
-            foreach (VolumeComponent c in new VolumeComponent[] { bloom, tone, color, vignette, blur })
+            // hareket bulanıklığı yok: telefonda görüntüyü lekeli gösteriyor ve pahalı (koşu hissini hız çizgileri veriyor)
+            foreach (VolumeComponent c in new VolumeComponent[] { bloom, tone, color, vignette })
             {
                 c.name = c.GetType().Name;
                 AssetDatabase.AddObjectToAsset(c, profile);
