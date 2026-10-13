@@ -1,0 +1,207 @@
+Temple Run ve Subway Surfers haritaları tek parça bir model değildir. Bu oyunlarda harita,
+birbirine eklenen modüler parçalardan oluşur. Kod bu parçaları karakterin önüne sürekli
+ekler, arkada kalanları siler. Yani bir "harita" aslında şunlardan oluşur:
+1. Yol segmentleri: Örneğin 30 m uzunluğunda, 3 şeritli zemin parçaları
+2. Kenar modülleri: Bina cepheleri, duvarlar, kemerler, köprü kemeri
+3. Dekorlar: Fener, tente, çiçek saksısı, tabela, minare, kubbe
+4. Zemin ve duvar dokuları: Tekrarlanabilir taş ve parke dokuları
+5. Gökyüzü ve ışık: Skybox, sis, güneş rengi
+Araç Ne için iyi Ne için kötü
+Google Flow Her bölgenin konsept çizimi (hedef görüntü) ve Meshy içinmodül referans görselleri Oynanabilir 3D harita üretemez
+Meshy AI Tek tek modüller: bina cephesi, kemer, köprü kemeri, sur
+kulesi, minare, fener, tente
+Bütün haritayı tek seferde üretmek:
+şeritler, ölçüler ve çarpışmalar bozuk
+çıkar
+Claude
+Segment sistemi kodu, parçaların otomatik yerleşimi, Unity
+Editor araçları, ışık ve sis ayarları, Blender Python ile basit
+geometri (yol, zemin, kaldırım)
+Görsel kalitede model ve doku
+çizmek
+Ücretsiz dokular
+(Poly Haven,
+ambientCG)
+Bazalt taş, parke, sıva, ahşap; tekrarlanabilir ve ücretsiz
+(CC0)
+Kültürel motifler (bunlar Meshy
+modüllerinden gelecek)
+Önerilen yol:
+1. Google Flow → her harita için konsept görsel (aşağıdaki prompt'lar)
+2. Google Flow → modül referans görselleri (aşağıdaki modül listesi)
+3. Meshy → modülleri 3D'ye çevir (Smart Topology T2, düşük poligon)
+4. Claude → segment sistemini yazsın ve modülleri otomatik dizsin (aşağıdaki Claude
+prompt'u)
+5. Sen → Unity'de ışık, sis ve renk ayarı, test
+Jumpline Go – Harita Tasarım Rehberi ve Prompt'lar
+Bölüm 1 haritaları: Diyarbakır Çarşısı, Sur İçi Çatılar, On Gözlü Köprü
+1. Haritayı hangi araçla yapmalısın?
+=====PAGE=====
+Bunlar 3D'ye çevrilmeyecek. Amaç hedef görüntüyü belirlemek; Claude'a ve Meshy'ye "böyle
+görünmeli" diye göstereceksin. Oran: 9:16 (oyun kamerası dikey).
+ANA
+Mobile endless runner game concept art, vertical 9:16, third-person camera view from 
+ALTERNATİF
+Mobile endless runner game concept art, vertical 9:16, third-person view from behind 
+ANA
+Mobile endless runner game concept art, vertical 9:16, third-person view from behind 
+ALTERNATİF
+Mobile endless runner game concept art, vertical 9:16, third-person view from behind 
+ANA
+Mobile endless runner game concept art, vertical 9:16, third-person view from behind 
+ALTERNATİF
+Mobile endless runner game concept art, vertical 9:16, third-person view from behind 
+Aynı kalıbı kullan, sadece ortam cümlesini değiştir:
+Mardin:steep stone alleys of Mardin made of honey-yellow carved limestone, ornate
+arched windows, stairs, lanterns, the Mesopotamian plain at night below, Şahmeran
+ahead
+Göbeklitepe:an ancient excavation site with giant T-shaped carved stone pillars in
+circles, desert hills, wooden walkways, golden dusty light, the Stone Guardian
+2. Google Flow – KONSEPT GÖRSELLERİ
+2.1 HARİTA 1 – DİYARBAKIR KAPALI ÇARŞI
+2.2 HARİTA 2 – SUR İÇİ ÇATILAR (Şehir üstü koşu)
+2.3 HARİTA 3 – ON GÖZLÜ KÖPRÜ (Dicle üzerinde)
+2.4 Diğer bölgeler için tek satırlık konsept prompt'ları
+=====PAGE=====
+ahead
+Mezopotamya:an ancient Assyrian city gate with giant winged bull statues,
+sandstone walls with carved reliefs, palm trees, golden sun, Lamassu ahead
+Amanos Ormanı:a misty ancient cedar forest with mossy stone ruins and old wooden
+bridges, rays of light, Humbaba ahead
+Van:a lakeside road along Lake Van with turquoise water, Akdamar island church in
+the distance, snowy mountains, sunset, the Van Lake Monster rising from the water
+ahead
+Kars / Erzurum:snowy old city streets with stone mansions, frozen fountains, warm
+window lights, falling snow, Karakoncolos ahead
+Ağrı Dağı:volcanic rocky mountain path with lava cracks, snowy peak of Mount
+Ararat above, smoke and embers, the dragon ahead
+Bunlar Meshy'de 3D'ye çevrilecek tekil parçalar. Her biri tek obje, düz gri arka plan, 3/4 açı.
+Oran 1:1 veya 16:9.
+Bütün modül prompt'larının sonuna şu cümleyi ekle:
+Single modular 3D game environment piece, stylized semi-realistic 3D game asset, mode
+# Modül Prompt'un başı
+1
+Dükkân
+cephesi A
+A two-story Diyarbakır bazaar shop building facade, black basalt
+stone with cream limestone stripes, wooden shop front with copper
+pots on display, red and cream striped awning, small wooden balcony
+above, ﬂat back side.
+2
+Dükkân
+cephesi B
+A two-story Diyarbakır shop building facade, cream limestone ground
+ﬂoor with a blue wooden door and a window full of kilims and
+spices, basalt upper ﬂoor with an arched window, green and white
+striped awning, ﬂat back side.
+3 Köşebinası
+A corner building of the Diyarbakır bazaar, black basalt with an
+ornate arched entrance, a carved stone cornice, a small hanging
+lantern and a wooden sign board without text.
+4 Çarşı
+kemeri
+A large pointed stone arch spanning a wide street, alternating
+black basalt and cream limestone stripes, a hanging Ottoman lantern
+at the top center, string lights attached on both sides.
+5 Işık zinciri A long string of warm glowing light bulbs hanging in a gentle curvebetween two small iron hooks.
+6 Tezgâhdekoru A small sidewalk display of copper pots, spice sacks, a stack ofwatermelons and a folded kilim on a low wooden platform.
+3. Google Flow – MODÜL REFERANS GÖRSELLERİ (Meshy'ye gidecek)
+3.1 Çarşı modülleri
+=====PAGE=====
+# Modül Prompt'un başı
+7 Sur duvarıparçası
+A straight section of the ancient Diyarbakır city wall, massive
+black basalt blocks, crenellations on top, a walkway on top, ﬂat
+ends so it can be repeated.
+8 Sur kulesi A round defensive tower of the Diyarbakır city walls, black basaltblocks, crenellated top, arrow slits, a small torch holder.
+9 Çatı bloğu
+A ﬂat stone rooftop block of an old Diyarbakır house, basalt
+walls, a small dome, a chimney, a water tank and a laundry line
+with colorful clothes.
+10 Dört AyaklıMinare
+A stylized model of the Four-Legged Minaret of Diyarbakır: a
+square basalt minaret standing on four short stone columns, carved
+details, a small balcony near the top.
+11 Kubbe
+A small mosque dome with a lead-grey roof and a crescent ﬁnial on
+top, sitting on an octagonal basalt drum with small arched
+windows.
+# Modül Prompt'un başı
+12
+Köprü kemeri
+(tekrarlanan
+parça)
+One single arch section of the On Gözlü Köprü stone bridge: a
+pointed stone arch with a pier, dark basalt blocks, a ﬂat
+walkable deck on top with low parapets on both sides, ﬂat
+ends so it can be repeated in a row.
+13 Köprü feneri
+A short stone post with a black iron lantern on top, to be
+placed on a bridge parapet.
+14
+Nehir kıyısı ağaç
+grubu
+A small cluster of green orchard trees and bushes from the
+Hevsel Gardens, with a low stone wall.
+15 Kayık
+A small wooden ﬁshing boat painted turquoise and white with
+oars inside.
+Toplam 15 modül. Meshy'de Smart Topology T2 + doku ile her biri yaklaşık 15 kredi, yani
+yaklaşık 225 kredi. Zemin (yol) ve nehir yüzeyi Meshy'den değil, Unity'de düz bir plane + Poly
+Haven dokusu ile yapılmalı.
+Bunu Claude'a (tercihen Claude Code'a, Unity projen açıkken) olduğu gibi yapıştır. Claude bu
+sistemi kodla çok iyi kurar.
+I am building a mobile endless runner game in Unity (C#), similar to Subway Surfers /
+GAME RULES
+- 3 lanes, lane width 2.5 m (lane x positions: -2.5, 0, 2.5). The player runs forward
+3.2 Sur ve çatı modülleri
+3.3 Köprü ve nehir modülleri
+4. CLAUDE PROMPT'U – Segment Sistemi
+=====PAGE=====
+- Player actions: lane switch, jump, slide. Speed increases slowly over time.
+- Mobile performance is critical: use object pooling, no Instantiate/Destroy during g
+SEGMENT SYSTEM
+1. Each segment is a prefab exactly 30 m long, with a "Start" and "End" transform. Se
+2. Each segment prefab has:
+   - Ground (road with 3 lanes)
+   - Left and right "decoration sockets" (empty transforms every 5 m) where building 
+   - "Obstacle slots" on each lane every 10 m where obstacles can be spawned.
+   - "Coin path" points.
+3. Create a ScriptableObject "RegionTheme" with: region name, list of segment prefabs
+4. Three regions for chapter 1 (Diyarbakır): "Bazaar" (covered bazaar street with arc
+OBSTACLE PATTERNS
+- Obstacle types by action: JUMP (low: tea table, melon stall, kebab grill, simit car
+- Create an "ObstaclePattern" ScriptableObject that deﬁnes what goes in each of the 
+- Difﬁculty ramps up with distance: more rows, less spacing, more vehicles.
+EDITOR TOOLS
+- An Editor window "Segment Builder" that creates a new empty segment prefab with the
+- A "Greybox" button that generates simple placeholder geometry (ground, side walls, 
+VISUAL STYLE NOTES
+- Stylized semi-realistic, warm golden hour in Bazaar, sunset in Rooftops, bright aft
+- Use linear fog to hide segment spawning at the far end.
+- Use a slight curved-world shader effect (vertex bend in the distance like Subway Su
+Please start with: folder structure, the RegionTheme and ObstaclePattern ScriptableOb
+Köprü bölgesi için: Write a script that builds the On Gözlü Köprü bridge
+procedurally by repeating my "BridgeArch" prefab every N meters under the road,
+and moves a large river plane with a scrolling water shader along with the player.
+Kavisli dünya efekti için: Write a URP shader graph (or HLSL shader) for a curved
+world effect that bends the world down and slightly sideways in the distance, with
+adjustable strength, compatible with mobile.
+Performans için: Review my segment system for mobile performance: draw calls,
+batching, LODs, texture atlasing and memory. Give concrete ﬁxes.
+Modeller ne kadar iyi olursa olsun, görüntünün yarısını ışık belirler. Mevcut ekran
+görüntülerinde gökyüzü düz sarı ve zemin kahverengi kalmış; bu yüzden görüntü boş duruyor.
+1. Skybox: Her bölgeye uygun bir gökyüzü (gün batımı, gece, öğleden sonra). Poly Haven'daki
+HDRI'lar ücretsiz.
+2. Sis (Fog): Lineer sis, bölge rengine uygun (çarşı için sıcak altın, köprü için açık mavi-
+beyaz). Uzaktaki parçaların "aniden belirmesini" gizler.
+Claude'a sonra sorabileceğin ek prompt'lar
+5. Unity'de harita kalitesini asıl artıracak 6 ayar
+=====PAGE=====
+3. Ana ışık rengi: Saf beyaz yerine sıcak turuncu-altın (çarşı) veya soğuk mavi (gece).
+4. Post Processing (URP Volume): Bloom (fenerler ve ışık zincirleri parlasın), Color Grading
+(sıcak ton), haﬁf Vignette.
+5. Arka plan katmanı: Yolun çok uzağında sabit duran düşük detaylı silüetler (sur, minare,
+dağ). Derinlik hissi verir.
+6. Zemin dokusu: Düz gri yerine gerçek bazalt parke dokusu + normal map. Yolun kenarına
+kaldırım ve oluk ekle.
