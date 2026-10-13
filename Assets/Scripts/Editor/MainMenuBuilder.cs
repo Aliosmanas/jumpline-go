@@ -193,8 +193,8 @@ namespace Jumpline.EditorTools
             var ring = SkinImage(s.top, "StageRing", new Rect(168f, 250f, 780f, 780f), "stage_ring", true);
             Link(MakeButton(new Box(ring.rectTransform, new Rect(168f, 250f, 780f, 780f)), ring), MenuLink.LinkAction.Open, "book");
             AddSparkles(s.top, new Rect(168f, 250f, 780f, 780f), 8, 40f);
-            SkinImage(s.top, "LegendRibbon", new Rect(258f, 990f, 600f, 120f), "ribbon", false, 0.6f);
-            var legendName = Txt(s.top, "LegendName", "TEPEGOZ", new Rect(378f, 1006f, 360f, 70f), fExtra, 44f, Color.white, localize: false);
+            // kurdele gövdesi resmin %15-%62 yüksekliğinde; yazı tam gövdeye ortalı
+            var legendName = RibbonLabel(s.top, "LegendName", new Rect(248f, 1022f, 620f, 150f), "TEPEGOZ", 46f, false);
             var hlp = s.screen.gameObject.AddComponent<HomeLegendPortrait>();
             Set(hlp, "image", legendImg);
             Set(hlp, "nameLabel", legendName);
@@ -246,8 +246,7 @@ namespace Jumpline.EditorTools
             SkinImage(s.top, "TitlePlaque", new Rect(208f, 24f, 700f, 140f), "plaque", false, 0.5f);
             Chrome(Txt(s.top, "Title", "CHARACTER", new Rect(318f, 40f, 480f, 104f), fTitle, 72f, Color.white, material: chromeMaterial));
             RawPreview(s.top, "RunnerPreview", new Rect(268f, 160f, 580f, 580f), preview);
-            SkinImage(s.top, "SuitRibbon", new Rect(278f, 712f, 560f, 104f), "ribbon", false, 0.6f);
-            TMP_Text suit = Txt(s.top, "SuitName", "ROOKIE", new Rect(388f, 726f, 340f, 62f), fExtra, 38f, Color.white, localize: false);
+            TMP_Text suit = RibbonLabel(s.top, "SuitName", new Rect(268f, 706f, 580f, 130f), "ROOKIE", 40f, false);
             var upRect = new Rect(158f, 838f, 800f, 168f);
             var up = GoldFace(s.top, "UpgradeButton", upRect, 30f, Hex("#E8901A"), Hex("#FFD23F"));
             Icon(up, "bolt", new Rect(upRect.x + 40f, upRect.y + 20f, 128f, 128f), Color.white);

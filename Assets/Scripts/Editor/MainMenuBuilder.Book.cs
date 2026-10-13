@@ -44,8 +44,7 @@ namespace Jumpline.EditorTools
             artImg.raycastTarget = false;
 
             // başlık kurdelesi + geri + ilerleme
-            SkinImage(s.top, "TitleRibbon", new Rect(178f, 40f, 760f, 150f), "ribbon", false, 0.6f);
-            Chrome(Txt(s.top, "Title", "LEGENDS BOOK", new Rect(318f, 58f, 480f, 90f), fTitle, 64f, Color.white, material: chromeMaterial));
+            Chrome(RibbonLabel(s.top, "Title", new Rect(178f, 30f, 760f, 180f), "LEGENDS BOOK", 60f, true, fTitle));
             var back = Add(s.top, "BackButton", new Rect(30f, 50f, 120f, 120f));
             var bi = back.go.AddComponent<Image>();
             bi.sprite = Skin["i_back"];
@@ -115,8 +114,7 @@ namespace Jumpline.EditorTools
             SkinImage(dm, "NamePlaque", new Rect(208f, 110f, 700f, 150f), "plaque", false, 0.5f);
             var dName = Txt(dm, "Name", "", new Rect(330f, 128f, 456f, 110f), fTitle, 72f, Color.white, material: chromeMaterial, localize: false);
             Chrome(dName);
-            SkinImage(dm, "RarityRibbon", new Rect(338f, 250f, 440f, 92f), "ribbon", false, 0.6f);
-            var dRarity = Txt(dm, "Rarity", "", new Rect(418f, 262f, 280f, 56f), fExtra, 34f, Color.white, localize: false);
+            var dRarity = RibbonLabel(dm, "Rarity", new Rect(328f, 246f, 460f, 120f), "", 34f, false);
             var dRegion = Txt(dm, "Region", "", new Rect(358f, 338f, 400f, 50f), fExtra, 34f, Hex("#7A3B1C"), localize: false);
             var closeBox = Add(dm, "Close", new Rect(930f, 120f, 116f, 116f));
             var ci = closeBox.go.AddComponent<Image>();

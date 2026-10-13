@@ -119,11 +119,15 @@ namespace Jumpline.EditorTools
                 var stars = new Image[3];
                 for (int k = 0; k < 3; k++)
                     stars[k] = Icon(s.top, "star", new Rect(cx - 58f + k * 40f, cy + 38f, 40f, 40f), Color.white);
-                Txt(s.top, $"Legend{i + 1}", st.legend, new Rect(cx - 160f, cy + 120f, 320f, 34f), fExtra, 23f, ink);
-                var status = Txt(s.top, $"Status{i + 1}", "", new Rect(cx - 160f, cy + 148f, 320f, 28f), fBold, 19f, Hex("#8A5A2A"), localize: false);
+                // efsane adı: parşömen üstünde okunsun diye bakır çerçeveli koyu hap + beyaz konturlu yazı
+                SkinImage(s.top, $"LegendPill{i + 1}", new Rect(cx - 140f, cy + 118f, 280f, 50f), "pill", false, 0.45f);
+                Txt(s.top, $"Legend{i + 1}", st.legend, new Rect(cx - 124f, cy + 120f, 248f, 46f), fExtra, 24f, Color.white);
+                var status = Txt(s.top, $"Status{i + 1}", "", new Rect(cx - 160f, cy + 168f, 320f, 34f), fExtra, 22f, Hex("#FFD23F"), localize: false);
                 nodes.Add((i + 1, button, stars, lockIcon.gameObject, portraitGo, status, sparkles));
             }
-            Txt(s.top, "StarRule", "3 STARS: WIN WITHOUT CONTINUE, IN 6 THROWS OR LESS", new Rect(40f, 300f, 1036f, 30f), fBold, 18f, Hex("#5A3212"));
+            SkinImage(s.top, "StarRulePill", new Rect(40f, 290f, 1036f, 60f), "pill", false, 0.45f);
+            Icon(s.top, "star", new Rect(58f, 294f, 52f, 52f), Color.white);
+            Txt(s.top, "StarRule", "3 STARS: WIN WITHOUT CONTINUE, IN 6 THROWS OR LESS", new Rect(116f, 294f, 940f, 52f), fExtra, 24f, Color.white);
 
             var view = s.screen.gameObject.AddComponent<MapView>();
             Set(view, "config", config);

@@ -601,9 +601,7 @@ namespace Jumpline.EditorTools
                 SkinSprite(spi, "panel_basalt", r, 0.11f);   // ince çerçeve: içerik kenara taşmasın
                 spi.raycastTarget = true;
                 float rw = Mathf.Min(r.width * 0.8f, 640f);
-                var rr = new Rect(r.center.x - rw * 0.5f, r.y - 26f, rw, 100f);
-                SkinImage(sp, "HeaderRibbon", rr, "ribbon", false, 0.6f);
-                Txt(sp, "Title", title, new Rect(rr.x + rw * 0.18f, rr.y + 10f, rw * 0.64f, 66f), fExtra, 44f, Color.white, material: OutlineText());
+                RibbonLabel(sp, "Title", new Rect(r.center.x - rw * 0.5f, r.y - 34f, rw, 132f), title, 44f);
                 return sp;
             }
             var panel = Panel(parent, name + "Panel", r, Hex("#4A1B2C"), Hex("#212A44"), 28f, Hex("#7083B3"));
@@ -726,8 +724,7 @@ namespace Jumpline.EditorTools
                 lim.raycastTarget = false;
                 if (!string.IsNullOrEmpty(subtitle))
                 {
-                    SkinImage(parent, "SubtitleRibbon", new Rect(258f, 330f, 600f, 90f), "ribbon", false, 0.6f);
-                    Txt(parent, "Subtitle", subtitle, new Rect(368f, 340f, 380f, 56f), fExtra, 30f, Color.white);
+                    RibbonLabel(parent, "Subtitle", new Rect(258f, 326f, 600f, 120f), subtitle, 32f);
                 }
                 return;
             }
@@ -1085,7 +1082,7 @@ namespace Jumpline.EditorTools
                 case "panel_basalt": return new Vector4(98f, 98f, 98f, 98f);
                 case "card_lime": return new Vector4(58f, 58f, 58f, 58f);
                 case "plaque": return new Vector4(124f, 54f, 124f, 54f);
-                case "ribbon": return new Vector4(214f, 60f, 214f, 60f);
+                case "ribbon": return new Vector4(214f, 0f, 214f, 0f);   // dikeyde dilimlenmez: gövde hep %5-55 yükseklikte
                 case "pill": return new Vector4(54f, 46f, 54f, 46f);
                 case "navbar": return new Vector4(60f, 40f, 60f, 40f);
                 case "parchment": return new Vector4(64f, 64f, 64f, 64f);
@@ -1146,6 +1143,16 @@ namespace Jumpline.EditorTools
             float maxB = Mathf.Max(Mathf.Max(b.x, b.z), Mathf.Max(b.y, b.w));
             float fit = Mathf.Min(r.width, r.height) * edge;
             img.pixelsPerUnitMultiplier = Mathf.Max(0.6f, maxB / Mathf.Max(fit, 1f));
+        }
+
+        /// <summary>Altın kurdele + gövdesine ortalı beyaz konturlu yazı (kurdele gövdesi resmin üst yarısında, uçlar katlı).</summary>
+        public static TextMeshProUGUI RibbonLabel(Box parent, string name, Rect r, string text, float size, bool localize = true, TMP_FontAsset font = null)
+        {
+            SkinImage(parent, name + "Ribbon", r, "ribbon", false, 0.6f);
+            var tr = new Rect(r.x + r.height * 0.5f, r.y + r.height * 0.06f, r.width - r.height, r.height * 0.48f);
+            var t = Txt(parent, name, text, tr, font ?? fExtra, size, Color.white, localize: localize);
+            t.alignment = TextAlignmentOptions.Center;
+            return t;
         }
 
         public static Image SkinImage(Box parent, string name, Rect r, string skin, bool raycast = false, float edge = 0.42f)
