@@ -7,7 +7,11 @@ namespace Jumpline.UI
     /// <summary>Basılıyken butonu hafifçe küçültür ve (varsa) üstündeki parıltıyı yumuşakça yakar.</summary>
     public class ButtonPressFeedback : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
     {
-        [SerializeField, Range(0.5f, 1f)] private float pressedScale = 0.95f;
+        [SerializeField, Range(0.5f, 1f)] private float pressedScale = 0.92f;
+        [Tooltip("Bırakınca yaylanma sertliği / sönümü (tema 'Efsane': tombul düğme hissi).")]
+        [SerializeField, Min(1f)] private float springStiffness = 420f;
+        [SerializeField, Min(0f)] private float springDamping = 16f;
+        private float scale = 1f, velocity;
         [SerializeField, Min(0f)] private float followSpeed = 22f;
         [Tooltip("Basınca parlayan katman (isteğe bağlı).")]
         [SerializeField] private Graphic flash;
@@ -25,6 +29,8 @@ namespace Jumpline.UI
         private void OnDisable()
         {
             pressed = false;
+            scale = 1f;
+            velocity = 0f;
             transform.localScale = Vector3.one;
             SetFlash(0f);
         }
@@ -41,8 +47,16 @@ namespace Jumpline.UI
 
         private void Update()
         {
-            float k = 1f - Mathf.Exp(-followSpeed * Time.unscaledDeltaTime);
-            transform.localScale = Vector3.one * Mathf.Lerp(transform.localScale.x, pressed ? pressedScale : 1f, k);
+            float dt = Mathf.Min(Time.unscaledDeltaTime, 0.05f);
+            float k = 1f - Mathf.Exp(-followSpeed * dt);
+            if (pressed) { scale = Mathf.Lerp(scale, pressedScale, k); velocity = 0f; }
+            else
+            {
+                // yay: bırakınca hafif taşıp yerine oturur
+                velocity += ((1f - scale) * springStiffness - velocity * springDamping) * dt;
+                scale += velocity * dt;
+            }
+            transform.localScale = Vector3.one * scale;
             if (flash != null) SetFlash(Mathf.Lerp(flash.color.a, pressed ? flashAlpha : 0f, k));
         }
 

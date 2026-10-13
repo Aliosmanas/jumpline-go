@@ -32,7 +32,7 @@ namespace Jumpline.EditorTools
 
         public static class C
         {
-            public static readonly Color Bg = Hex("#1E1D23");
+            public static readonly Color Bg = Hex("#0B2C3C");   // tema "Efsane": derin turkuaz-lacivert
             public static readonly Color NavyDark = Hex("#1B2236");
             public static readonly Color BorderDim = Hex("#55658C");
             public static readonly Color Blue = Hex("#5AA8FF");
@@ -134,9 +134,37 @@ namespace Jumpline.EditorTools
             var b = Add(parent, name, r);
             var img = b.go.AddComponent<Image>();
             Rounded(img, radius);
-            b.go.AddComponent<UIGradient>().SetColors(bottom, top);
-            if (border.a > 0f) Border(b, radius, border);
+            b.go.AddComponent<UIGradient>().SetColors(Theme(bottom), Theme(top, true));
+            if (border.a > 0f) Border(b, radius, ThemeBorder(border));
             return b;
+        }
+
+        // ---------------------------------------------------------------------
+        // Tema "Efsane" (kullanıcı referansları: çizgi film kiti + parlak mobil oyun + altın/turkuaz süslü bantlar).
+        // Eski koyu lacivert/bordo yüzeyler canlı turkuaz-maviye, gri-mavi çerçeveler altına çevrilir; sıcak renkler
+        // (bronz rozet, kırmızı sayaç, altın) olduğu gibi kalır. themeBypass: koyu kalması gereken (çubuk oluğu) yüzeyler.
+        // ---------------------------------------------------------------------
+        public static bool themeBypass;
+        private static readonly Color ThemeDeep = Hex("#124C66"), ThemeLight = Hex("#2E93AE"), ThemeGold = Hex("#F2C24E");
+
+        public static Color Theme(Color c, bool top = false)
+        {
+            if (themeBypass || c.a <= 0.01f) return c;
+            Color.RGBToHSV(c, out float h, out float sat, out float v);
+            bool warm = (h < 0.14f || h > 0.97f) && sat > 0.45f && v > 0.4f;   // bronz/kırmızı/altın: dokunma
+            if (warm || v > 0.45f) return c;
+            float t = Mathf.Clamp01(v / 0.45f);
+            Color m = Color.Lerp(ThemeDeep, ThemeLight, top ? Mathf.Lerp(0.55f, 1f, t) : Mathf.Lerp(0.15f, 0.6f, t));
+            m.a = c.a;
+            return m;
+        }
+
+        public static Color ThemeBorder(Color c)
+        {
+            if (themeBypass || c.a <= 0.01f) return c;
+            Color.RGBToHSV(c, out float h, out float sat, out float v);
+            if (h > 0.5f && h < 0.75f && sat < 0.55f && v > 0.2f && v < 0.9f) { var g = ThemeGold; g.a = c.a; return g; }
+            return c;
         }
 
         public static void Fill(Box b, Color bottom, Color top)
@@ -341,9 +369,61 @@ namespace Jumpline.EditorTools
 
         public static Button BoxButton(Box parent, string name, Rect r, string label, float size, out TextMeshProUGUI labelText, bool localize = true)
         {
-            var b = Panel(parent, name, r, Hex("#4D1B2D"), Hex("#29345A"), 26f, Hex("#6F80AE"));
-            labelText = Txt(b, "Label", label, r, fExtra, size, C.TextLight, localize: localize);
+            var b = GoldFace(parent, name, r, 26f, Hex("#E8901A"), Hex("#FFD957"));
+            labelText = Txt(b, "Label", label, r, fExtra, size, Color.white, material: OutlineText(), localize: localize);
             return MakeButton(b, b.rt.GetComponent<Image>());
+        }
+
+        /// <summary>Tombul parlak düğme yüzü: renk geçişi, beyaz kenar, üstte parlama, altta koyu gölge.</summary>
+        public static Box GoldFace(Box parent, string name, Rect r, float radius, Color bottom, Color top)
+        {
+            var shadow = Add(parent, name + "Shadow", new Rect(r.x, r.y + 7f, r.width, r.height));
+            var si = shadow.go.AddComponent<Image>();
+            Rounded(si, radius);
+            si.color = Hex("#5A2E06", 0.75f);
+            si.raycastTarget = false;
+            themeBypass = true;
+            var b = Panel(parent, name, r, bottom, top, radius, Hex("#FFF4CC"));
+            themeBypass = false;
+            var gloss = Add(b, "Gloss", new Rect(r.x + r.width * 0.06f, r.y + r.height * 0.08f, r.width * 0.88f, r.height * 0.4f));
+            var gi = gloss.go.AddComponent<Image>();
+            Rounded(gi, radius * 0.6f);
+            gi.raycastTarget = false;
+            gloss.go.AddComponent<UIGradient>().SetColors(new Color(1f, 1f, 1f, 0f), new Color(1f, 1f, 1f, 0.32f));
+            // kayan ışık şeridi (UIShine): yüzey maskeler, şerit çapraz
+            b.go.AddComponent<Mask>().showMaskGraphic = true;
+            var band = NewUI("Shine", b.rt);
+            band.anchorMin = band.anchorMax = new Vector2(0.5f, 0.5f);
+            band.sizeDelta = new Vector2(Mathf.Max(40f, r.width * 0.22f), r.height * 2.4f);
+            band.localRotation = Quaternion.Euler(0f, 0f, -22f);
+            var bi = band.gameObject.AddComponent<Image>();
+            bi.color = new Color(1f, 1f, 1f, 0.28f);
+            bi.raycastTarget = false;
+            var shine = b.go.AddComponent<UIShine>();
+            Set(shine, "band", band);
+            SetFloat(shine, "startDelay", (Mathf.Abs(name.GetHashCode()) % 100) / 100f * 2.5f);   // düğmeler aynı anda parlamasın
+            return b;
+        }
+
+        private static Material outlineText;
+
+        /// <summary>Beyaz yazı + kalın koyu kahve kontur (çizgi film düğme yazısı).</summary>
+        public static Material OutlineText()
+        {
+            if (outlineText != null) return outlineText;
+            const string path = "Assets/Art/UI/Fonts/ExtraBold_Brown.mat";
+            outlineText = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (outlineText == null)
+            {
+                outlineText = new Material(fExtra.material);
+                AssetDatabase.CreateAsset(outlineText, path);
+            }
+            outlineText.EnableKeyword("OUTLINE_ON");
+            outlineText.SetFloat("_OutlineWidth", 0.22f);
+            outlineText.SetColor("_OutlineColor", new Color32(74, 36, 8, 255));
+            outlineText.SetFloat("_FaceDilate", 0.12f);
+            EditorUtility.SetDirty(outlineText);
+            return outlineText;
         }
 
         /// <summary>Ayarlar tarzı üst başlık çubuğu: geri butonu + krom başlık. Geri butonunu döndürür.</summary>
@@ -356,17 +436,20 @@ namespace Jumpline.EditorTools
                 new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0.86f),
                 new Vector2(0.833f, 0.86f), new Vector2(0.81f, 1f), new Vector2(0f, 1f),
             });
-            poly.color = Hex("#1F2A47");
+            poly.color = Color.white;
             poly.raycastTarget = false;
+            header.go.AddComponent<UIGradient>().SetColors(Hex("#0E4555"), Hex("#2A8C9C"));
             header.go.AddComponent<Mask>().showMaskGraphic = true;
-            var glow = Img(header.rt, "MaroonGlow", softCircle, Hex("#5A1A30", 0.95f), false);
-            Place(glow.rectTransform, header, new Rect(130f, -170f, 860f, 470f));
+            var glow = Img(header.rt, "GoldGlow", softCircle, Hex("#F2C24E", 0.35f), false);
+            Place(glow.rectTransform, header, new Rect(230f, -150f, 660f, 420f));
             glow.raycastTarget = false;
+            Ribbon(parent, new Rect(905f, 18f, 190f, 150f), false);
+            Ribbon(parent, new Rect(8f, 150f, 170f, 70f), true);
 
             var edge = Add(parent, "HeaderEdge", new Rect(0f, 0f, 1116f, 200f));
             var edgePoly = AddPolygon(edge);
             edgePoly.Configure(new[] { new Vector2(0f, 0.99f), new Vector2(0.81f, 0.99f), new Vector2(0.833f, 0.855f), new Vector2(1f, 0.855f) }, true, 4f);
-            edgePoly.color = Hex("#7A2A40");
+            edgePoly.color = ThemeGold;
             edgePoly.raycastTarget = false;
 
             var back = Panel(parent, "BackButton", new Rect(40f, 42f, 123f, 123f), Hex("#4F1B2E"), Hex("#2E3A5E"), 18f, Hex("#7C8DB8"));
@@ -374,7 +457,33 @@ namespace Jumpline.EditorTools
             Button backButton = MakeButton(back, back.rt.GetComponent<Image>());
 
             Chrome(Txt(parent, "Title", title, new Rect(190f, 40f, 740f, 130f), fTitle, title.Length > 9 ? 76f : 92f, Color.white, material: chromeMaterial));
+            Gem(parent, new Vector2(560f, 186f), 22f);
             return backButton;
+        }
+
+        /// <summary>Altın kurdele kıvrımı (bant uçları): iki ince hilal + uçta turkuaz damla.</summary>
+        public static void Ribbon(Box parent, Rect r, bool flip)
+        {
+            Vector2[] Crescent(float a0, float a1, float thick)
+            {
+                var pts = new System.Collections.Generic.List<Vector2>();
+                for (int i = 0; i <= 12; i++) { float a = Mathf.Lerp(a0, a1, i / 12f); pts.Add(new Vector2(0.5f + 0.5f * Mathf.Cos(a), 0.5f + 0.5f * Mathf.Sin(a))); }
+                for (int i = 12; i >= 0; i--) { float a = Mathf.Lerp(a0, a1, i / 12f); float k = 0.5f - thick * Mathf.Sin(i / 12f * Mathf.PI); pts.Add(new Vector2(0.5f + k * Mathf.Cos(a), 0.5f + k * Mathf.Sin(a))); }
+                if (flip) for (int i = 0; i < pts.Count; i++) pts[i] = new Vector2(1f - pts[i].x, pts[i].y);
+                return pts.ToArray();
+            }
+            var a = Poly(parent, "RibbonGold", r, Crescent(0.4f, 2.6f, 0.13f), ThemeGold);
+            a.raycastTarget = false;
+            var b = Poly(parent, "RibbonTeal", new Rect(r.x + r.width * 0.15f, r.y + r.height * 0.2f, r.width * 0.7f, r.height * 0.7f), Crescent(3.4f, 5.6f, 0.16f), Hex("#5FE0D0"));
+            b.raycastTarget = false;
+        }
+
+        /// <summary>Elmas biçimli turkuaz mücevher (bant ortası), altın çerçeveli.</summary>
+        public static void Gem(Box parent, Vector2 c, float s)
+        {
+            Vector2[] diamond = { new Vector2(0.5f, 0f), new Vector2(1f, 0.5f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f) };
+            Poly(parent, "GemFrame", new Rect(c.x - s * 1.35f, c.y - s * 1.35f, s * 2.7f, s * 2.7f), diamond, ThemeGold).raycastTarget = false;
+            Poly(parent, "Gem", new Rect(c.x - s, c.y - s, s * 2f, s * 2f), diamond, Hex("#7FF0E4")).raycastTarget = false;
         }
 
         /// <summary>Başlıklı bölüm paneli (AUDIO / GRAPHICS / CONTROLS tarzı).</summary>
@@ -385,22 +494,24 @@ namespace Jumpline.EditorTools
             var bandImg = band.go.AddComponent<Image>();
             Rounded(bandImg, 26f);
             bandImg.raycastTarget = false;
-            band.go.AddComponent<UIGradient>().SetColors(Hex("#2A3556", 0f), Hex("#2A3556", 0.6f));
-            Txt(panel, "Title", title, new Rect(r.x, r.y + 12f, r.width, 72f), fExtra, 50f, Color.white);
-            Line(panel, new Rect(r.x + 4f, r.y + 92f, r.width - 8f, 2f), Hex("#3B4A70"));
-            GlowLine(panel, new Rect(r.center.x - 130f, r.y + 85f, 260f, 16f), C.Blue);
+            band.go.AddComponent<UIGradient>().SetColors(Hex("#B9802A"), Hex("#F5D57E"));   // altın bant
+            Txt(panel, "Title", title, new Rect(r.x, r.y + 12f, r.width, 72f), fExtra, 50f, Color.white, material: OutlineText());
+            Line(panel, new Rect(r.x + 4f, r.y + 92f, r.width - 8f, 3f), Hex("#7A4A14"));
+            Gem(panel, new Vector2(r.center.x, r.y + 93f), 12f);
             return panel;
         }
 
         /// <summary>Koyu iz + kırmızı→mavi dolgu çubuğu. Dolgu sola yaslıdır (genişliği koddan değişir).</summary>
         public static RectTransform ProgressBar(Box parent, string name, Rect r, float fill)
         {
-            var track = Panel(parent, name, r, C.NavyDark, C.NavyDark, r.height * 0.5f, Hex("#5D6A91"));
+            themeBypass = true;
+            var track = Panel(parent, name, r, Hex("#082331"), Hex("#0C3042"), r.height * 0.5f, Hex("#C99A3A"));
+            themeBypass = false;
             var bar = Add(track, "Fill", new Rect(r.x + 3f, r.y + 3f, (r.width - 6f) * fill, r.height - 6f));
             var img = bar.go.AddComponent<Image>();
             Rounded(img, (r.height - 6f) * 0.5f);
             img.raycastTarget = false;
-            bar.go.AddComponent<UIGradient>().SetColors(Hex("#7A2A45"), Hex("#6FC3F5"), true);
+            bar.go.AddComponent<UIGradient>().SetColors(Hex("#F29A1D"), Hex("#FFE07A"), true);   // altın dolgu
             PivotLeft(bar);
             return bar.rt;
         }
@@ -412,14 +523,14 @@ namespace Jumpline.EditorTools
             var bg = Add(root, "Background", track);
             var bgImg = bg.go.AddComponent<Image>();
             Rounded(bgImg, track.height * 0.5f);
-            bgImg.color = Hex("#1B2236");
-            Border(bg, track.height * 0.5f, Hex("#5B6992"));
+            bgImg.color = Hex("#082331");
+            Border(bg, track.height * 0.5f, Hex("#C99A3A"));
 
             var fillArea = Add(root, "Fill Area", track);
             var fill = Add(fillArea, "Fill", track);
             var fillImg = fill.go.AddComponent<Image>();
             Rounded(fillImg, track.height * 0.5f);
-            fill.go.AddComponent<UIGradient>().SetColors(Hex("#3C1626"), Hex("#7E2A44"), true);
+            fill.go.AddComponent<UIGradient>().SetColors(Hex("#E8901A"), Hex("#FFD957"), true);   // altın dolgu
             fill.rt.anchorMin = Vector2.zero;
             fill.rt.anchorMax = new Vector2(0f, 1f);
             fill.rt.sizeDelta = Vector2.zero;
@@ -430,7 +541,7 @@ namespace Jumpline.EditorTools
             handle.rt.anchorMin = new Vector2(0f, 0.5f);
             handle.rt.anchorMax = new Vector2(0f, 0.5f);
             handle.rt.anchoredPosition = Vector2.zero;
-            var ring = Img(handle.rt, "RingGlow", ringGlow, Hex("#7AA6FF", 0.95f), false);
+            var ring = Img(handle.rt, "RingGlow", ringGlow, Hex("#FFD957", 0.95f), false);
             ring.raycastTarget = false;
             ring.rectTransform.sizeDelta = new Vector2(100f, 100f);
             var knobImg = Img(handle.rt, "Knob", knob, Color.white, false);
@@ -453,8 +564,8 @@ namespace Jumpline.EditorTools
             var root = Add(parent, name, r);
             var img = root.go.AddComponent<Image>();
             Rounded(img, r.height * 0.5f);
-            root.go.AddComponent<UIGradient>().SetColors(Hex("#4A1A2E"), Hex("#2A1C30"), true);
-            Border(root, r.height * 0.5f, Hex("#6E7FAE"));
+            root.go.AddComponent<UIGradient>().SetColors(Hex("#0A2A3A"), Hex("#123C50"), true);
+            Border(root, r.height * 0.5f, Hex("#C99A3A"));
             var k = Img(root.rt, "Knob", knob, Color.white, false);
             k.raycastTarget = false;
             k.rectTransform.sizeDelta = new Vector2(52f, 52f);
@@ -568,97 +679,57 @@ namespace Jumpline.EditorTools
         /// <summary>Ana PLAY: cam dış plaka + bordo devreli iç panel + iki ışık halkası.</summary>
         public static Button GlassPlayButton(Box parent, string name, Rect r, string label, float size)
         {
+            // tema "Efsane": parlak yeşil, altın çerçeveli büyük oyna düğmesi (2. referans "hızlı başla")
             var root = Add(parent, name, r);
-            Ring(root, new Rect(r.x - 30f, r.y - 70f, r.width * 0.6f, r.height + 140f), Pink * new Color(1, 1, 1, 0.85f), -14f, 6f);
-            Ring(root, new Rect(r.xMax - r.width * 0.62f + 30f, r.y - 80f, r.width * 0.62f, r.height + 160f), Cyan * new Color(1, 1, 1, 0.85f), 18f, -5f, 0.5f);
+            var halo = Img(root.rt, "Halo", softCircle, Hex("#FFE07A", 0.35f), false);
+            Place(halo.rectTransform, root, new Rect(r.x - 60f, r.y - 70f, r.width + 120f, r.height + 140f));
+            halo.raycastTarget = false;
+            Pulse(halo, 0.3f, 3f, 0f);
+            var frame = Add(root, "GoldFrame", new Rect(r.x - 14f, r.y - 14f, r.width + 28f, r.height + 28f));
+            var fi = frame.go.AddComponent<Image>();
+            Rounded(fi, r.height * 0.5f + 14f);
+            fi.raycastTarget = false;
+            frame.go.AddComponent<UIGradient>().SetColors(Hex("#B9802A"), Hex("#FFE38A"));
+            var face = GoldFace(root, "Face", r, r.height * 0.5f, Hex("#1F8E3C"), Hex("#7BE26A"));
+            Ribbon(root, new Rect(r.xMax - 70f, r.y - 60f, 150f, 120f), false);
+            Ribbon(root, new Rect(r.x - 80f, r.yMax - 70f, 150f, 120f), true);
+            Txt(face, "Label", label, r, fExtra, size, Color.white, material: OutlineText());
+            AddSparkles(root, r, 14, 46f);
+            return MakeButton(root, face.rt.GetComponent<Image>());
+        }
 
-            const float slant = 0.14f;
-            Poly(root, "Glass", r, Parallelogram(slant), Hex("#AFC3FF", 0.07f));
-            PolyStroke(root, "GlassEdge", r, Parallelogram(slant), Hex("#C8D6FF", 0.45f), 2f);
-
-            var ri = new Rect(r.x + r.width * 0.07f, r.y + r.height * 0.14f, r.width * 0.86f, r.height * 0.72f);
-            UIPolygon inner = Poly(root, "Inner", ri, Parallelogram(slant * 0.9f), Color.white);
-            inner.raycastTarget = true;
-            inner.gameObject.AddComponent<UIGradient>().SetColors(Hex("#46142A"), Hex("#7A1F44"));
-            inner.gameObject.AddComponent<Mask>().showMaskGraphic = true;
-            var innerBox = new Box(inner.rectTransform, ri);
-            var core = Img(inner.rectTransform, "CoreGlow", softCircle, Hex("#FF5C93", 0.45f), false);
-            Place(core.rectTransform, innerBox, new Rect(ri.center.x - ri.width * 0.4f, ri.y - ri.height * 0.3f, ri.width * 0.8f, ri.height * 1.6f));
-            core.raycastTarget = false;
-            Pulse(core, 0.35f, 4f, 0f);
-            var lines = Img(inner.rectTransform, "Circuit", circuit, Hex("#7FB8FF", 0.6f), false);
-            Stretch(lines.rectTransform);
-            lines.raycastTarget = false;
-            Pulse(lines, 0.3f, 5f, 0.3f);
-            PolyStroke(root, "InnerEdge", ri, Parallelogram(slant * 0.9f), Hex("#FF7FA8", 0.8f), 2.5f);
-            GlowLine(root, new Rect(ri.x + ri.width * 0.25f, ri.y - 8f, ri.width * 0.5f, 16f), Pink);
-            GlowLine(root, new Rect(ri.x + ri.width * 0.2f, ri.yMax - 8f, ri.width * 0.6f, 16f), Cyan);
-
-            Shadow(Txt(root, "Label", label, ri, fExtra, size, Color.white));
-            UIPolygon flash = Poly(root, "PressFlash", ri, Parallelogram(slant * 0.9f), new Color(1f, 1f, 1f, 0f));
-            return WithFeedback(root, inner, flash);
+        /// <summary>Öğenin çevresinde parlayıp sönen yıldız parçacıkları (UISparkles).</summary>
+        public static UISparkles AddSparkles(Box parent, Rect r, int count, float size)
+        {
+            var b = Add(parent, "Sparkles", r);
+            var sp = b.go.AddComponent<UISparkles>();
+            Set(sp, "sprite", Icons["star"]);
+            SetInt(sp, "count", count);
+            SetFloat(sp, "size", size);
+            return sp;
         }
 
         /// <summary>QUICK RACE / DAILY CHALLENGE etiket butonu (mavi ya da bordo).</summary>
         public static Button TagButton(Box parent, string name, Rect r, string label, bool blue, float size = 38f)
         {
+            // tema "Efsane": tombul parlak düğme — turuncu (hızlı yarış) / kırmızı (günlük görev), 1. referans
             var root = Add(parent, name, r);
-            Color accent = blue ? Cyan : Pink;
-            Ring(root, blue
-                    ? new Rect(r.x - 40f, r.y - 30f, r.width * 0.55f, r.height + 80f)
-                    : new Rect(r.xMax - r.width * 0.55f + 40f, r.y - 30f, r.width * 0.55f, r.height + 80f),
-                (blue ? Pink : Cyan) * new Color(1, 1, 1, 0.7f), blue ? -12f : 14f, blue ? 7f : -7f, blue ? 0.2f : 0.7f);
-
-            const float slant = 0.1f;
-            var glass = new Rect(r.x - 12f, r.y - 12f, r.width + 24f, r.height + 24f);
-            Poly(root, "Glass", glass, Parallelogram(slant), Hex("#AFC3FF", 0.05f));
-            PolyStroke(root, "GlassEdge", glass, Parallelogram(slant), Hex("#C8D6FF", 0.32f), 1.6f);
-
-            UIPolygon inner = Poly(root, "Inner", r, Parallelogram(slant), Color.white);
-            inner.raycastTarget = true;
-            inner.gameObject.AddComponent<UIGradient>().SetColors(blue ? Hex("#151B33") : Hex("#2E1222"), blue ? Hex("#26345E") : Hex("#5E1C36"));
-            inner.gameObject.AddComponent<Mask>().showMaskGraphic = true;
-            var lines = Img(inner.rectTransform, "Circuit", circuit, accent * new Color(1, 1, 1, 0.35f), false);
-            Stretch(lines.rectTransform);
-            lines.raycastTarget = false;
-            PolyStroke(root, "InnerEdge", r, Parallelogram(slant), accent * new Color(1, 1, 1, 0.7f), 2f);
-            var top = Add(root, "TopAccent", new Rect(r.x + r.width * 0.3f, r.y - 7f, r.width * 0.45f, 14f));
-            var topImg = top.go.AddComponent<Image>();
-            topImg.sprite = glowLine;
-            topImg.color = accent;
-            topImg.raycastTarget = false;
-            Pulse(topImg, 0.35f, 3.5f, blue ? 0f : 0.5f);
-            GlowLine(root, new Rect(r.x + r.width * 0.2f, r.yMax - 7f, r.width * 0.45f, 14f), accent * new Color(1, 1, 1, 0.8f));
-
-            Shadow(Txt(root, "Label", label, r, fExtra, size, Hex("#DDE2EE")));
-            UIPolygon flash = Poly(root, "PressFlash", r, Parallelogram(slant), new Color(1f, 1f, 1f, 0f));
-            return WithFeedback(root, inner, flash);
+            var face = GoldFace(root, "Face", r, r.height * 0.5f, blue ? Hex("#E2761A") : Hex("#B8282A"), blue ? Hex("#FFC24A") : Hex("#FF6A55"));
+            Txt(face, "Label", label, r, fExtra, size, Color.white, material: OutlineText());
+            return MakeButton(root, face.rt.GetComponent<Image>());
         }
 
         /// <summary>Alt gezinme kutusu: dosya biçimi, devre çizgisi, ikon, ışık halkası.</summary>
         public static Button FolderTile(Box parent, string name, Rect r, string icon, string label, int index)
         {
+            // tema "Efsane": yuvarlak köşeli altın ikon kutusu (1. referans), konturlu etiket
             var root = Add(parent, name, r);
-            bool blue = index % 2 == 0;
-            Ring(root, new Rect(r.x - 42f, r.y + r.height * 0.32f, r.width + 84f, r.height * 0.82f),
-                (blue ? Cyan : Pink) * new Color(1, 1, 1, 0.75f), -8f, blue ? 9f : -9f, index * 0.17f);
-
-            UIPolygon tile = Poly(root, "Tile", r, FolderShape, Color.white);
-            tile.raycastTarget = true;
-            tile.gameObject.AddComponent<UIGradient>().SetColors(Hex("#4E1832"), Hex("#232C4C"));
-            tile.gameObject.AddComponent<Mask>().showMaskGraphic = true;
-            var lines = Img(tile.rectTransform, "Circuit", circuit, Hex("#8FA8D8", 0.22f), false);
-            lines.rectTransform.anchorMin = Vector2.zero;
-            lines.rectTransform.anchorMax = Vector2.one;
-            lines.rectTransform.offsetMin = new Vector2(-r.width * 0.6f, 0f);
-            lines.rectTransform.offsetMax = new Vector2(r.width * 0.6f, 0f);
-            lines.raycastTarget = false;
-            PolyStroke(root, "Edge", r, FolderShape, Hex("#9AABDB", 0.85f), 2.2f);
-
-            Icon(root, icon, new Rect(r.center.x - 44f, r.center.y - 38f, 88f, 88f), Color.white);
-            UIPolygon flash = Poly(root, "PressFlash", r, FolderShape, new Color(1f, 1f, 1f, 0f));
-            Txt(parent, name + "Label", label, new Rect(r.center.x - 115f, r.yMax + 12f, 230f, 40f), fBold, 23f, C.TextGrey);
-            return WithFeedback(root, tile, flash);
+            var face = GoldFace(root, "Tile", r, 34f, Hex("#E8901A"), Hex("#FFD957"));
+            var shade = Icon(face, icon, new Rect(r.center.x - 44f, r.center.y - 34f, 88f, 88f), Hex("#6A3A0A", 0.6f));
+            shade.name = "IconShadow";
+            Icon(face, icon, new Rect(r.center.x - 44f, r.center.y - 40f, 88f, 88f), Color.white);
+            Txt(parent, name + "Label", label, new Rect(r.center.x - 115f, r.yMax + 12f, 230f, 40f), fExtra, 24f, Color.white, material: OutlineText());
+            return MakeButton(root, face.rt.GetComponent<Image>());
         }
 
         /// <summary>3B karakter görüntüsü (RenderTexture). Kare dokuyu kutunun oranına göre kırpar.</summary>
@@ -718,6 +789,12 @@ namespace Jumpline.EditorTools
         public static void SetFloat(Object target, string field, float value)
         {
             Prop(target, field, out var so).floatValue = value;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        public static void SetInt(Object target, string field, int value)
+        {
+            Prop(target, field, out var so).intValue = value;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -952,15 +1029,15 @@ namespace Jumpline.EditorTools
         {
             const int w = 279, h = 500;
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
-            Color top = Hex("#20263A"), mid = Hex("#241D2B"), bottom = Hex("#1B1A20");
+            Color top = Hex("#14566E"), mid = Hex("#0D3A50"), bottom = Hex("#082434");   // tema "Efsane"
             for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
             {
                 float u = x / (w - 1f), v = 1f - y / (h - 1f);
                 Color c = v < 0.45f ? Color.Lerp(top, mid, v / 0.45f) : Color.Lerp(mid, bottom, (v - 0.45f) / 0.55f);
-                c = AddGlow(c, u, v, 0.12f, 0.45f, 0.5f, Hex("#5A1F33"), 0.55f);
-                c = AddGlow(c, u, v, 0.88f, 0.22f, 0.45f, Hex("#2A3B66"), 0.5f);
-                c = AddGlow(c, u, v, 0.85f, 0.62f, 0.4f, Hex("#4A1A2C"), 0.45f);
+                c = AddGlow(c, u, v, 0.15f, 0.4f, 0.5f, Hex("#2AA3A8"), 0.45f);
+                c = AddGlow(c, u, v, 0.85f, 0.2f, 0.45f, Hex("#C99A3A"), 0.35f);
+                c = AddGlow(c, u, v, 0.8f, 0.68f, 0.4f, Hex("#1E7F8C"), 0.4f);
                 tex.SetPixel(x, y, c);
             }
             return SaveSprite($"{SpriteDir}/Background.png", tex, Vector4.zero);

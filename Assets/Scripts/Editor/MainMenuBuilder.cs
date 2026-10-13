@@ -777,10 +777,10 @@ namespace Jumpline.EditorTools
                 var seg = Add(root, names[i], segRect);
                 var segImg = seg.go.AddComponent<Image>();
                 bool maroon = i % 2 == 0;
-                seg.go.AddComponent<UIGradient>().SetColors(maroon ? Hex("#5A1F33") : Hex("#2B3656"), maroon ? Hex("#3E1A2B") : Hex("#222C47"));
+                seg.go.AddComponent<UIGradient>().SetColors(maroon ? Hex("#0E4555") : Hex("#14566A"), maroon ? Hex("#1C6C80") : Hex("#227A90"));
                 var sel = Add(seg, "Selected", segRect);
                 var selImg = sel.go.AddComponent<Image>();
-                selImg.color = Hex("#3A5A9A", 0.45f);
+                selImg.color = Hex("#F2C24E", 0.55f);
                 selImg.raycastTarget = false;
                 GlowLine(sel, new Rect(segRect.x + 30f, r.yMax - 12f, w - 60f, 16f), Hex("#7FB8FF"));
                 selected[i] = sel.go;

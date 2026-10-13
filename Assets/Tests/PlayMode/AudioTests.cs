@@ -23,6 +23,15 @@ namespace Jumpline.Tests
                 Assert.IsNotNull(bank.FindTrack(id)?.clip, "müzik eksik: " + id);
         }
 
+        [SetUp]
+        public void AudibleSettings()
+        {
+            // oyuncunun kayıtlı ses ayarı (sessiz / müzik 0) testleri etkilemesin
+            Jumpline.Save.SaveManager.Muted = false;
+            Jumpline.Save.SaveManager.MusicVolume = 1f;
+            AudioManager.Instance.ApplySettings();
+        }
+
         /// <summary>Çalan müzik parçası sayısı (efekt döngüleri hariç).</summary>
         private static int PlayingMusic()
         {

@@ -23,6 +23,7 @@ namespace Jumpline.UI
             public GameObject lockIcon;
             public GameObject portrait;
             public TMP_Text status;
+            [Tooltip("Sıradaki durağın çevresinde parlayan yıldızlar.")] public GameObject sparkles;
         }
 
         [SerializeField] private GameConfig config;
@@ -62,13 +63,20 @@ namespace Jumpline.UI
                 bool unlocked = built && SaveManager.IsLevelUnlocked(n.level);
                 int stars = SaveManager.GetStars(n.level);
                 if (n.lockIcon != null) n.lockIcon.SetActive(!unlocked);
-                if (n.portrait != null) n.portrait.SetActive(unlocked);
+                if (n.portrait != null)   // kilitliyken canavar kara siluet (merak uyandırsın)
+                {
+                    n.portrait.SetActive(true);
+                    var pimg = n.portrait.GetComponent<UnityEngine.UI.Image>();
+                    if (pimg != null) pimg.color = unlocked ? Color.white : new Color(0.08f, 0.06f, 0.08f, built ? 0.9f : 0.75f);
+                }
                 if (n.stars != null)
                     for (int s = 0; s < n.stars.Length; s++)
                         if (n.stars[s] != null) { n.stars[s].gameObject.SetActive(built); n.stars[s].color = s < stars ? starOn : starOff; }
                 if (n.status != null) n.status.text = !built ? Localization.Get("COMING SOON") : unlocked ? "" : Localization.Get("LOCKED");
                 if (unlocked && stars < 3 && pulseIndex < 0) pulseIndex = i;
             }
+            for (int i = 0; i < nodes.Length; i++)
+                if (nodes[i].sparkles != null) nodes[i].sparkles.SetActive(i == pulseIndex);
         }
 
         private void Update()
