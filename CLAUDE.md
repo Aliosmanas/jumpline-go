@@ -46,3 +46,6 @@ Tam tasarım isteği: `docs/BRIEF.md`. Kullanıcı Türkçe konuşur, Türkçe c
 - Ayarlanabilir her değer `[SerializeField]` ya da ScriptableObject; magic number yok.
 - Gameplay mekaniğini değiştiren büyük kararlar kullanıcıya sorulur.
 - Keystore / hesap şifrelerini Claude girmez.
+- **İkinci beyin (Obsidian, 13 Eki 2026 kullanıcı isteği):** kasa `D:\Repolar\Repolar`. Her anlamlı iş oturumu sonunda
+  `Projeler/JUMPLINE GO/JUMPLINE GO — Konsolide Durum.md` + `Wiki/Kaydet.md` (en üst satır) + `Wiki/log.md` güncellenir;
+  oturum başında önce bu sayfa okunur (ayrıntı için kod). Kasa kuralları: `D:\Repolar\Repolar\CLAUDE.md` (tablo, yoğun, Türkçe).
