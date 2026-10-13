@@ -255,13 +255,14 @@ namespace Jumpline.EditorTools
 
             // kalpler (canavarın yüzü solda)
             bossIconImages.Clear();
-            bossIconImages.Add(Icon(top, "boss_head", new Rect(300f, 146f, 84f, 84f), Color.white));
+            SkinImage(top, "BossMedallion", new Rect(24f, 196f, 132f, 132f), "medallion");   // plakanın altında, sol üst (hud_1.jpg)
+            bossIconImages.Add(Icon(top, "boss_head", new Rect(42f, 214f, 96f, 96f), Color.white));
             var hearts = new Image[6];   // bölüme göre 4-6 kalp (LevelSpec.bossHearts); fazlası gizlenir
             for (int i = 0; i < hearts.Length; i++)
-                hearts[i] = Icon(top, "heart", new Rect(392f + i * 60f, 156f, 56f, 56f), Color.white);
+                hearts[i] = Icon(top, "heart", new Rect(166f + i * 66f, 214f, 62f, 62f), Color.white);
 
             // mesafe: koşucu (sol) ←→ canavar; dolgu uzadıkça kırmızılaşır
-            const float mx = 318f, my = 244f, mw = 410f, mh = 26f;
+            const float mx = 176f, my = 300f, mw = 470f, mh = 26f;
             Panel(top, "GapTrack", new Rect(mx, my, mw, mh), C.NavyDark, Hex("#2A3556"), mh * 0.5f, Hex("#7083B3"));
             var fillBox = Add(top, "GapFill", new Rect(mx + 3f, my + 3f, mw - 6f, mh - 6f));
             var fillImg = fillBox.go.AddComponent<Image>();
@@ -288,11 +289,15 @@ namespace Jumpline.EditorTools
             var btnRoot = Add(bot, "ThrowButton", new Rect(826f, 1592f, 250f, 250f));
             btnRoot.go.AddComponent<Jumpline.UI.HandednessMirror>();   // solak modu: sola
             var group = btnRoot.go.AddComponent<CanvasGroup>();
-            var ring = Panel(btnRoot, "Ring", new Rect(826f, 1592f, 250f, 250f), Hex("#7A3B1C"), Hex("#E39A55"), 125f, Hex("#FFE0A8"));
-            var face = Panel(btnRoot, "Face", new Rect(844f, 1610f, 214f, 214f), Hex("#D99A52"), Hex("#FBE7C0"), 107f, Hex("#00000000"));
+            // referans: bakır halkalı safran yuvarlak düğme (hud_1.jpg)
+            var ringImg = SkinImage(btnRoot, "Ring", new Rect(826f, 1592f, 250f, 250f), "round_saffron", true);
+            var ring = new Box(ringImg.rectTransform, new Rect(826f, 1592f, 250f, 250f));
+            var faceImg = SkinImage(btnRoot, "Face", new Rect(856f, 1620f, 190f, 190f), "medallion");
+            faceImg.color = new Color(1f, 1f, 1f, 0.55f);
             var icon = Icon(btnRoot, "throw_melon", new Rect(871f, 1622f, 160f, 160f), Color.white);
             Txt(btnRoot, "ThrowLabel", "THROW", new Rect(826f, 1764f, 250f, 56f), fExtra, 40f, Color.white, TextAlignmentOptions.Center, outlined);
-            var badge = Panel(btnRoot, "CountBadge", new Rect(1010f, 1582f, 78f, 78f), Hex("#B3262E"), Hex("#FF4B5A"), 39f, Hex("#FFFFFF"));
+            var badgeImg = SkinImage(btnRoot, "CountBadge", new Rect(1004f, 1576f, 90f, 90f), "badge_red");
+            var badge = new Box(badgeImg.rectTransform, new Rect(1004f, 1576f, 90f, 90f));
             var count = Txt(badge, "Count", "x2", new Rect(1010f, 1582f, 78f, 78f), fExtra, 34f, Color.white, localize: false);
             foreach (var g in btnRoot.go.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;   // süs katmanları dokunuşu yutmasın
             var hit = ring.go.GetComponent<Image>();
@@ -505,6 +510,8 @@ namespace Jumpline.EditorTools
                 mat = new Material(fExtra.material);
                 AssetDatabase.CreateAsset(mat, path);
             }
+            mat.shader = fExtra.material.shader;
+            mat.mainTexture = fExtra.material.mainTexture;
             mat.EnableKeyword("OUTLINE_ON");
             mat.SetFloat("_OutlineWidth", 0.2f);
             mat.SetColor("_OutlineColor", new Color32(40, 12, 20, 255));

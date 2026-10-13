@@ -7,7 +7,7 @@ using static Jumpline.EditorTools.UIKit;
 
 namespace Jumpline.EditorTools
 {
-    /// <summary>Yükleme ekranı prefab'ı (Assets/Resources/LoadingScreen.prefab): koyu bazalt zemin, almaşık şerit, logo, çubuk, ipucu.</summary>
+    /// <summary>Yükleme ekranı prefab'ı (Assets/Resources/LoadingScreen.prefab): gece surları resmi (Flow), logo, bakır çerçeveli çubuk, ipucu.</summary>
     public static class LoadingScreenBuilder
     {
         public const string PrefabPath = "Assets/Resources/LoadingScreen.prefab";
@@ -23,36 +23,30 @@ namespace Jumpline.EditorTools
             var group = canvas.gameObject.AddComponent<CanvasGroup>();
             group.alpha = 0f;
             group.blocksRaycasts = false;
-            var bg = Img(canvas, "Background", null, Hex("#17161A"), false);
+            var bg = Img(canvas, "Background", null, Hex("#141A33"), false);
             Stretch(bg.rectTransform, new Vector2(-300f, -300f), new Vector2(300f, 300f));
             Box mid = Group(canvas, "Middle", 0.5f);
-            // almaşık şerit (bazalt-kireç) iki yanda
-            for (int i = 0; i < 12; i++)
-            {
-                var stripe = Add(mid, "Stripe" + i, new Rect(i * 96f, 640f, 48f, 18f));
-                var img = stripe.go.AddComponent<Image>();
-                img.color = Hex("#ECE6DA", 0.85f);
-                img.raycastTarget = false;
-                var stripe2 = Add(mid, "StripeB" + i, new Rect(i * 96f + 48f, 1342f, 48f, 18f));
-                var img2 = stripe2.go.AddComponent<Image>();
-                img2.color = Hex("#ECE6DA", 0.85f);
-                img2.raycastTarget = false;
-            }
-            var title = Txt(mid, "Title", "JUMPLINE GO", new Rect(0f, 760f, 1116f, 170f), fTitle != null ? fTitle : fExtra, 120f, Color.white, localize: false);
-            Chrome(title);
-            Txt(mid, "Subtitle", "SUR İÇİ", new Rect(0f, 925f, 1116f, 60f), fBold, 38f, Hex("#E8B95B"), localize: false);
-            Panel(mid, "BarTrack", new Rect(258f, 1050f, 600f, 30f), C.NavyDark, C.NavyDark, 15f, Hex("#5D6A91"));
-            var fill = Add(mid, "BarFill", new Rect(261f, 1053f, 594f, 24f));
+            // docs/flow_ui/yukleme_1.jpg: surların üstünde koşan kahraman + logo + bakır çerçeveli çubuk (dolgusu boşaltıldı)
+            var art = Add(mid, "Art", Full);
+            var artImg = art.go.AddComponent<Image>();
+            artImg.sprite = Skin["bg_loading"];
+            artImg.raycastTarget = false;
+            var fill = Add(mid, "BarFill", new Rect(178f, 1726f, 748f, 82f));
             var fillImg = fill.go.AddComponent<Image>();
-            Rounded(fillImg, 12f);
-            fillImg.color = Hex("#E8B95B");
+            Rounded(fillImg, 32f);
             fillImg.raycastTarget = false;
+            fill.go.AddComponent<UIGradient>().SetColors(Hex("#E8901A"), Hex("#FFD23F"));
             PivotLeft(fill);
-            var tip = Txt(mid, "Tip", "", new Rect(118f, 1130f, 880f, 150f), fMedium, 38f, Hex("#C9CCD6"), localize: false, wrap: true);
+            var tipBack = Add(mid, "TipBack", new Rect(98f, 1556f, 920f, 140f));
+            var tbi = tipBack.go.AddComponent<Image>();
+            Rounded(tbi, 30f);
+            tbi.color = Hex("#0E1428", 0.72f);
+            tbi.raycastTarget = false;
+            var tip = Txt(mid, "Tip", "", new Rect(128f, 1566f, 860f, 120f), fBold, 34f, Color.white, localize: false, wrap: true);
             var ls = canvas.gameObject.AddComponent<LoadingScreen>();
             Set(ls, "group", group);
             Set(ls, "barFill", fill.rt);
-            SetFloat(ls, "barWidth", 594f);
+            SetFloat(ls, "barWidth", 748f);
             Set(ls, "tipLabel", tip);
             PrefabUtility.SaveAsPrefabAsset(canvas.gameObject, PrefabPath);
             Object.DestroyImmediate(canvas.gameObject);

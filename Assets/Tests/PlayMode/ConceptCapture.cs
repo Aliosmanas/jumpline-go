@@ -21,6 +21,26 @@ namespace Jumpline.Tests
         [UnityTest]
         public IEnumerator Level2_Clean() => Shoot(2, "concept_lv2");
 
+        /// <summary>Arayüzlü oyun karesi (HUD tema kontrolü) → Logs/Concept/hud_lv1.png.</summary>
+        [UnityTest]
+        public IEnumerator Level1_Hud()
+        {
+            PlayerPrefs.SetInt("jl.introSeen", 1);
+            PlayerPrefs.SetInt("jl.tutorialDone", 1);
+            PlayerPrefs.SetInt("jl.introSeen.1", 1);
+            GameSession.Mode = RunMode.Campaign;
+            GameSession.Level = 1;
+            SceneManager.LoadScene("Gameplay");
+            yield return new WaitForSeconds(4.5f);
+            yield return new WaitForEndOfFrame();
+            var tex = ScreenCapture.CaptureScreenshotAsTexture();
+            string dir = Path.Combine(Application.dataPath, "..", "Logs", "Concept");
+            Directory.CreateDirectory(dir);
+            File.WriteAllBytes(Path.Combine(dir, "hud_lv1.png"), tex.EncodeToPNG());
+            Object.Destroy(tex);
+            Assert.Pass();
+        }
+
         private static IEnumerator Shoot(int level, string name)
         {
             PlayerPrefs.SetInt("jl.introSeen", 1);

@@ -55,6 +55,9 @@ namespace Jumpline.EditorTools
             public GameObject go => rt.gameObject;
         }
 
+        public const string SkinDir = UiDir + "/Skin";
+        /// <summary>Tema "Taş & Çini" parçaları (Google Flow, docs/flow_ui/parts → Assets/Art/UI/Skin).</summary>
+        public static readonly Dictionary<string, Sprite> Skin = new Dictionary<string, Sprite>();
         public static Sprite rounded, outline, circle, glowRect, glowLine, knob, ringGlow, softCircle, background, circuit, arcRing;
         public static readonly Dictionary<string, Sprite> Icons = new Dictionary<string, Sprite>();
         public static TMP_FontAsset fMedium, fBold, fExtra, fTitle;
@@ -131,6 +134,15 @@ namespace Jumpline.EditorTools
 
         public static Box Panel(Box parent, string name, Rect r, Color bottom, Color top, float radius, Color border)
         {
+            if (!themeBypass && Skin.Count > 0 && IsThemedDark(top))
+            {
+                var sb = Add(parent, name, r);
+                var si = sb.go.AddComponent<Image>();
+                bool small = Mathf.Min(r.width, r.height) < 96f;
+                SkinSprite(si, small ? "pill" : "card_lime", r, small ? 0.45f : 0.22f);
+                if (top.a < 0.99f) si.color = new Color(1f, 1f, 1f, Mathf.Max(top.a, 0.85f));
+                return sb;
+            }
             var b = Add(parent, name, r);
             var img = b.go.AddComponent<Image>();
             Rounded(img, radius);
@@ -146,6 +158,15 @@ namespace Jumpline.EditorTools
         // ---------------------------------------------------------------------
         public static bool themeBypass;
         private static readonly Color ThemeDeep = Hex("#124C66"), ThemeLight = Hex("#2E93AE"), ThemeGold = Hex("#F2C24E");
+
+        /// <summary>Tema çevirisine giren koyu (soğuk) yüzey mi? Sıcak renkler (bronz, kırmızı, altın) ve açık yüzeyler değil.</summary>
+        public static bool IsThemedDark(Color c)
+        {
+            if (c.a <= 0.01f) return false;
+            Color.RGBToHSV(c, out float h, out float sat, out float v);
+            bool warm = (h < 0.14f || h > 0.97f) && sat > 0.45f && v > 0.4f;
+            return !warm && v <= 0.45f;
+        }
 
         public static Color Theme(Color c, bool top = false)
         {
@@ -222,7 +243,7 @@ namespace Jumpline.EditorTools
             var b = Add(parent, icon + "Icon", r);
             var img = b.go.AddComponent<Image>();
             img.sprite = Icons[icon];
-            img.color = color;
+            img.color = IsSkinSprite(img.sprite) && color.a > 0.9f && color.maxColorComponent > 0.5f ? Color.white : color;
             img.preserveAspect = true;
             img.raycastTarget = false;
             return img;
@@ -235,9 +256,27 @@ namespace Jumpline.EditorTools
             var b = Add(parent, name, r);
             var t = b.go.AddComponent<TextMeshProUGUI>();
             t.font = font;
+            if (Skin.Count > 0 && inkBody && font == fMedium && material == null)
+            {
+                color = Ink;
+                material = fMedium.material;
+            }
+            else if (Skin.Count > 0 && font != fTitle)
+            {
+                Color.RGBToHSV(color, out _, out float cs, out float cv);
+                if (cs < 0.2f && cv > 0.55f) color = Color.white;   // soluk gri etiket → beyaz + kontur
+            }
+            if (material == null && Skin.Count > 0) material = AutoOutline(font);   // tema: her yazı konturlu
             if (material != null) t.fontSharedMaterial = material;
             t.text = text;
-            t.fontSize = size;
+            float want = Skin.Count > 0 ? Mathf.Max(size * 1.08f, MinTextSize) : size;
+            t.fontSize = want;
+            if (Skin.Count > 0)
+            {
+                t.enableAutoSizing = true;   // büyüyen yazı kutusuna sığmazsa küçülür (taşma yok)
+                t.fontSizeMax = want;
+                t.fontSizeMin = Mathf.Min(16f, want);
+            }
             t.color = color;
             t.alignment = align;
             t.textWrappingMode = wrap ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
@@ -247,10 +286,41 @@ namespace Jumpline.EditorTools
             return t;
         }
 
+        public const float MinTextSize = 24f;
+        /// <summary>Menülerde açıklama metni (fMedium) krem kartlar üstünde koyu mürekkep, kontursuz; açık gri etiketler beyaz.</summary>
+        public static bool inkBody;
+        private static readonly Color Ink = new Color32(59, 36, 18, 255);
+        private static readonly Dictionary<TMP_FontAsset, Material> autoOutline = new Dictionary<TMP_FontAsset, Material>();
+
+        /// <summary>Beyaz/açık yazılara koyu kahve kontur (rehber: kalınlık 0.25–0.3, alt gölge).</summary>
+        public static Material AutoOutline(TMP_FontAsset font)
+        {
+            if (font == null) return null;
+            if (font == fExtra) return OutlineText();
+            if (font == fTitle) return chromeMaterial;
+            if (autoOutline.TryGetValue(font, out var m) && m != null) return m;
+            string path = $"{FontDir}/{font.name}_Outline.mat";
+            m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(font.material);
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.shader = font.material.shader;
+            m.CopyPropertiesFromMaterial(font.material);
+            m.EnableKeyword("OUTLINE_ON");
+            m.SetFloat("_OutlineWidth", 0.28f);
+            m.SetColor("_OutlineColor", new Color32(42, 22, 8, 255));
+            m.SetFloat("_FaceDilate", 0.08f);
+            EditorUtility.SetDirty(m);
+            autoOutline[font] = m;
+            return m;
+        }
+
         public static void Chrome(TextMeshProUGUI t)
         {
             t.enableVertexGradient = true;
-            t.colorGradient = new VertexGradient(Color.white, Color.white, Hex("#8E97AB"), Hex("#8E97AB"));
+            t.colorGradient = new VertexGradient(Color.white, Color.white, Hex("#FFE7A0"), Hex("#FFE7A0"));   // beyaz → açık sarı
         }
 
         public static void Shadow(TextMeshProUGUI t)
@@ -377,6 +447,14 @@ namespace Jumpline.EditorTools
         /// <summary>Tombul parlak düğme yüzü: renk geçişi, beyaz kenar, üstte parlama, altta koyu gölge.</summary>
         public static Box GoldFace(Box parent, string name, Rect r, float radius, Color bottom, Color top)
         {
+            if (Skin.Count > 0)
+            {
+                var fb = Add(parent, name, r);
+                var fi = fb.go.AddComponent<Image>();
+                SkinSprite(fi, ButtonSkin(top), r);
+                AddShine(fb, r, name);
+                return fb;
+            }
             var shadow = Add(parent, name + "Shadow", new Rect(r.x, r.y + 7f, r.width, r.height));
             var si = shadow.go.AddComponent<Image>();
             Rounded(si, radius);
@@ -390,7 +468,13 @@ namespace Jumpline.EditorTools
             Rounded(gi, radius * 0.6f);
             gi.raycastTarget = false;
             gloss.go.AddComponent<UIGradient>().SetColors(new Color(1f, 1f, 1f, 0f), new Color(1f, 1f, 1f, 0.32f));
-            // kayan ışık şeridi (UIShine): yüzey maskeler, şerit çapraz
+            AddShine(b, r, name);
+            return b;
+        }
+
+        /// <summary>Kayan ışık şeridi (UIShine): yüzey maskeler, şerit çapraz.</summary>
+        private static void AddShine(Box b, Rect r, string name)
+        {
             b.go.AddComponent<Mask>().showMaskGraphic = true;
             var band = NewUI("Shine", b.rt);
             band.anchorMin = band.anchorMax = new Vector2(0.5f, 0.5f);
@@ -402,7 +486,6 @@ namespace Jumpline.EditorTools
             var shine = b.go.AddComponent<UIShine>();
             Set(shine, "band", band);
             SetFloat(shine, "startDelay", (Mathf.Abs(name.GetHashCode()) % 100) / 100f * 2.5f);   // düğmeler aynı anda parlamasın
-            return b;
         }
 
         private static Material outlineText;
@@ -418,10 +501,17 @@ namespace Jumpline.EditorTools
                 outlineText = new Material(fExtra.material);
                 AssetDatabase.CreateAsset(outlineText, path);
             }
+            outlineText.shader = fExtra.material.shader;
+            outlineText.mainTexture = fExtra.material.mainTexture;   // font değişince eski atlas kalmasın
             outlineText.EnableKeyword("OUTLINE_ON");
             outlineText.SetFloat("_OutlineWidth", 0.22f);
             outlineText.SetColor("_OutlineColor", new Color32(74, 36, 8, 255));
             outlineText.SetFloat("_FaceDilate", 0.12f);
+            outlineText.EnableKeyword("UNDERLAY_ON");
+            outlineText.SetColor("_UnderlayColor", new Color(0f, 0f, 0f, 0.6f));
+            outlineText.SetFloat("_UnderlayOffsetY", -0.9f);
+            outlineText.SetFloat("_UnderlayDilate", 0.35f);
+            outlineText.SetFloat("_UnderlaySoftness", 0.1f);
             EditorUtility.SetDirty(outlineText);
             return outlineText;
         }
@@ -429,6 +519,17 @@ namespace Jumpline.EditorTools
         /// <summary>Ayarlar tarzı üst başlık çubuğu: geri butonu + krom başlık. Geri butonunu döndürür.</summary>
         public static Button Header(Box parent, string title)
         {
+            if (Skin.Count > 0)
+            {
+                SkinImage(parent, "HeaderPlaque", new Rect(150f, 36f, 816f, 150f), "plaque", false, 0.5f);
+                var backBox = Add(parent, "BackButton", new Rect(30f, 44f, 128f, 128f));
+                var bi = backBox.go.AddComponent<Image>();
+                bi.sprite = Skin["i_back"];
+                bi.preserveAspect = true;
+                Button bb = MakeButton(backBox, bi);
+                Chrome(Txt(parent, "Title", title, new Rect(250f, 50f, 616f, 120f), fTitle, title.Length > 10 ? 70f : 84f, Color.white, material: chromeMaterial));
+                return bb;
+            }
             var header = Add(parent, "HeaderBar", new Rect(0f, 0f, 1116f, 200f));
             var poly = AddPolygon(header);
             poly.Configure(new[]
@@ -489,6 +590,18 @@ namespace Jumpline.EditorTools
         /// <summary>Başlıklı bölüm paneli (AUDIO / GRAPHICS / CONTROLS tarzı).</summary>
         public static Box Section(Box parent, string name, string title, Rect r)
         {
+            if (Skin.Count > 0)
+            {
+                var sp = Add(parent, name + "Panel", r);
+                var spi = sp.go.AddComponent<Image>();
+                SkinSprite(spi, "panel_basalt", r, 0.11f);   // ince çerçeve: içerik kenara taşmasın
+                spi.raycastTarget = true;
+                float rw = Mathf.Min(r.width * 0.8f, 640f);
+                var rr = new Rect(r.center.x - rw * 0.5f, r.y - 26f, rw, 100f);
+                SkinImage(sp, "HeaderRibbon", rr, "ribbon", false, 0.6f);
+                Txt(sp, "Title", title, new Rect(rr.x + rw * 0.18f, rr.y + 10f, rw * 0.64f, 66f), fExtra, 44f, Color.white, material: OutlineText());
+                return sp;
+            }
             var panel = Panel(parent, name + "Panel", r, Hex("#4A1B2C"), Hex("#212A44"), 28f, Hex("#7083B3"));
             var band = Add(panel, "HeaderBand", new Rect(r.x + 3f, r.y + 3f, r.width - 6f, 90f));
             var bandImg = band.go.AddComponent<Image>();
@@ -563,9 +676,23 @@ namespace Jumpline.EditorTools
         {
             var root = Add(parent, name, r);
             var img = root.go.AddComponent<Image>();
-            Rounded(img, r.height * 0.5f);
-            root.go.AddComponent<UIGradient>().SetColors(Hex("#0A2A3A"), Hex("#123C50"), true);
-            Border(root, r.height * 0.5f, Hex("#C99A3A"));
+            GameObject onTrack = null;
+            if (Skin.Count > 0)
+            {
+                SkinSprite(img, "btn_red", r, 0.5f);
+                var onImg = Img(root.rt, "OnTrack", Skin["btn_green"], Color.white);
+                SkinSprite(onImg, "btn_green", r, 0.5f);
+                onImg.raycastTarget = false;
+                Stretch(onImg.rectTransform);
+                onTrack = onImg.gameObject;
+                onTrack.SetActive(on);
+            }
+            else
+            {
+                Rounded(img, r.height * 0.5f);
+                root.go.AddComponent<UIGradient>().SetColors(Hex("#0A2A3A"), Hex("#123C50"), true);
+                Border(root, r.height * 0.5f, Hex("#C99A3A"));
+            }
             var k = Img(root.rt, "Knob", knob, Color.white, false);
             k.raycastTarget = false;
             k.rectTransform.sizeDelta = new Vector2(52f, 52f);
@@ -577,6 +704,7 @@ namespace Jumpline.EditorTools
             var sw = root.go.AddComponent<SwitchToggle>();
             float travel = r.width * 0.5f - r.height * 0.5f;
             Set(sw, "knob", k.rectTransform);
+            if (onTrack != null) Set(sw, "onTrack", onTrack);
             SetFloat(sw, "offX", -travel);
             SetFloat(sw, "onX", travel);
             k.rectTransform.anchoredPosition = new Vector2(on ? travel : -travel, 0f);
@@ -585,6 +713,20 @@ namespace Jumpline.EditorTools
 
         public static void Logo(Box parent, string subtitle)
         {
+            if (Skin.TryGetValue("logo", out var logoSprite))
+            {
+                var lb = Add(parent, "Logo", new Rect(288f, 70f, 540f, 270f));
+                var lim = lb.go.AddComponent<Image>();
+                lim.sprite = logoSprite;
+                lim.preserveAspect = true;
+                lim.raycastTarget = false;
+                if (!string.IsNullOrEmpty(subtitle))
+                {
+                    SkinImage(parent, "SubtitleRibbon", new Rect(258f, 330f, 600f, 90f), "ribbon", false, 0.6f);
+                    Txt(parent, "Subtitle", subtitle, new Rect(368f, 340f, 380f, 56f), fExtra, 30f, Color.white);
+                }
+                return;
+            }
             const float skew = -12f;
             var plate = Panel(parent, "LogoPlate", new Rect(128f, 118f, 860f, 165f), Hex("#1A2340"), Hex("#2E4272"), 18f, Hex("#8FA4D6"));
             plate.go.AddComponent<UISkew>().SetAngle(skew);
@@ -685,15 +827,21 @@ namespace Jumpline.EditorTools
             Place(halo.rectTransform, root, new Rect(r.x - 60f, r.y - 70f, r.width + 120f, r.height + 140f));
             halo.raycastTarget = false;
             Pulse(halo, 0.3f, 3f, 0f);
-            var frame = Add(root, "GoldFrame", new Rect(r.x - 14f, r.y - 14f, r.width + 28f, r.height + 28f));
-            var fi = frame.go.AddComponent<Image>();
-            Rounded(fi, r.height * 0.5f + 14f);
-            fi.raycastTarget = false;
-            frame.go.AddComponent<UIGradient>().SetColors(Hex("#B9802A"), Hex("#FFE38A"));
-            var face = GoldFace(root, "Face", r, r.height * 0.5f, Hex("#1F8E3C"), Hex("#7BE26A"));
-            Ribbon(root, new Rect(r.xMax - 70f, r.y - 60f, 150f, 120f), false);
-            Ribbon(root, new Rect(r.x - 80f, r.yMax - 70f, 150f, 120f), true);
-            Txt(face, "Label", label, r, fExtra, size, Color.white, material: OutlineText());
+            if (Skin.Count == 0)
+            {
+                var frame = Add(root, "GoldFrame", new Rect(r.x - 14f, r.y - 14f, r.width + 28f, r.height + 28f));
+                var fi = frame.go.AddComponent<Image>();
+                Rounded(fi, r.height * 0.5f + 14f);
+                fi.raycastTarget = false;
+                frame.go.AddComponent<UIGradient>().SetColors(Hex("#B9802A"), Hex("#FFE38A"));
+            }
+            var face = GoldFace(root, "Face", r, r.height * 0.5f, Hex("#E8901A"), Hex("#FFD23F"));   // referans: dev safran "OYNA"
+            if (Skin.Count == 0)
+            {
+                Ribbon(root, new Rect(r.xMax - 70f, r.y - 60f, 150f, 120f), false);
+                Ribbon(root, new Rect(r.x - 80f, r.yMax - 70f, 150f, 120f), true);
+            }
+            Txt(face, "Label", label, new Rect(r.x, r.y - r.height * 0.06f, r.width, r.height), fExtra, size, Color.white, material: OutlineText());
             AddSparkles(root, r, 14, 46f);
             return MakeButton(root, face.rt.GetComponent<Image>());
         }
@@ -915,11 +1063,117 @@ namespace Jumpline.EditorTools
             Icons["bg_road"] = CropPlain("bg_road", "market/gold.jpg", new RectInt(0, 500, 768, 720));
             Icons["gear_boots"] = CropReference("gear_boots", "character/boots.jpg", new RectInt(110, 600, 1000, 810), true);
 
-            fMedium = GetOrCreateFont("Montserrat-Medium");
-            fBold = GetOrCreateFont("Montserrat-Bold");
-            fExtra = GetOrCreateFont("Montserrat-ExtraBold");
-            fTitle = GetOrCreateFont("Exo2-BlackItalic");
+            LoadSkin();
+            // tema "Taş & Çini" (docs/flow_ui): kalın yuvarlak düğme/sayı fontu, Doğu esintili başlık, kalın gövde (hepsi OFL, Türkçe tam)
+            fMedium = GetOrCreateFont("Nunito-ExtraBold");
+            fBold = GetOrCreateFont("Nunito-Black");
+            fExtra = GetOrCreateFont("Baloo2-ExtraBold");
+            fTitle = GetOrCreateFont("Lalezar-Regular");
             chromeMaterial = GetOrCreateChromeMaterial();
+        }
+
+        /// <summary>9 dilimli kenarlar (kaynak piksel). Sözlükte olmayan parçalar dilimlenmez.</summary>
+        private static Vector4 SkinBorder(string n)
+        {
+            if (n.StartsWith("btn_")) return new Vector4(74f, 74f, 74f, 74f);
+            switch (n)
+            {
+                case "panel_basalt": return new Vector4(98f, 98f, 98f, 98f);
+                case "card_lime": return new Vector4(58f, 58f, 58f, 58f);
+                case "plaque": return new Vector4(124f, 54f, 124f, 54f);
+                case "ribbon": return new Vector4(214f, 60f, 214f, 60f);
+                case "pill": return new Vector4(54f, 46f, 54f, 46f);
+                case "navbar": return new Vector4(60f, 40f, 60f, 40f);
+                case "parchment": return new Vector4(64f, 64f, 64f, 64f);
+                default: return Vector4.zero;
+            }
+        }
+
+        private static void LoadSkin()
+        {
+            Skin.Clear();
+            if (!AssetDatabase.IsValidFolder(SkinDir)) return;
+            foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { SkinDir }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string n = Path.GetFileNameWithoutExtension(path);
+                var imp = (TextureImporter)AssetImporter.GetAtPath(path);
+                bool bg = n.StartsWith("bg_");
+                Vector4 border = SkinBorder(n);
+                if (imp.textureType != TextureImporterType.Sprite || imp.spriteBorder != border || imp.mipmapEnabled)
+                {
+                    imp.textureType = TextureImporterType.Sprite;
+                    imp.spriteImportMode = SpriteImportMode.Single;
+                    imp.spriteBorder = border;
+                    imp.alphaIsTransparency = !bg;
+                    imp.mipmapEnabled = false;
+                    imp.wrapMode = TextureWrapMode.Clamp;
+                    imp.maxTextureSize = 2048;
+                    imp.textureCompression = bg ? TextureImporterCompression.CompressedHQ : TextureImporterCompression.Uncompressed;
+                    imp.SaveAndReimport();
+                }
+                Skin[n] = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            }
+            if (Skin.TryGetValue("bg_menu", out var bgm)) background = bgm;
+            // renkli ikonlar (eski tek renkli ikonların yerine)
+            (string key, string skin)[] icons =
+            {
+                ("coin", "i_coin"), ("gem", "i_gem"), ("star", "i_star"), ("heart", "i_heart"), ("lock", "i_lock"),
+                ("settings", "i_gear"), ("shopping-cart", "i_shop"), ("calendar-star", "i_calendar"), ("backpack", "i_chest"),
+                ("helmet", "i_shield"), ("arrow-left", "i_back"), ("player-pause", "i_pause"),
+                ("book", "i_book"), ("map", "i_map"), ("scroll", "i_scroll"), ("trophy", "i_trophy"), ("home", "i_home"),
+                ("replay", "i_replay"), ("music", "i_music"), ("sound", "i_sound"), ("swords", "i_swords"), ("video", "i_video"),
+                ("bolt", "i_bolt"), ("close", "i_close"), ("globe", "i_globe"), ("help", "i_help"), ("vibrate", "i_vibrate"),
+                ("bell", "i_bell"), ("chest", "i_chest"), ("nazar", "i_nazar"), ("melon", "i_melon"), ("gear", "i_gear"),
+            };
+            foreach (var (key, skin) in icons)
+                if (Skin.TryGetValue(skin, out var sp)) Icons[key] = sp;
+        }
+
+        public static bool IsSkinSprite(Sprite sp) => sp != null && Skin.ContainsValue(sp);
+
+        /// <summary>Kutunun kısa kenarına göre 9 dilim kenarını ölçekler (küçük düğmede köşeler taşmasın).</summary>
+        public static void SkinSprite(Image img, string skin, Rect r, float edge = 0.42f)
+        {
+            img.sprite = Skin[skin];
+            Vector4 b = img.sprite.border;
+            if (b == Vector4.zero) { img.type = Image.Type.Simple; return; }
+            img.type = Image.Type.Sliced;
+            float maxB = Mathf.Max(Mathf.Max(b.x, b.z), Mathf.Max(b.y, b.w));
+            float fit = Mathf.Min(r.width, r.height) * edge;
+            img.pixelsPerUnitMultiplier = Mathf.Max(0.6f, maxB / Mathf.Max(fit, 1f));
+        }
+
+        public static Image SkinImage(Box parent, string name, Rect r, string skin, bool raycast = false, float edge = 0.42f)
+        {
+            var b = Add(parent, name, r);
+            var img = b.go.AddComponent<Image>();
+            SkinSprite(img, skin, r, edge);
+            img.raycastTarget = raycast;
+            if (img.type == Image.Type.Simple) img.preserveAspect = true;
+            return img;
+        }
+
+        /// <summary>Hazır düğmenin yüzünü başka renkteki parçayla değiştirir (yeşil DEVAM, kırmızı ANA MENÜ…).</summary>
+        public static Button Reskin(Button b, string skin)
+        {
+            if (b == null || !Skin.ContainsKey(skin)) return b;
+            var img = b.GetComponent<Image>();
+            var rt = (RectTransform)b.transform;
+            SkinSprite(img, skin, new Rect(0f, 0f, rt.sizeDelta.x, rt.sizeDelta.y));
+            return b;
+        }
+
+        /// <summary>Düğme yüzü rengi → hazır düğme parçası.</summary>
+        public static string ButtonSkin(Color top)
+        {
+            Color.RGBToHSV(top, out float h, out float sat, out float v);
+            if (sat < 0.22f) return "btn_basalt";
+            if (h < 0.035f || h > 0.92f) return "btn_red";
+            if (h < 0.17f) return "btn_saffron";
+            if (h < 0.42f) return "btn_green";
+            if (h < 0.56f) return "btn_turquoise";
+            return "btn_cobalt";
         }
 
         public static T GetOrCreateAsset<T>(string path, System.Action<T> init) where T : ScriptableObject
@@ -959,10 +1213,11 @@ namespace Jumpline.EditorTools
             var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
             bool isNew = mat == null;
             if (isNew) mat = new Material(fTitle.material) { name = "Exo2 Chrome" };
+            mat.shader = fTitle.material.shader;
             mat.CopyPropertiesFromMaterial(fTitle.material);
             mat.EnableKeyword("OUTLINE_ON");
-            mat.SetFloat("_OutlineWidth", 0.12f);
-            mat.SetColor("_OutlineColor", Hex("#11141F"));
+            mat.SetFloat("_OutlineWidth", 0.26f);
+            mat.SetColor("_OutlineColor", Hex("#3A1C08"));
             mat.EnableKeyword("UNDERLAY_ON");
             mat.SetColor("_UnderlayColor", new Color(0f, 0f, 0f, 0.6f));
             mat.SetFloat("_UnderlayOffsetX", 0.25f);

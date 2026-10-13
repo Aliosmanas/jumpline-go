@@ -50,6 +50,7 @@ namespace Jumpline.EditorTools
             // NewScene kullanılmayan asset'leri boşaltır; her şeyi sahne açıldıktan sonra yükle.
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             LoadAssets();
+            inkBody = true;
             LoadData();
             var skins = RunnerStageBuilder.EnsureLibrary();
             RunnerStageBuilder.ConfigureImport();
@@ -81,6 +82,7 @@ namespace Jumpline.EditorTools
             BuildCredits(NewScreen(safe, "credits", false));
             BuildMap(NewScreen(safe, "map", true));
             BuildTasks(NewScreen(safe, "tasks", false));
+            BuildBook(NewScreen(safe, "book", true));
 
             GameObject nav = BuildBottomNav(safe);
             BuildCurrencyBar(safe);   // her ekranın üstünde altın + elmas
@@ -90,6 +92,7 @@ namespace Jumpline.EditorTools
             Set(navigator, "bottomNav", nav);
             Set(navigator, "toast", toast);
 
+            inkBody = false;
             EditorSceneManager.SaveScene(scene, ScenePath);
             ScenesSetup.ApplyBuildSettings();
             AssetDatabase.SaveAssets();
@@ -128,19 +131,31 @@ namespace Jumpline.EditorTools
             Box bar = Group(safe, "CurrencyBar", 1f);
             var shade = Add(bar, "Shade", new Rect(0f, 0f, 1116f, CurrencyBarHeight));
             var shadeImg = shade.go.AddComponent<Image>();
-            shadeImg.color = Hex("#0E1220", 0.55f);
+            shadeImg.color = Hex("#0E1428", 0.6f);
             shadeImg.raycastTarget = false;
-            TMP_Text Pill(string name, string icon, Rect r, Color border, Color text)
+            TMP_Text Pill(string name, string icon, Rect r)
             {
-                Panel(bar, name, r, Hex("#1B2236", 0.95f), Hex("#2A3556", 0.95f), r.height * 0.5f, border);
-                Icon(bar, icon, new Rect(r.x + 10f, r.y + 7f, r.height - 14f, r.height - 14f), Color.white);
-                var t = Txt(bar, name + "Text", "0", new Rect(r.x + r.height, r.y, r.width - r.height - 22f, r.height), fExtra, 36f, text,
-                    TextAlignmentOptions.MidlineRight, localize: false);
+                SkinImage(bar, name, r, "pill", false, 0.45f);
+                Icon(bar, icon, new Rect(r.x - 16f, r.y - 8f, r.height + 16f, r.height + 16f), Color.white);
+                var t = Txt(bar, name + "Text", "0", new Rect(r.x + r.height + 4f, r.y, r.width - r.height - 66f, r.height), fExtra, 38f, Color.white,
+                    TextAlignmentOptions.Midline, localize: false);
                 t.raycastTarget = false;
+                var plus = Add(bar, name + "Plus", new Rect(r.xMax - 58f, r.y + 6f, r.height - 12f, r.height - 12f));
+                var pi = plus.go.AddComponent<Image>();
+                pi.sprite = Skin["round_green"];
+                pi.preserveAspect = true;
+                Txt(plus, "Plus", "+", new Rect(r.xMax - 58f, r.y + 2f, r.height - 12f, r.height - 12f), fExtra, 40f, Color.white, localize: false);
+                Link(MakeButton(plus, pi), MenuLink.LinkAction.OpenRoot, "market");
                 return t;
             }
-            var gold = Pill("GoldPill", "coin", new Rect(560f, 14f, 260f, 64f), Hex("#E8B95B"), C.Gold);
-            var gems = Pill("GemsPill", "gem", new Rect(836f, 14f, 240f, 64f), Hex("#6EA6FF"), Hex("#BFD8FF"));
+            var gold = Pill("GoldPill", "coin", new Rect(330f, 14f, 300f, 66f));
+            var gems = Pill("GemsPill", "gem", new Rect(668f, 14f, 280f, 66f));
+            var gear = Add(bar, "SettingsButton", new Rect(980f, 4f, 112f, 86f));
+            var gi = gear.go.AddComponent<Image>();
+            gi.sprite = Skin["round_saffron"];
+            gi.preserveAspect = true;
+            Icon(gear, "gear", new Rect(1000f, 12f, 72f, 70f), Color.white);
+            Link(MakeButton(gear, gi), MenuLink.LinkAction.OpenRoot, "settings");
             var cb = bar.rt.gameObject.AddComponent<CurrencyBar>();
             Set(cb, "goldLabel", gold);
             Set(cb, "gemsLabel", gems);
@@ -158,12 +173,41 @@ namespace Jumpline.EditorTools
 
         private static void BuildHome(Screen s)
         {
-            // docs/references/menu/home_v2.jpg
-            RawPreview(s.top, "RunnerPreview", new Rect(108f, 330f, 900f, 900f), preview);
-            Logo(s.top, "THE BOOK OF LEGENDS");
-            Link(GlassPlayButton(s.bot, "PlayButton", new Rect(118f, 1215f, 880f, 250f), "PLAY", 120f), MenuLink.LinkAction.Open, "map");
-            Starts(TagButton(s.bot, "QuickRaceButton", new Rect(70f, 1535f, 470f, 118f), "QUICK RACE", true), RunMode.QuickRace);
-            Starts(TagButton(s.bot, "DailyChallengeButton", new Rect(576f, 1535f, 470f, 118f), "DAILY CHALLENGE", false, 33f), RunMode.Daily);
+            // docs/flow_ui/anamenu_A.jpg — gece Diyarbakır arka planı, bazalt-bakır sahne halkası, dev safran OYNA
+            var logo = Add(s.top, "Logo", new Rect(318f, 6f, 480f, 240f));
+            var li = logo.go.AddComponent<Image>();
+            li.sprite = Skin["logo"];
+            li.preserveAspect = true;
+            li.raycastTarget = false;
+            var stage = Add(s.top, "StageWindow", new Rect(218f, 300f, 680f, 680f));
+            var sti = stage.go.AddComponent<Image>();
+            sti.sprite = circle;
+            sti.color = Hex("#16203C", 0.85f);
+            stage.go.AddComponent<Mask>().showMaskGraphic = true;
+            RawPreview(stage, "RunnerPreview", new Rect(118f, 250f, 880f, 880f), preview);
+            var ring = SkinImage(s.top, "StageRing", new Rect(168f, 250f, 780f, 780f), "stage_ring", true);
+            Link(MakeButton(new Box(ring.rectTransform, new Rect(168f, 250f, 780f, 780f)), ring), MenuLink.LinkAction.Open, "character");
+            AddSparkles(s.top, new Rect(168f, 250f, 780f, 780f), 8, 40f);
+            // sol kısayollar (görevler / etkinlikler / karakter)
+            (string icon, string label, string target)[] side = { ("scroll", "TASKS", "tasks"), ("calendar-star", "EVENTS", "events"), ("helmet", "CHARACTER", "character") };
+            for (int i = 0; i < side.Length; i++)
+            {
+                var r = new Rect(24f, 300f + i * 200f, 130f, 130f);
+                var sb = Add(s.top, "Side" + side[i].target, r);
+                var sbi = sb.go.AddComponent<Image>();
+                SkinSprite(sbi, "tab", r);
+                Icon(sb, side[i].icon, new Rect(r.x + 14f, r.y + 10f, 102f, 102f), Color.white);
+                Txt(s.top, "Side" + side[i].target + "Label", side[i].label, new Rect(r.x - 20f, r.yMax - 6f, 170f, 44f), fExtra, 24f, Color.white);
+                Link(MakeButton(sb, sbi), MenuLink.LinkAction.Open, side[i].target);
+            }
+            Link(GlassPlayButton(s.bot, "PlayButton", new Rect(148f, 1188f, 680f, 230f), "PLAY", 128f), MenuLink.LinkAction.Open, "map");
+            var mode = Add(s.bot, "QuickRaceMode", new Rect(852f, 1200f, 206f, 206f));
+            var mi = mode.go.AddComponent<Image>();
+            SkinSprite(mi, "btn_turquoise", new Rect(852f, 1200f, 206f, 206f), 0.4f);
+            Icon(mode, "bolt", new Rect(892f, 1220f, 126f, 126f), Color.white);
+            Txt(mode, "Label", "QUICK RACE", new Rect(852f, 1340f, 206f, 50f), fExtra, 24f, Color.white);
+            Starts(MakeButton(mode, mi), RunMode.QuickRace);
+            Starts(TagButton(s.bot, "DailyChallengeButton", new Rect(188f, 1470f, 740f, 120f), "DAILY CHALLENGE", false, 44f), RunMode.Daily);
         }
 
         // ---------------------------------------------------------------------
@@ -300,7 +344,8 @@ namespace Jumpline.EditorTools
         private static Box TabPage(Box parent, string name, bool road)
         {
             var page = Add(parent, name, Full);
-            var bg = Img(page.rt, "Background", road ? Icons["bg_road"] : background, Color.white, false);
+            road = false;   // tema "Taş & Çini": tüm sekmeler gece Diyarbakır arka planı
+            var bg = Img(page.rt, "Background", background, Color.white, false);
             bg.raycastTarget = false;
             if (road)
             {
@@ -326,14 +371,15 @@ namespace Jumpline.EditorTools
         /// <summary>Lacivert parlak fiyat kapsülü (referanstaki "$2.99").</summary>
         private static Button PricePill(Box parent, Rect r, out TextMeshProUGUI label, float size = 34f)
         {
-            return PillButton(parent, "PriceButton", r, "", size, Color.white, 1f, out label, Hex("#6EA6FF"), C.Blue, false);
+            var b = GoldFace(parent, "PriceButton", r, 14f, Hex("#3E8E2E"), Hex("#6CC24A"));   // referans: yeşil fiyat düğmesi
+            label = Txt(b, "Label", "", r, fExtra, size, Color.white, localize: false);
+            return MakeButton(b, b.rt.GetComponent<Image>());
         }
 
         /// <summary>Bordo fiyat butonu (ekipman mağazası).</summary>
         private static Button RedPill(Box parent, Rect r, out TextMeshProUGUI label)
         {
-            var b = Panel(parent, "PriceButton", r, Hex("#5A0F24"), Hex("#8A1A3A"), 12f, Hex("#E0406E"));
-            GlowLine(b, new Rect(r.x + 30f, r.yMax - 7f, r.width - 60f, 12f), Hex("#FF5C8A"));
+            var b = GoldFace(parent, "PriceButton", r, 14f, Hex("#3E8E2E"), Hex("#6CC24A"));
             label = Txt(b, "Label", "", r, fExtra, 34f, Color.white, localize: false);
             return MakeButton(b, b.rt.GetComponent<Image>());
         }
@@ -341,9 +387,8 @@ namespace Jumpline.EditorTools
         /// <summary>Mavi dikdörtgen fiyat butonu (güç mağazası).</summary>
         private static Button BluePill(Box parent, Rect r, out TextMeshProUGUI label)
         {
-            var b = Panel(parent, "PriceButton", r, Hex("#1B4FB0"), Hex("#3F82F0"), 12f, Hex("#9CC6FF"));
+            var b = GoldFace(parent, "PriceButton", r, 14f, Hex("#3E8E2E"), Hex("#6CC24A"));
             label = Txt(b, "Label", "", r, fExtra, 44f, Color.white, localize: false);
-            Shadow(label);
             return MakeButton(b, b.rt.GetComponent<Image>());
         }
 
@@ -577,8 +622,8 @@ namespace Jumpline.EditorTools
         private static SegmentedControl Tabs(Box parent, string[] names)
         {
             var strip = Add(parent, "Tabs", new Rect(0f, 0f, 1116f, 113f));
-            Fill(strip, Hex("#121726"), Hex("#1A2036"));
-            Line(parent, new Rect(0f, 111f, 1116f, 2f), Hex("#2E3A5A"));
+            var stripImg = strip.go.AddComponent<Image>();
+            SkinSprite(stripImg, "navbar", new Rect(0f, 0f, 1116f, 113f), 0.4f);   // bazalt şerit, bakır kenar
             float w = 1116f / names.Length;
             var buttons = new Button[names.Length];
             var selected = new GameObject[names.Length];
@@ -589,10 +634,10 @@ namespace Jumpline.EditorTools
                 var tab = Add(strip, names[i] + "Tab", r);
                 var hit = tab.go.AddComponent<Image>();
                 hit.color = new Color(0f, 0f, 0f, 0f);
-                var sel = Add(tab, "Selected", new Rect(r.x + 8f, r.y + 8f, r.width - 16f, r.height - 8f));
-                Fill(sel, Hex("#3A1024"), Hex("#6A1A3A"));
-                sel.rt.GetComponent<Image>().raycastTarget = false;
-                GlowLine(sel, new Rect(r.x + 30f, r.yMax - 8f, r.width - 60f, 12f), Hex("#FF4F7A"));
+                var sel = Add(tab, "Selected", new Rect(r.x + 8f, r.y + 10f, r.width - 16f, r.height - 18f));
+                var selImg = sel.go.AddComponent<Image>();
+                SkinSprite(selImg, "btn_saffron", new Rect(0f, 0f, r.width - 16f, r.height - 18f));
+                selImg.raycastTarget = false;
                 selected[i] = sel.go;
                 labels[i] = Txt(tab, "Label", names[i], r, fExtra, names[i].Length > 7 ? 32f : 36f, Color.white);
                 labels[i].enableAutoSizing = true;
@@ -604,7 +649,7 @@ namespace Jumpline.EditorTools
             SetArray(control, "segments", buttons);
             SetArray(control, "selectedVisuals", selected);
             SetArray(control, "labels", labels);
-            SetColor(control, "normalLabelColor", Hex("#8C95AA"));
+            SetColor(control, "normalLabelColor", Hex("#E9D3A1"));
             SetColor(control, "selectedLabelColor", Color.white);
             control.SetWithoutNotify(0);
             return control;
@@ -1049,20 +1094,28 @@ namespace Jumpline.EditorTools
             var rt = NewUI("BottomNav", safe);
             Stretch(rt);
             Box bot = Group(rt, "Bottom", 0f);
-            Line(bot, new Rect(0f, 1830f, 1116f, 2f), Hex("#3A4058", 0.9f));
-            NavTile(bot, "Market", 133f, "shopping-cart", "MARKET", "market", 0);
-            NavTile(bot, "Events", 346f, "calendar-star", "EVENTS", "events", 1);
-            NavTile(bot, "Inventory", 558f, "backpack", "INVENTORY", "inventory", 2);
-            NavTile(bot, "Character", 770f, "helmet", "CHARACTER", "character", 3);
-            NavTile(bot, "Settings", 982f, "settings", "SETTINGS", "settings", 4);
+            var barImg = SkinImage(bot, "NavBar", new Rect(-20f, 1790f, 1156f, 230f), "navbar", true, 0.3f);
+            barImg.raycastTarget = true;
+            NavTile(bot, "Market", 112f, "shopping-cart", "MARKET", "market", 0);
+            NavTile(bot, "Inventory", 335f, "chest", "COLLECTION", "inventory", 1);
+            NavTile(bot, "Home", 558f, "swords", "PLAY", "home", 2);
+            NavTile(bot, "Book", 781f, "book", "BOOK", "book", 3);
+            NavTile(bot, "Map", 1004f, "map", "MAP", "map", 4);
             return rt.gameObject;
         }
 
         // docs/references/menu/home_v2.jpg — dosya biçimli kutular, ışık halkaları
         private static void NavTile(Box parent, string name, float cx, string icon, string label, string screenId, int index)
         {
-            Button b = FolderTile(parent, name + "Tile", new Rect(cx - 75f, 1745f, 150f, 150f), icon, label, index);
-            Link(b, MenuLink.LinkAction.OpenRoot, screenId);
+            bool raised = index == 2;
+            var r = raised ? new Rect(cx - 112f, 1700f, 224f, 196f) : new Rect(cx - 98f, 1772f, 196f, 160f);
+            var tile = Add(parent, name + "Tile", r);
+            var ti = tile.go.AddComponent<Image>();
+            SkinSprite(ti, raised ? "tab_raised" : "tab", r, 0.3f);
+            float isz = raised ? 132f : 104f;
+            Icon(tile, icon, new Rect(r.center.x - isz * 0.5f, r.y + (raised ? 14f : 10f), isz, isz), Color.white);
+            Txt(tile, "Label", label, new Rect(r.x - 6f, r.yMax - (raised ? 60f : 52f), r.width + 12f, 48f), fExtra, raised ? 32f : 26f, Color.white);
+            Link(MakeButton(tile, ti), MenuLink.LinkAction.OpenRoot, screenId);
         }
 
         // ---------------------------------------------------------------------

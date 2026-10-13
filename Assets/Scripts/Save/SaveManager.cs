@@ -23,6 +23,7 @@ namespace Jumpline.Save
         public const string GemsKey = "jl.gems";
         public const string EquippedSkinKey = "jl.equippedSkin";
         public const string LanguageKey = "jl.language";
+        private const string LanguageMigrationKey = "jl.language.tr2026";
         public const string DailyClaimKey = "jl.dailyClaim";
         public const string OwnedPrefix = "jl.owned.";
         public const string BoostPrefix = "jl.boost.";
@@ -43,7 +44,7 @@ namespace Jumpline.Save
         public const int DefaultGold = 500;    // ekonomi (aşama 13): kostüm almak hedef olsun; eski kayıtlar etkilenmez
         public const int DefaultGems = 50;
         public const string DefaultSkin = "rookie";
-        public const string DefaultLanguage = "en";
+        public const string DefaultLanguage = "tr";   // arayüz referansları Türkçe (13 Eki 2026)
 
         // ---------- Kayıt sürümü ----------
 
@@ -292,7 +293,16 @@ namespace Jumpline.Save
 
         public static string Language
         {
-            get => PlayerPrefs.GetString(LanguageKey, Application.systemLanguage == SystemLanguage.Turkish ? "tr" : DefaultLanguage);
+            get
+            {
+                // 13 Eki 2026: arayüz Türkçe tasarlandı → eski "en" kaydı bir kez Türkçeye çevrilir (sonra oyuncu seçimi korunur)
+                if (PlayerPrefs.GetInt(LanguageMigrationKey, 0) == 0)
+                {
+                    PlayerPrefs.SetInt(LanguageMigrationKey, 1);
+                    PlayerPrefs.SetString(LanguageKey, DefaultLanguage);
+                }
+                return PlayerPrefs.GetString(LanguageKey, DefaultLanguage);
+            }
             set => PlayerPrefs.SetString(LanguageKey, value);
         }
 

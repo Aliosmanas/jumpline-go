@@ -1317,26 +1317,29 @@ namespace Jumpline.EditorTools
             hudMid = mid;
             Box bot = Group(hud, "Bottom", 0f);
 
-            Panel(top, "LevelPill", new Rect(308f, 50f, 500f, 92f), Hex("#1B2236", 0.9f), Hex("#2A3556", 0.9f), 46f, Hex("#7083B3"));
-            var level = Txt(top, "LevelLabel", "LEVEL 1", new Rect(308f, 50f, 500f, 92f), fExtra, 46f, Color.white, localize: false);
-            var mode = Txt(top, "ModeLabel", "", new Rect(308f, 150f, 500f, 44f), fBold, 28f, C.TextGrey, localize: false);
-            var progress = ProgressBar(top, "Progress", new Rect(258f, 210f, 600f, 24f), 0f);
+            // docs/flow_ui/hud_1.jpg: oymalı bazalt plaka (bölüm + şehir), safran duraklat, bakır kenarlı sayaçlar
+            SkinImage(top, "LevelPlaque", new Rect(228f, 30f, 660f, 168f), "plaque", false, 0.5f);
+            var level = Txt(top, "LevelLabel", "LEVEL 1", new Rect(338f, 44f, 440f, 84f), fTitle, 66f, Color.white, material: chromeMaterial, localize: false);
+            Chrome(level);
+            var mode = Txt(top, "ModeLabel", "", new Rect(338f, 124f, 440f, 46f), fExtra, 28f, Hex("#FFD23F"), localize: false);
+            var progress = ProgressBar(top, "Progress", new Rect(258f, 214f, 600f, 30f), 0f);
             hudTop = top;
             hudTopBox = top;
             hudBot = bot;
             chaseHidden = new[] { mode.gameObject, progress.parent.gameObject };   // ProgressBar dolguyu döndürür; iz ebeveyn
 
-            var pausePanel = Panel(top, "PauseButton", new Rect(953f, 40f, 123f, 123f), Hex("#4F1B2E"), Hex("#2E3A5E"), 18f, Hex("#7C8DB8"));
-            Icon(pausePanel, "player-pause", new Rect(975f, 62f, 79f, 79f), Color.white);
+            var pauseImg = SkinImage(top, "PauseButton", new Rect(950f, 36f, 132f, 132f), "round_saffron", true);
+            var pausePanel = new Box(pauseImg.rectTransform, new Rect(950f, 36f, 132f, 132f));
+            Txt(pausePanel, "Bars", "II", new Rect(950f, 40f, 132f, 120f), fExtra, 72f, Color.white, localize: false);
             Button pause = MakeButton(pausePanel, pausePanel.rt.GetComponent<Image>());
 
             // para sayacı (duraklat butonunun altında) + puan (metre başına 10)
             // para kapsülü (altın kenar) + altında puan kapsülü (neon kenar, "PUAN" etiketi)
-            Panel(top, "CoinPill", new Rect(756f, 182f, 320f, 74f), Hex("#1B2236", 0.9f), Hex("#2A3556", 0.9f), 37f, Hex("#E8B95B"));
+            SkinImage(top, "CoinPill", new Rect(756f, 186f, 320f, 74f), "pill", false, 0.45f);
             coinIcon = Icon(top, "coin", new Rect(1007f, 189f, 60f, 60f), Color.white);
-            coinLabel = Txt(top, "CoinCount", "0", new Rect(778f, 182f, 220f, 74f), fExtra, 42f, C.Gold, TextAlignmentOptions.MidlineRight, localize: false);
-            Panel(top, "ScorePill", new Rect(776f, 268f, 300f, 64f), Hex("#1B2236", 0.9f), Hex("#2A3556", 0.9f), 32f, Hex("#55CFFF"));
-            var scoreTag = Txt(top, "ScoreTag", "SCORE", new Rect(800f, 268f, 110f, 64f), fBold, 24f, Hex("#55CFFF"), TextAlignmentOptions.MidlineLeft);
+            coinLabel = Txt(top, "CoinCount", "0", new Rect(778f, 186f, 220f, 74f), fExtra, 42f, Color.white, TextAlignmentOptions.MidlineRight, localize: false);
+            SkinImage(top, "ScorePill", new Rect(776f, 272f, 300f, 66f), "pill", false, 0.45f);
+            var scoreTag = Txt(top, "ScoreTag", "SCORE", new Rect(800f, 272f, 110f, 66f), fExtra, 24f, Hex("#4FE3D6"), TextAlignmentOptions.MidlineLeft);
             scoreLabel = Txt(top, "Score", "0", new Rect(900f, 268f, 158f, 64f), fExtra, 34f, Color.white, TextAlignmentOptions.MidlineRight, localize: false);
             coinLabel.raycastTarget = scoreLabel.raycastTarget = coinIcon.raycastTarget = scoreTag.raycastTarget = false;
 
@@ -1352,9 +1355,9 @@ namespace Jumpline.EditorTools
 
             // Paneller
             CanvasGroup pauseGroup = Overlay(safe, "PausePanel", "PAUSED", 640f, out Box pauseBox);
-            Button cont = BoxButton(pauseBox, "Continue", new Rect(213f, 810f, 690f, 120f), "CONTINUE", 44f);
-            Button restart1 = BoxButton(pauseBox, "Restart", new Rect(213f, 960f, 690f, 120f), "RESTART", 44f);
-            Button menu1 = BoxButton(pauseBox, "MainMenu", new Rect(213f, 1110f, 690f, 120f), "MAIN MENU", 44f);
+            Button cont = Reskin(BoxButton(pauseBox, "Continue", new Rect(213f, 790f, 690f, 150f), "CONTINUE", 60f), "btn_green");
+            Button restart1 = Reskin(BoxButton(pauseBox, "Restart", new Rect(213f, 970f, 330f, 120f), "RESTART", 40f), "btn_turquoise");
+            Button menu1 = Reskin(BoxButton(pauseBox, "MainMenu", new Rect(573f, 970f, 330f, 120f), "MAIN MENU", 40f), "btn_red");
 
             CanvasGroup completeGroup = Overlay(safe, "CompletePanel", "LEVEL COMPLETE!", 800f, out Box completeBox);
             var reward = Txt(completeBox, "Reward", "", new Rect(113f, 790f, 890f, 120f), fExtra, 42f, C.Gold, localize: false);
@@ -1362,18 +1365,18 @@ namespace Jumpline.EditorTools
             for (int k = 0; k < 3; k++)
                 starImgs[k] = Icon(completeBox, "star", new Rect(398f + k * 110f, 700f, 100f, 100f), Color.white);
             SetArray(flow, "starImages", starImgs);
-            Button next = BoxButton(completeBox, "Next", new Rect(213f, 930f, 690f, 120f), "NEXT", 44f);
-            Button replay = BoxButton(completeBox, "Replay", new Rect(213f, 1080f, 690f, 120f), "REPLAY", 44f);
-            Button menu2 = BoxButton(completeBox, "MainMenu", new Rect(213f, 1230f, 690f, 120f), "MAIN MENU", 44f);
+            Button next = Reskin(BoxButton(completeBox, "Next", new Rect(213f, 930f, 690f, 150f), "NEXT", 60f), "btn_green");
+            Button replay = Reskin(BoxButton(completeBox, "Replay", new Rect(213f, 1110f, 330f, 120f), "REPLAY", 40f), "btn_turquoise");
+            Button menu2 = Reskin(BoxButton(completeBox, "MainMenu", new Rect(573f, 1110f, 330f, 120f), "MAIN MENU", 40f), "btn_red");
 
             CanvasGroup failGroup = Overlay(safe, "FailPanel", "GAME OVER", 820f, out Box failBox);
             Set(flow, "failReasonLabel", failBox.rt.Find("Title").GetComponent<TextMeshProUGUI>());   // kaçınca başlık değişir
             var gemBalance = Txt(failBox, "GemBalance", "", new Rect(213f, 690f, 690f, 50f), fBold, 30f, Hex("#BFD8FF"), localize: false);
-            Button reviveAd = BoxButton(failBox, "ReviveAd", new Rect(213f, 750f, 690f, 110f), "WATCH AD · CONTINUE (SOON)", 32f);
-            Button reviveGems = BoxButton(failBox, "ReviveGems", new Rect(213f, 875f, 690f, 110f), "CONTINUE · 50", 40f, out TextMeshProUGUI reviveLabel, false);
+            Button reviveAd = Reskin(BoxButton(failBox, "ReviveAd", new Rect(213f, 750f, 690f, 110f), "WATCH AD · CONTINUE (SOON)", 32f), "btn_turquoise");
+            Button reviveGems = Reskin(BoxButton(failBox, "ReviveGems", new Rect(213f, 875f, 690f, 110f), "CONTINUE · 50", 40f, out TextMeshProUGUI reviveLabel, false), "btn_green");
             Icon(failBox, "gem", new Rect(236f, 891f, 78f, 78f), Color.white).raycastTarget = false;
             Button retry = BoxButton(failBox, "Retry", new Rect(213f, 1000f, 690f, 110f), "PLAY AGAIN", 40f);
-            Button menu3 = BoxButton(failBox, "MainMenu", new Rect(213f, 1125f, 690f, 110f), "MAIN MENU", 40f);
+            Button menu3 = Reskin(BoxButton(failBox, "MainMenu", new Rect(213f, 1125f, 690f, 110f), "MAIN MENU", 40f), "btn_red");
             var countdown = Txt(hudMid, "Countdown", "3", new Rect(258f, 760f, 600f, 400f), fExtra, 280f, Color.white, localize: false);
             countdown.raycastTarget = false;
             countdown.gameObject.SetActive(false);
