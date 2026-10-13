@@ -50,12 +50,11 @@ Diğer tüm modeller, dokular ve arayüz öğeleri bu proje için Blender betikl
 
 | Font | Kullanım | Kaynak |
 |---|---|---|
-| Baloo 2 ExtraBold (statik örnek, wght 800) | düğmeler, sayılar | github.com/google/fonts — ofl/baloo2 |
-| Lalezar | büyük başlıklar | github.com/google/fonts — ofl/lalezar |
-| Nunito Black / ExtraBold (statik örnek) | gövde metni | github.com/google/fonts — ofl/nunito |
+| Paytone One | başlıklar, düğmeler, sayılar | github.com/google/fonts — ofl/paytoneone |
+| Rubik Bold / ExtraBold (statik örnek) | gövde metni | github.com/google/fonts — ofl/rubik |
 
 ## Arayüz görselleri (13 Eki 2026)
 
 Tema "Taş & Çini" ekran tasarımları, düğme/panel/ikon/çerçeve parçaları, menü ve kitap arka planları, logo ve yükleme
-resmi: kullanıcının kendi Google Flow hesabında (Nano Banana 2.1) üretildi — `docs/flow_ui/`, parçalar `Assets/Art/UI/Skin/`.
+resmi, 8 efsanenin karikatür portresi (`Assets/Art/UI/LegendArt`): kullanıcının kendi Google Flow hesabında (Nano Banana 2.1) üretildi — `docs/flow_ui/`, parçalar `Assets/Art/UI/Skin/`.
 Ticari kullanım Google'ın üretken yapay zekâ kullanım şartlarına tabidir; mağazaya çıkmadan önce şartlar kontrol edilmeli.

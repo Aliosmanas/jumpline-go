@@ -83,7 +83,7 @@ namespace Jumpline.EditorTools
                 window.go.AddComponent<UIGradient>().SetColors(Hex("#F5E3BE"), Hex("#FFF6DE"));
                 window.go.AddComponent<Mask>().showMaskGraphic = true;
                 GameObject portraitGo = null;
-                if (st.portrait != null && ImportSpriteHQ(st.portrait) is Sprite ps)
+                if (st.portrait != null && LegendArt(i) is Sprite ps)
                 {
                     var pb = Add(window, "Portrait", new Rect(r.x + 10f, r.y + 14f, 156f, 156f));
                     var pi = pb.go.AddComponent<Image>();

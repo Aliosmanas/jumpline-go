@@ -57,7 +57,7 @@ namespace Jumpline.UI
         [SerializeField] private Button nextButton;
         [SerializeField] private Color segmentOn = new Color(0.12f, 0.65f, 0.63f);
         [SerializeField] private Color segmentOff = new Color(0.35f, 0.27f, 0.18f, 0.35f);
-        [SerializeField] private Color lockedTint = new Color(0.08f, 0.06f, 0.08f, 0.92f);
+        [SerializeField] private Color lockedTint = new Color(0.2f, 0.17f, 0.22f, 1f);   // karikatür kare: gölgede kalsın, seçilsin
 
         private static readonly string[] RarityKeys = { "COMMON", "RARE", "EPIC", "LEGENDARY" };
         private int shown = -1;

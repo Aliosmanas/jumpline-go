@@ -184,10 +184,29 @@ namespace Jumpline.EditorTools
             sti.sprite = circle;
             sti.color = Hex("#16203C", 0.85f);
             stage.go.AddComponent<Mask>().showMaskGraphic = true;
-            RawPreview(stage, "RunnerPreview", new Rect(118f, 250f, 880f, 880f), preview);
+            // sıradaki rakibin karikatür portresi (kullanıcı isteği 13 Eki: koşucu yerine canavar)
+            var legendBox = Add(stage, "LegendPortrait", new Rect(218f, 300f, 680f, 680f));
+            var legendImg = legendBox.go.AddComponent<Image>();
+            legendImg.sprite = LegendArt(0);
+            legendImg.preserveAspect = true;
+            legendImg.raycastTarget = false;
             var ring = SkinImage(s.top, "StageRing", new Rect(168f, 250f, 780f, 780f), "stage_ring", true);
-            Link(MakeButton(new Box(ring.rectTransform, new Rect(168f, 250f, 780f, 780f)), ring), MenuLink.LinkAction.Open, "character");
+            Link(MakeButton(new Box(ring.rectTransform, new Rect(168f, 250f, 780f, 780f)), ring), MenuLink.LinkAction.Open, "book");
             AddSparkles(s.top, new Rect(168f, 250f, 780f, 780f), 8, 40f);
+            SkinImage(s.top, "LegendRibbon", new Rect(258f, 990f, 600f, 120f), "ribbon", false, 0.6f);
+            var legendName = Txt(s.top, "LegendName", "TEPEGOZ", new Rect(378f, 1006f, 360f, 70f), fExtra, 44f, Color.white, localize: false);
+            var hlp = s.screen.gameObject.AddComponent<HomeLegendPortrait>();
+            Set(hlp, "image", legendImg);
+            Set(hlp, "nameLabel", legendName);
+            var arts = new Object[MapStops.Length];
+            var keys = new string[MapStops.Length];
+            for (int i = 0; i < MapStops.Length; i++) { arts[i] = LegendArt(i); keys[i] = MapStops[i].legend; }
+            SetArray(hlp, "portraits", arts);
+            var hso = new SerializedObject(hlp);
+            var kp = hso.FindProperty("nameKeys");
+            kp.arraySize = keys.Length;
+            for (int i = 0; i < keys.Length; i++) kp.GetArrayElementAtIndex(i).stringValue = keys[i];
+            hso.ApplyModifiedPropertiesWithoutUndo();
             // sol kısayollar (görevler / etkinlikler / karakter)
             (string icon, string label, string target)[] side = { ("scroll", "TASKS", "tasks"), ("calendar-star", "EVENTS", "events"), ("helmet", "CHARACTER", "character") };
             for (int i = 0; i < side.Length; i++)
@@ -214,38 +233,107 @@ namespace Jumpline.EditorTools
         // CHARACTER / PROFILE
         // ---------------------------------------------------------------------
 
+        // Karakter ekranı (13 Eki kullanıcı isteği): geri tuşu yok, büyük GELİŞTİR karakterin altında,
+        // kostüm + ekipman market gibi kart ızgarası (dokun → giy), özellikler en altta.
+        private static readonly string[] GearIds =
+        {
+            "stealth_helmet", "velocity_helmet", "titanium_helmet", "stealth_gloves", "velocity_gloves", "titanium_gloves",
+            "stealth_boots", "velocity_boots", "titanium_boots",
+        };
+
         private static void BuildCharacter(Screen s)
         {
-            RawPreview(s.top, "RunnerPreview", new Rect(320f, 460f, 540f, 900f), preview);
-            Logo(s.top, "CHARACTER / PROFILE");
+            SkinImage(s.top, "TitlePlaque", new Rect(208f, 24f, 700f, 140f), "plaque", false, 0.5f);
+            Chrome(Txt(s.top, "Title", "CHARACTER", new Rect(318f, 40f, 480f, 104f), fTitle, 72f, Color.white, material: chromeMaterial));
+            RawPreview(s.top, "RunnerPreview", new Rect(268f, 160f, 580f, 580f), preview);
+            SkinImage(s.top, "SuitRibbon", new Rect(278f, 712f, 560f, 104f), "ribbon", false, 0.6f);
+            TMP_Text suit = Txt(s.top, "SuitName", "ROOKIE", new Rect(388f, 726f, 340f, 62f), fExtra, 38f, Color.white, localize: false);
+            var upRect = new Rect(158f, 838f, 800f, 168f);
+            var up = GoldFace(s.top, "UpgradeButton", upRect, 30f, Hex("#E8901A"), Hex("#FFD23F"));
+            Icon(up, "bolt", new Rect(upRect.x + 40f, upRect.y + 20f, 128f, 128f), Color.white);
+            Txt(up, "Label", "UPGRADE", new Rect(upRect.x + 170f, upRect.y + 12f, 580f, 136f), fExtra, 76f, Color.white, material: OutlineText());
+            AddSparkles(s.top, upRect, 8, 36f);
+            Link(MakeButton(up, up.rt.GetComponent<Image>()), MenuLink.LinkAction.Open, "upgrade");
 
-            Txt(s.top, "StatsHeader", "STATS", new Rect(40f, 420f, 288f, 56f), fBold, 34f, Hex("#C9CCD6"));
-            Line(s.top, new Rect(40f, 479f, 288f, 2f), Hex("#4E546B"));
+            const float top = 1036f, gapY = 22f, sectionGap = 60f;
+            float bottom = NavTop - 70f;
+            (string title, string[] ids, int cols, float cardH, bool thumb)[] grids =
+            {
+                ("SKINS", SkinIds, 4, 300f, true),
+                ("GEAR", GearIds, 3, 340f, false),
+            };
+            float statsH = 120f + 4 * 136f;
+            float contentBottom = top + 50f + statsH + sectionGap;
+            foreach (var g in grids) contentBottom += 120f + ((g.ids.Length + g.cols - 1) / g.cols) * (g.cardH + gapY) + sectionGap;
+            Box c = VerticalScroll(s.top, "CharacterScroll", new Rect(0f, top, 1116f, bottom - top), contentBottom);
+            var cards = new List<ShopItemCard>();
+            float y = top + 50f;
+            foreach (var g in grids)
+            {
+                int rows = (g.ids.Length + g.cols - 1) / g.cols;
+                float h = 120f + rows * (g.cardH + gapY);
+                var panel = Section(c, g.title, g.title, new Rect(30f, y, 1056f, h));
+                float cw = (1056f - 60f - 18f * (g.cols - 1)) / g.cols;
+                for (int i = 0; i < g.ids.Length; i++)
+                {
+                    var r = new Rect(60f + (i % g.cols) * (cw + 18f), y + 104f + (i / g.cols) * (g.cardH + gapY), cw, g.cardH);
+                    var card = CollectionCard(panel, g.ids[i], r, g.thumb);
+                    if (card != null) cards.Add(card);
+                }
+                y += h + sectionGap;
+            }
+            var statsPanel = Section(c, "Stats", "STATS", new Rect(30f, y, 1056f, statsH));
             var bars = new List<Dictionary<string, object>>
             {
-                StatRow(s.top, "magnet", "MAGNET", 515f),
-                StatRow(s.top, "shield", "SHIELD", 640f),
-                StatRow(s.top, "double_gold", "DOUBLE GOLD", 765f),
-                StatRow(s.top, "speed_boost", "SPEED BOOST", 890f),
+                StatRowWide(statsPanel, "magnet", "MAGNET", y + 110f),
+                StatRowWide(statsPanel, "shield", "SHIELD", y + 246f),
+                StatRowWide(statsPanel, "double_gold", "DOUBLE GOLD", y + 382f),
+                StatRowWide(statsPanel, "speed_boost", "SPEED BOOST", y + 518f),
             };
-
-            Txt(s.top, "GearHeader", "GEAR", new Rect(862f, 420f, 213f, 56f), fBold, 34f, Hex("#C9CCD6"));
-            Line(s.top, new Rect(862f, 479f, 213f, 2f), Hex("#4E546B"));
-            Panel(s.top, "GearPanel", new Rect(862f, 497f, 213f, 871f), Hex("#1E2438", 0.75f), Hex("#2A1A28", 0.75f), 18f, Hex("#5D6B93"));
-            TMP_Text suit = GearSlot(s.top, "Suit", 523f, "SUIT:", "ROOKIE", null, null);
-            GearSlot(s.top, "Boots", 742f, "BOOTS:", "SPRING BOOTS", "gear_boots", RunnerSkin.Boots);
-            GearSlot(s.top, "Gloves", 950f, "GLOVES:", "GRIP-TECH", "gear_gloves", RunnerSkin.Gloves);
-            GearSlot(s.top, "Helmet", 1160f, "HELMET:", "VELOCITY VISOR", "gear_helmet", RunnerSkin.Helmet);
-
-            Link(PrimaryButton(s.bot, "CustomizeButton", new Rect(262f, 1362f, 590f, 180f), new Rect(285f, 1380f, 545f, 142f), "CUSTOMIZE", 80f), MenuLink.LinkAction.Open, "customize");
-            Link(PillButton(s.bot, "UpgradeButton", new Rect(378f, 1572f, 360f, 68f), "UPGRADE", 30f, Hex("#C3C8D6"), 1f), MenuLink.LinkAction.Open, "upgrade");
-            Link(PillButton(s.bot, "BackButton", new Rect(765f, 1572f, 308f, 68f), "BACK", 30f, Hex("#C3C8D6"), 1f), MenuLink.LinkAction.Back);
 
             var view = s.screen.gameObject.AddComponent<CharacterView>();
             Set(view, "stats", stats);
             Set(view, "catalog", catalog);
             Set(view, "suitName", suit);
             SetStructArray(view, "bars", bars);
+            var list = s.screen.gameObject.AddComponent<ItemListView>();
+            Set(list, "catalog", catalog);
+            SetEnum(list, "mode", (int)CardMode.Customize);
+            SetArray(list, "cards", cards.ToArray());
+        }
+
+        /// <summary>Koleksiyon kartı (market kartıyla aynı görünüm): dokununca giyer; durum bakır çerçeveli hapta.</summary>
+        private static ShopItemCard CollectionCard(Box parent, string itemId, Rect r, bool thumb)
+        {
+            ShopItem item = catalog.Find(itemId);
+            if (item == null) return null;
+            var root = Add(parent, "Own_" + itemId, r);
+            var face = Panel(root, "Face", r, Hex("#1C2236"), Hex("#2A3352"), 20f, Hex("#00000000"));
+            var art = new Rect(r.x + 14f, r.y + 14f, r.width - 28f, r.height - 150f);
+            if (thumb) Thumb(root, itemId, art);
+            else if (Icons.ContainsKey(itemId)) Icon(root, itemId, art, Color.white);
+            RarityTag(root, r, item.rarity);
+            var title = Txt(root, "Title", item.displayName, new Rect(r.x + 8f, r.yMax - 132f, r.width - 16f, 46f), fExtra, 28f, Color.white, localize: false);
+            SkinImage(root, "StatusPill", new Rect(r.x + 12f, r.yMax - 80f, r.width - 24f, 66f), "pill", false, 0.45f);
+            var status = Txt(root, "Status", "", new Rect(r.x + 20f, r.yMax - 78f, r.width - 40f, 62f), fExtra, 26f, Color.white, localize: false);
+            var mark = Add(root, "EquippedMark", new Rect(r.x + 6f, r.y + 6f, 64f, 64f));
+            var mi = mark.go.AddComponent<Image>();
+            mi.sprite = Skin["round_green"];
+            mi.raycastTarget = false;
+            Icon(mark, "check", new Rect(r.x + 16f, r.y + 14f, 44f, 44f), Color.white);
+            Button b = MakeButton(root, face.rt.GetComponent<Image>());
+            return Card(root, itemId, b, title, status, null, mark.go);
+        }
+
+        private static Dictionary<string, object> StatRowWide(Box parent, string id, string label, float y)
+        {
+            const float x = 70f, w = 976f;
+            if (Icons.ContainsKey(id)) Icon(parent, id, new Rect(x, y + 4f, 104f, 104f), Color.white);
+            Txt(parent, id + "Label", label, new Rect(x + 120f, y, 480f, 50f), fExtra, 34f, Color.white, TextAlignmentOptions.Left);
+            var value = Txt(parent, id + "Value", "0", new Rect(x + w - 260f, y, 250f, 50f), fExtra, 34f, Hex("#FFD23F"), TextAlignmentOptions.Right, localize: false);
+            RectTransform fill = ProgressBar(parent, id + "Bar", new Rect(x + 120f, y + 58f, w - 140f, 30f), 0.5f);
+            var tier = Txt(parent, id + "Tier", "", new Rect(x + 120f, y + 92f, w - 140f, 36f), fBold, 26f, Color.white, TextAlignmentOptions.Left, localize: false);
+            return new Dictionary<string, object> { { "statId", id }, { "value", value }, { "tier", tier }, { "fill", fill }, { "fullWidth", w - 146f }, { "valueFormat", "{0} SEC" } };
         }
 
         /// <summary>Takıp çıkarma + takılı çeşide göre ikon (standard / stealth / velocity / titanium).</summary>
@@ -267,37 +355,6 @@ namespace Jumpline.EditorTools
             var so = new SerializedObject(target);
             so.FindProperty(field).boolValue = value;
             so.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static Dictionary<string, object> StatRow(Box parent, string id, string label, float y)
-        {
-            Txt(parent, id + "Label", label, new Rect(45f, y, 230f, 40f), fBold, 28f, Hex("#E2E4EA"), TextAlignmentOptions.Left);
-            var value = Txt(parent, id + "Value", "0", new Rect(225f, y, 100f, 40f), fBold, 28f, Hex("#E2E4EA"), TextAlignmentOptions.Right, localize: false);
-            RectTransform fill = ProgressBar(parent, id + "Bar", new Rect(42f, y + 43f, 286f, 24f), 0.5f);
-            var tier = Txt(parent, id + "Tier", "", new Rect(45f, y + 70f, 280f, 36f), fMedium, 26f, Hex("#B5B9C6"), TextAlignmentOptions.Left, localize: false);
-            return new Dictionary<string, object> { { "statId", id }, { "value", value }, { "tier", tier }, { "fill", fill }, { "fullWidth", 280f }, { "valueFormat", "{0} SEC" } };
-        }
-
-        private static TMP_Text GearSlot(Box parent, string name, float y, string kind, string item, string icon, string gearSlot)
-        {
-            var r = new Rect(901f, y, 134f, 134f);
-            var slot = Panel(parent, name + "Slot", r, Hex("#5A1D33"), Hex("#2F3A5E"), 18f, Hex("#8193C0"));
-            Image art = icon != null ? Icon(slot, icon, new Rect(905f, y + 6f, 126f, 122f), Color.white) : null;
-            if (icon == null) Thumb(slot, "rookie", new Rect(905f, y + 4f, 126f, 126f));
-            Color c = Hex("#D9DCE3");
-            Txt(parent, name + "Kind", kind, new Rect(868f, y + 142f, 200f, 26f), fBold, 18f, c);
-            var itemText = Txt(parent, name + "Item", item, new Rect(862f, y + 165f, 213f, 26f), fBold, 18f, c, localize: name != "Suit");
-            Button button = MakeButton(slot, slot.rt.GetComponent<Image>());
-            if (gearSlot == null)
-            {
-                Link(button, MenuLink.LinkAction.Open, "customize");
-            }
-            else
-            {
-                var status = Txt(slot, "Status", "", new Rect(r.x, r.yMax - 26f, r.width, 22f), fExtra, 15f, c, localize: false);
-                AddGearToggle(button.gameObject, gearSlot, item, art, status, icon);
-            }
-            return itemText;
         }
 
         // ---------------------------------------------------------------------

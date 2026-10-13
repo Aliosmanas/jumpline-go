@@ -28,6 +28,13 @@ namespace Jumpline.EditorTools
 
         private static readonly string[] FrameByRarity = { "frame_copper", "frame_turquoise", "frame_purple", "frame_gold" };
 
+        /// <summary>Efsanenin karikatür portresi (Google Flow, Assets/Art/UI/LegendArt) — yoksa eski 3B portre.</summary>
+        private static Sprite LegendArt(int i)
+        {
+            string file = System.IO.Path.GetFileName(MapStops[i].portrait);
+            return ImportSpriteHQ("Assets/Art/UI/LegendArt/" + file) ?? ImportSpriteHQ(MapStops[i].portrait);
+        }
+
         private static void BuildBook(Screen s)
         {
             SolidBackground(s);
@@ -72,7 +79,7 @@ namespace Jumpline.EditorTools
                 wi.color = Hex("#D9C49A");   // parşömen: kilitliyken kara siluet seçilsin
                 wi.raycastTarget = false;
                 window.go.AddComponent<Mask>().showMaskGraphic = true;
-                var ps = ImportSpriteHQ(MapStops[i].portrait);
+                var ps = LegendArt(i);
                 var portrait = Add(window, "Portrait", new Rect(x + 22f, y + 26f, 236f, 236f));
                 var pi = portrait.go.AddComponent<Image>();
                 pi.sprite = ps;
@@ -95,7 +102,7 @@ namespace Jumpline.EditorTools
                     { "weaknessKey", d.weakness }, { "rarity", rarity }, { "portrait", ps },
                 });
             }
-            Txt(s.top, "Hint", "Beat a legend to add it to the book!", new Rect(118f, 1550f, 880f, 50f), fBold, 30f, Hex("#5A3212"));
+            Txt(s.top, "Hint", "Beat a legend to add it to the book!", new Rect(118f, 1508f, 880f, 56f), fExtra, 32f, Color.white);
 
             // ---- detay sayfası ----
             var detailRt = NewUI("Detail", s.screen.transform);
@@ -134,11 +141,14 @@ namespace Jumpline.EditorTools
             pvi.preserveAspect = true;
             Button prevB = MakeButton(prev, pvi);
             var next = Add(dm, "Next", new Rect(906f, 650f, 120f, 120f));
-            var nxi = next.go.AddComponent<Image>();
-            nxi.sprite = Skin["i_back"];
-            nxi.preserveAspect = true;
-            next.rt.localScale = new Vector3(-1f, 1f, 1f);
-            Button nextB = MakeButton(next, nxi);
+            var nxHit = next.go.AddComponent<Image>();
+            nxHit.color = new Color(1f, 1f, 1f, 0f);
+            var nxArt = Img(next.rt, "Arrow", Skin["i_back"], Color.white, false);   // ok sağa: ayna çocukta (basma yayı kökün ölçeğini sıfırlar)
+            nxArt.preserveAspect = true;
+            nxArt.raycastTarget = false;
+            Stretch(nxArt.rectTransform);
+            nxArt.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
+            Button nextB = MakeButton(next, nxHit);
 
             string[] statKeys = { "POWER", "SPEED", "CUNNING" };
             var segs = new Object[15];

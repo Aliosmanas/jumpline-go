@@ -269,13 +269,13 @@ namespace Jumpline.EditorTools
             if (material == null && Skin.Count > 0) material = AutoOutline(font);   // tema: her yazı konturlu
             if (material != null) t.fontSharedMaterial = material;
             t.text = text;
-            float want = Skin.Count > 0 ? Mathf.Max(size * 1.08f, MinTextSize) : size;
+            float want = Skin.Count > 0 ? Mathf.Max(size * 1.18f, MinTextSize) : size;
             t.fontSize = want;
             if (Skin.Count > 0)
             {
                 t.enableAutoSizing = true;   // büyüyen yazı kutusuna sığmazsa küçülür (taşma yok)
                 t.fontSizeMax = want;
-                t.fontSizeMin = Mathf.Min(16f, want);
+                t.fontSizeMin = Mathf.Min(20f, want);
             }
             t.color = color;
             t.alignment = align;
@@ -286,7 +286,7 @@ namespace Jumpline.EditorTools
             return t;
         }
 
-        public const float MinTextSize = 24f;
+        public const float MinTextSize = 28f;   // rehber: mutlak alt sınır 28
         /// <summary>Menülerde açıklama metni (fMedium) krem kartlar üstünde koyu mürekkep, kontursuz; açık gri etiketler beyaz.</summary>
         public static bool inkBody;
         private static readonly Color Ink = new Color32(59, 36, 18, 255);
@@ -309,9 +309,13 @@ namespace Jumpline.EditorTools
             m.shader = font.material.shader;
             m.CopyPropertiesFromMaterial(font.material);
             m.EnableKeyword("OUTLINE_ON");
-            m.SetFloat("_OutlineWidth", 0.28f);
+            m.SetFloat("_OutlineWidth", 0.3f);
             m.SetColor("_OutlineColor", new Color32(42, 22, 8, 255));
-            m.SetFloat("_FaceDilate", 0.08f);
+            m.SetFloat("_FaceDilate", 0.12f);
+            m.EnableKeyword("UNDERLAY_ON");
+            m.SetColor("_UnderlayColor", new Color(0f, 0f, 0f, 0.55f));
+            m.SetFloat("_UnderlayOffsetY", -0.8f);
+            m.SetFloat("_UnderlayDilate", 0.3f);
             EditorUtility.SetDirty(m);
             autoOutline[font] = m;
             return m;
@@ -504,9 +508,9 @@ namespace Jumpline.EditorTools
             outlineText.shader = fExtra.material.shader;
             outlineText.mainTexture = fExtra.material.mainTexture;   // font değişince eski atlas kalmasın
             outlineText.EnableKeyword("OUTLINE_ON");
-            outlineText.SetFloat("_OutlineWidth", 0.22f);
-            outlineText.SetColor("_OutlineColor", new Color32(74, 36, 8, 255));
-            outlineText.SetFloat("_FaceDilate", 0.12f);
+            outlineText.SetFloat("_OutlineWidth", 0.32f);
+            outlineText.SetColor("_OutlineColor", new Color32(52, 24, 6, 255));
+            outlineText.SetFloat("_FaceDilate", 0.18f);
             outlineText.EnableKeyword("UNDERLAY_ON");
             outlineText.SetColor("_UnderlayColor", new Color(0f, 0f, 0f, 0.6f));
             outlineText.SetFloat("_UnderlayOffsetY", -0.9f);
@@ -1064,11 +1068,11 @@ namespace Jumpline.EditorTools
             Icons["gear_boots"] = CropReference("gear_boots", "character/boots.jpg", new RectInt(110, 600, 1000, 810), true);
 
             LoadSkin();
-            // tema "Taş & Çini" (docs/flow_ui): kalın yuvarlak düğme/sayı fontu, Doğu esintili başlık, kalın gövde (hepsi OFL, Türkçe tam)
-            fMedium = GetOrCreateFont("Nunito-ExtraBold");
-            fBold = GetOrCreateFont("Nunito-Black");
-            fExtra = GetOrCreateFont("Baloo2-ExtraBold");
-            fTitle = GetOrCreateFont("Lalezar-Regular");
+            // tema "Taş & Çini": tombul oyun fontu (başlık/düğme/sayı) + çok okunur kalın gövde (OFL, Türkçe tam; kullanıcı 13 Eki seçimi)
+            fMedium = GetOrCreateFont("Rubik-Bold");
+            fBold = GetOrCreateFont("Rubik-ExtraBold");
+            fExtra = GetOrCreateFont("PaytoneOne-Regular");
+            fTitle = fExtra;
             chromeMaterial = GetOrCreateChromeMaterial();
         }
 
@@ -1194,7 +1198,7 @@ namespace Jumpline.EditorTools
             if (asset != null) return asset;
 
             var source = AssetDatabase.LoadAssetAtPath<Font>($"{FontDir}/{fileName}.ttf");
-            asset = TMP_FontAsset.CreateFontAsset(source, 90, 9, GlyphRenderMode.SDFAA, 1024, 1024);
+            asset = TMP_FontAsset.CreateFontAsset(source, 90, 14, GlyphRenderMode.SDFAA, 1024, 1024);   // geniş dolgu: kalın kontur
             asset.name = $"{fileName} SDF";
             AssetDatabase.CreateAsset(asset, assetPath);
             asset.atlasTextures[0].name = $"{fileName} Atlas";
@@ -1216,7 +1220,8 @@ namespace Jumpline.EditorTools
             mat.shader = fTitle.material.shader;
             mat.CopyPropertiesFromMaterial(fTitle.material);
             mat.EnableKeyword("OUTLINE_ON");
-            mat.SetFloat("_OutlineWidth", 0.26f);
+            mat.SetFloat("_OutlineWidth", 0.34f);
+            mat.SetFloat("_FaceDilate", 0.18f);
             mat.SetColor("_OutlineColor", Hex("#3A1C08"));
             mat.EnableKeyword("UNDERLAY_ON");
             mat.SetColor("_UnderlayColor", new Color(0f, 0f, 0f, 0.6f));
