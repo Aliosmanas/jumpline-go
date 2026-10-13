@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Jumpline.UI
 {
-    /// <summary>Market: cüzdan, sekmeler ve kartlardan satın alma / giyme.</summary>
+    /// <summary>Market: kartlardan satın alma / giyme. Sekmeler ve cüzdan yazıları isteğe bağlı (tek sayfa markette yok).</summary>
     public class MarketView : MonoBehaviour
     {
         [SerializeField] private ShopCatalog catalog;
@@ -19,14 +19,14 @@ namespace Jumpline.UI
 
         private void Awake()
         {
-            tabs.OnChanged.AddListener(ShowTab);
+            if (tabs != null) tabs.OnChanged.AddListener(ShowTab);
             foreach (ShopItemCard c in cards) c.Clicked += OnCard;
         }
 
         private void OnEnable()
         {
             Localization.Changed += Refresh;
-            ShowTab(tabs.SelectedIndex);
+            if (tabs != null) ShowTab(tabs.SelectedIndex);
             Refresh();
         }
 
@@ -34,6 +34,7 @@ namespace Jumpline.UI
 
         private void ShowTab(int index)
         {
+            if (tabPanels == null) return;
             for (int i = 0; i < tabPanels.Length; i++) tabPanels[i].SetActive(i == index);
         }
 
@@ -67,8 +68,8 @@ namespace Jumpline.UI
 
         private void Refresh()
         {
-            goldText.text = SaveManager.Gold.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
-            gemsText.text = SaveManager.Gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+            if (goldText != null) goldText.text = SaveManager.Gold.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+            if (gemsText != null) gemsText.text = SaveManager.Gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
             foreach (ShopItemCard c in cards)
             {
                 ShopItem item = catalog.Find(c.ItemId);

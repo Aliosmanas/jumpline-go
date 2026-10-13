@@ -338,6 +338,7 @@ namespace Jumpline.Core
                 "Koşucu ve engeller sıradaki adım.\nAkışı denemek için test butonlarını kullan."
             },
             // Efsaneler Kitabı + yeni alt menü (13 Eki 2026)
+            { "BUNDLES", "PAKETLER" },
             { "COLLECTION", "KOLEKSİYON" },
             { "BOOK", "KİTAP" },
             { "MAP", "HARİTA" },

@@ -311,289 +311,94 @@ namespace Jumpline.EditorTools
 
         private const float NavTop = 1735f;
 
+        // Tek sayfa market (Clash Royale düzeni, docs/flow_ui/market.jpg): her şey alt alta, bölüm başlıkları altın kurdelede.
         private static void BuildMarket(Screen s)
         {
             var cards = new List<ShopItemCard>();
-            string[] tabNames = { "OFFERS", "SKINS", "GEAR", "BOOSTS", "CURRENCY" };
-
-            var offers = TabPage(s.top, "OffersTab", false);
-            BuildOffersTab(offers, cards);
-            var skins = TabPage(s.top, "SkinsTab", false);
-            BuildSkinsTab(skins, cards, out TMP_Text gold, out TMP_Text gems);
-            var gear = TabPage(s.top, "GearTab", false);
-            BuildGearTab(gear, cards);
-            var boosts = TabPage(s.top, "BoostsTab", true);
-            BuildBoostsTab(boosts, cards);
-            var currency = TabPage(s.top, "CurrencyTab", true);
-            BuildCurrencyTab(currency, cards);
-
-            SegmentedControl tabs = Tabs(s.top, tabNames);
+            Link(Header(s.top, "MARKET"), MenuLink.LinkAction.Back);
+            const float top = 210f, sectionGap = 64f;
+            float bottom = NavTop - 70f;
+            // bölüm yükseklikleri: başlık 110 + satırlar
+            (string title, string[] ids, int cols, float cardH, bool thumb)[] sections =
+            {
+                ("CHARACTER SKINS", SkinIds, 4, 310f, true),
+                ("GEAR", new[] { "stealth_helmet", "velocity_helmet", "titanium_helmet", "stealth_gloves", "velocity_gloves", "titanium_gloves",
+                                  "stealth_boots", "velocity_boots", "titanium_boots" }, 3, 380f, false),
+                ("BOOSTS", new[] { "magnet", "double_gold", "speed_boost", "shield" }, 2, 400f, false),
+                ("BUNDLES", new[] { "pack_starter", "pack_value", "pack_goldbundle" }, 3, 380f, false),
+                ("GEM PACKS", new[] { "gem_small", "gem_medium", "gem_large" }, 3, 380f, false),
+                ("GOLD PACKS", CurrencyIds, 3, 380f, false),
+            };
+            float contentBottom = top + 40f;
+            foreach (var sec in sections)
+            {
+                int rows = (sec.ids.Length + sec.cols - 1) / sec.cols;
+                contentBottom += 120f + rows * (sec.cardH + 22f) + sectionGap;
+            }
+            Box c = VerticalScroll(s.top, "MarketScroll", new Rect(0f, top, 1116f, bottom - top), contentBottom);
+            float y = top + 50f;
+            foreach (var sec in sections)
+            {
+                int rows = (sec.ids.Length + sec.cols - 1) / sec.cols;
+                float h = 120f + rows * (sec.cardH + 22f);
+                var panel = Section(c, sec.title.Replace(" ", ""), sec.title, new Rect(30f, y, 1056f, h));
+                float gap = 18f;
+                float cw = (1056f - 60f - gap * (sec.cols - 1)) / sec.cols;
+                for (int i = 0; i < sec.ids.Length; i++)
+                {
+                    int row = i / sec.cols, col = i % sec.cols;
+                    var r = new Rect(60f + col * (cw + gap), y + 104f + row * (sec.cardH + 22f), cw, sec.cardH);
+                    var card = ShopCard(panel, sec.ids[i], r, sec.thumb);
+                    if (card != null) cards.Add(card);
+                }
+                y += h + sectionGap;
+            }
 
             var view = s.screen.gameObject.AddComponent<MarketView>();
             Set(view, "catalog", catalog);
-            Set(view, "goldText", gold);
-            Set(view, "gemsText", gems);
-            Set(view, "tabs", tabs);
-            SetArray(view, "tabPanels", new Object[] { offers.go, skins.go, gear.go, boosts.go, currency.go });
-            offers.go.SetActive(true);
-            foreach (var t in new[] { skins, gear, boosts, currency }) t.go.SetActive(false);
             SetArray(view, "cards", cards.ToArray());
         }
 
-        /// <summary>Sekme sayfası: kendi arka planı (koyu geçiş ya da yol görseli).</summary>
-        private static Box TabPage(Box parent, string name, bool road)
+        /// <summary>Tek tip market kartı: kireç taşı zemin, görsel, ad, fiyat satırı, yeşil düğme.</summary>
+        private static ShopItemCard ShopCard(Box parent, string itemId, Rect r, bool thumb)
         {
-            var page = Add(parent, name, Full);
-            road = false;   // tema "Taş & Çini": tüm sekmeler gece Diyarbakır arka planı
-            var bg = Img(page.rt, "Background", background, Color.white, false);
-            bg.raycastTarget = false;
-            if (road)
-            {
-                // Görsel ekranın altını kaplasın; üstü koyu laciverte erisin (referans)
-                Place(bg.rectTransform, page, new Rect(-200f, 320f, 1516f, 1600f));
-                var solid = Add(page, "TopSolid", new Rect(0f, -300f, 1116f, 700f));
-                Fill(solid, Hex("#141826"), Hex("#141826"));
-                var fade = Add(page, "TopFade", new Rect(0f, 400f, 1116f, 600f));
-                Fill(fade, new Color(0.078f, 0.094f, 0.149f, 0f), Hex("#141826"));
-                solid.rt.SetSiblingIndex(1);
-                fade.rt.SetSiblingIndex(2);
-            }
-            else
-            {
-                Stretch(bg.rectTransform, new Vector2(-300f, -300f), new Vector2(300f, 300f));
-            }
-            return page;
+            ShopItem item = catalog.Find(itemId);
+            if (item == null) return null;
+            var root = Add(parent, "Card_" + itemId, r);
+            Panel(root, "Face", r, Hex("#1C2236"), Hex("#2A3352"), 20f, Hex("#00000000"));
+            var art = new Rect(r.x + 14f, r.y + 14f, r.width - 28f, r.height - 182f);
+            string icon = Icons.ContainsKey(itemId) ? itemId : CardArt(itemId);
+            if (thumb) Thumb(root, itemId, art);
+            else if (icon != null) Icon(root, icon, art, Color.white);
+            if (item.category == ItemCategory.Skin || item.category == ItemCategory.Gear) RarityTag(root, r, item.rarity);
+            var title = Txt(root, "Title", item.displayName, new Rect(r.x + 8f, r.yMax - 166f, r.width - 16f, 46f), fExtra, 30f, Color.white, localize: false);
+            var status = Txt(root, "Status", "", new Rect(r.x + 8f, r.yMax - 122f, r.width - 16f, 40f), fExtra, 26f, Hex("#FFD23F"), localize: false);
+            Button b = PricePill(root, new Rect(r.x + 18f, r.yMax - 80f, r.width - 36f, 68f), out TextMeshProUGUI action, 32f);
+            return Card(root, itemId, b, title, status, action, null);
         }
 
-        private static TextMeshProUGUI SectionTitle(Box parent, string text, float y) =>
-            Txt(parent, text.Replace(" ", "") + "Title", text, new Rect(58f, y, 900f, 56f), fExtra, 38f, Color.white, TextAlignmentOptions.Left);
-
-        /// <summary>Lacivert parlak fiyat kapsülü (referanstaki "$2.99").</summary>
+        /// <summary>Yeşil parlak fiyat / satın al düğmesi.</summary>
         private static Button PricePill(Box parent, Rect r, out TextMeshProUGUI label, float size = 34f)
         {
-            var b = GoldFace(parent, "PriceButton", r, 14f, Hex("#3E8E2E"), Hex("#6CC24A"));   // referans: yeşil fiyat düğmesi
+            var b = GoldFace(parent, "PriceButton", r, 14f, Hex("#3E8E2E"), Hex("#6CC24A"));
             label = Txt(b, "Label", "", r, fExtra, size, Color.white, localize: false);
             return MakeButton(b, b.rt.GetComponent<Image>());
         }
 
-        /// <summary>Bordo fiyat butonu (ekipman mağazası).</summary>
-        private static Button RedPill(Box parent, Rect r, out TextMeshProUGUI label)
+        /// <summary>Katalog kimliği → market görseli (UIKit.LoadAssets'te kesilen referans parçaları).</summary>
+        private static string CardArt(string itemId) => itemId switch
         {
-            var b = GoldFace(parent, "PriceButton", r, 14f, Hex("#3E8E2E"), Hex("#6CC24A"));
-            label = Txt(b, "Label", "", r, fExtra, 34f, Color.white, localize: false);
-            return MakeButton(b, b.rt.GetComponent<Image>());
-        }
-
-        /// <summary>Mavi dikdörtgen fiyat butonu (güç mağazası).</summary>
-        private static Button BluePill(Box parent, Rect r, out TextMeshProUGUI label)
-        {
-            var b = GoldFace(parent, "PriceButton", r, 14f, Hex("#3E8E2E"), Hex("#6CC24A"));
-            label = Txt(b, "Label", "", r, fExtra, 44f, Color.white, localize: false);
-            return MakeButton(b, b.rt.GetComponent<Image>());
-        }
-
-        private static Box RarityCard(Box parent, string name, Rect r, Rarity rarity, Color bottom, Color top)
-        {
-            var card = Add(parent, name, r);
-            Panel(card, "Face", r, bottom, top, 20f, RarityColor(rarity));
-            return card;
-        }
-
-        private static ShopItemCard Bind(Box root, string itemId, Button button, TMP_Text title, TMP_Text status, TMP_Text action, bool keepTitle)
-        {
-            var card = Card(root, itemId, button, title, status, action, null);
-            if (keepTitle) SetBool(card, "keepTitle", true);
-            return card;
-        }
-
-        // ---------------- OFFERS ----------------
-        private static void BuildOffersTab(Box page, List<ShopItemCard> cards)
-        {
-            Box c = VerticalScroll(page, "OffersScroll", new Rect(0f, 113f, 1116f, NavTop - 113f), 2060f);
-
-            SectionTitle(c, "FEATURED", 150f);
-            var vp = Add(c, "FeaturedViewport", new Rect(0f, 222f, 1116f, 440f));
-            vp.go.AddComponent<RectMask2D>();
-            vp.go.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0f);
-            var strip = Add(vp, "Content", new Rect(0f, 222f, 1716f, 440f));
-            strip.rt.anchorMin = strip.rt.anchorMax = new Vector2(0f, 0.5f);
-            strip.rt.pivot = new Vector2(0f, 0.5f);
-            strip.rt.anchoredPosition = Vector2.zero;
-            var sr = vp.go.AddComponent<ScrollRect>();
-            sr.content = strip.rt;
-            sr.viewport = vp.rt;
-            sr.horizontal = true;
-            sr.vertical = false;
-            cards.Add(FeaturedCard(strip, "velocity_pack", new Rect(58f, 240f, 785f, 404f), "pack_velocity", true));
-            cards.Add(FeaturedCard(strip, "velocity_bundle", new Rect(873f, 240f, 785f, 404f), "pack_bundle", false));
-
-            SectionTitle(c, "CHARACTER SKINS", 700f);
-            string[] skinOffers = { "offer_stealth", "offer_titanium", "offer_crimson", "offer_glitch", "offer_velocity", "offer_blaze" };
-            for (int i = 0; i < skinOffers.Length; i++)
-            {
-                var r = new Rect(58f + (i % 3) * 341f, 780f + (i / 3) * 391f, 317f, 366f);
-                ShopItem item = catalog.Find(skinOffers[i]);
-                var card = RarityCard(c, skinOffers[i], r, item.rarity, Hex("#1C2236"), Hex("#2A3352"));
-                Thumb(card, item.rewardSkin + "_bust", new Rect(r.x + 30f, r.y + 18f, r.width - 60f, 238f));
-                RarityIcon(card, r, item.rarity);
-                var title = Txt(card, "Title", item.displayName, new Rect(r.x, r.y + 252f, r.width, 40f), fExtra, 28f, Color.white, localize: false);
-                Button b = PricePill(card, new Rect(r.x + 50f, r.y + 296f, r.width - 100f, 60f), out TextMeshProUGUI price);
-                cards.Add(Bind(card, item.id, b, title, null, price, true));
-            }
-
-            SectionTitle(c, "GEMS & GOLD", 1590f);
-            (string id, string art)[] packs = { ("pack_starter", "pack_starter"), ("pack_value", "pack_value"), ("pack_goldbundle", "pack_goldbundle") };
-            for (int i = 0; i < packs.Length; i++)
-            {
-                var r = new Rect(58f + i * 341f, 1664f, 317f, 366f);
-                ShopItem item = catalog.Find(packs[i].id);
-                var card = RarityCard(c, packs[i].id, r, item.rarity, Hex("#1C2236"), Hex("#2A3352"));
-                Icon(card, packs[i].art, new Rect(r.x + 40f, r.y + 40f, r.width - 80f, 200f), Color.white);
-                RarityIcon(card, r, item.rarity);
-                var title = Txt(card, "Title", item.displayName, new Rect(r.x, r.y + 252f, r.width, 40f), fExtra, 28f, Color.white, localize: false);
-                Button b = PricePill(card, new Rect(r.x + 50f, r.y + 296f, r.width - 100f, 60f), out TextMeshProUGUI price);
-                cards.Add(Bind(card, item.id, b, title, null, price, true));
-            }
-        }
-
-        private static ShopItemCard FeaturedCard(Box parent, string itemId, Rect r, string art, bool pink)
-        {
-            ShopItem item = catalog.Find(itemId);
-            var card = Add(parent, itemId, r);
-            Color accent = pink ? Hex("#FF6FB0") : Hex("#6FA8FF");
-            Panel(card, "Face", r, pink ? Hex("#3A1530") : Hex("#152040"), pink ? Hex("#6A2048") : Hex("#22386A"), 22f, RarityColor(item.rarity));
-            var glow = Img(card.rt, "Glow", softCircle, accent * new Color(1f, 1f, 1f, 0.35f), false);
-            Place(glow.rectTransform, card, new Rect(r.x + 300f, r.y - 60f, 520f, 520f));
-            glow.raycastTarget = false;
-            if (pink) Thumb(card, "velocity", new Rect(r.x + 400f, r.y + 6f, 240f, 300f));
-            Icon(card, art, new Rect(r.x + 40f, r.y + 130f, 260f, 210f), Color.white);
-            var title = Txt(card, "Title", item.displayName, new Rect(r.x + 32f, r.y + 26f, 700f, 60f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
-            Txt(card, "Subtitle", item.subtitle, new Rect(r.x + 32f, r.y + 86f, 500f, 36f), fExtra, 24f, accent, TextAlignmentOptions.Left, localize: false);
-            RarityIcon(card, r, item.rarity);
-            Txt(card, "Rarity", pink ? "RARITY: 0/3" : "RARITY: 0/51", new Rect(r.x + 32f, r.yMax - 64f, 400f, 36f), fBold, 24f, Hex("#A9AEBD"), TextAlignmentOptions.Left, localize: false);
-            Button b = PricePill(card, new Rect(r.xMax - 250f, r.yMax - 98f, 221f, 68f), out TextMeshProUGUI price, 38f);
-            return Bind(card, itemId, b, title, null, price, true);
-        }
-
-        // ---------------- SKINS (menu/market_v2.jpg) ----------------
-        private static void BuildSkinsTab(Box page, List<ShopItemCard> cards, out TMP_Text gold, out TMP_Text gems)
-        {
-            var bar = Add(page, "TopBar", new Rect(0f, 113f, 1116f, 104f));
-            Fill(bar, Hex("#141826"), Hex("#1C2133"));
-            Line(page, new Rect(0f, 215f, 1116f, 2f), Hex("#3B4A6E"));
-            Txt(page, "Title", "JUMPLINE GO", new Rect(48f, 125f, 520f, 80f), fExtra, 50f, Color.white, TextAlignmentOptions.Left, localize: false);
-            Icon(page, "coin", new Rect(655f, 135f, 60f, 60f), Color.white);
-            gold = Txt(page, "GoldText", "0", new Rect(722f, 133f, 180f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
-            Icon(page, "gem", new Rect(890f, 133f, 62f, 64f), Color.white);
-            gems = Txt(page, "GemsText", "0", new Rect(958f, 133f, 150f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
-
-            Box skins = VerticalScroll(page, "SkinsScroll", new Rect(0f, 217f, 1116f, NavTop - 217f), 2420f);
-            RawPreview(skins, "RunnerPreview", new Rect(430f, 470f, 680f, 1000f), preview);
-            var deals = Panel(skins, "DealsPanel", new Rect(75f, 250f, 333f, 1340f), Hex("#1E2236", 0.85f), Hex("#262D48", 0.85f), 22f, Hex("#5D6B93"));
-            Txt(deals, "DealsTitle", "DAILY DEALS", new Rect(75f, 270f, 333f, 70f), fExtra, 38f, Color.white);
-            cards.Add(DealCard(deals, 1, "stealth", new Rect(102f, 352f, 279f, 412f), true));
-            cards.Add(DealCard(deals, 2, "speed_boost", new Rect(102f, 780f, 279f, 398f), false));
-            cards.Add(DealCard(deals, 3, "titanium", new Rect(102f, 1194f, 279f, 370f), false));
-            float[] xs = { 75f, 323f, 571f, 820f };
-            float[] ys = { 1640f, 1950f };
-            int n = 0;
-            foreach (float y in ys)
-            foreach (float x in xs)
-            {
-                cards.Add(GridCard(skins, SkinIds[n], new Rect(x, y, 221f, 281f), false));
-                n++;
-            }
-        }
-
-        // ---------------- GEAR (market/gear.jpg) ----------------
-        private static void BuildGearTab(Box page, List<ShopItemCard> cards)
-        {
-            Box c = VerticalScroll(page, "GearScroll", new Rect(0f, 113f, 1116f, NavTop - 113f), 1880f);
-            var banner = Add(c, "Banner", new Rect(150f, 150f, 816f, 82f));
-            var poly = AddPolygon(banner);
-            poly.Configure(new[] { new Vector2(0.08f, 0f), new Vector2(0.92f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) });
-            poly.color = Hex("#6A1430");
-            poly.raycastTarget = false;
-            banner.go.AddComponent<UIGradient>().SetColors(Hex("#3A0C1E"), Hex("#8A1A3A"), true);
-            GlowLine(c, new Rect(150f, 226f, 816f, 12f), Hex("#FF4F7A"));
-            Txt(c, "BannerTitle", "GEAR SHOP", new Rect(150f, 152f, 816f, 80f), fExtra, 54f, Color.white);
-
-            string[] slots = { "helmet", "gloves", "boots" };
-            string[] titles = { "HELMETS", "GLOVES", "BOOTS" };
-            string[] variants = { "stealth", "velocity", "titanium" };
-            for (int row = 0; row < 3; row++)
-            {
-                float y = 330f + row * 520f;
-                Txt(c, titles[row] + "Title", titles[row], new Rect(52f, y - 62f, 600f, 56f), fExtra, 38f, Color.white, TextAlignmentOptions.Left);
-                for (int col = 0; col < 3; col++)
-                {
-                    string id = $"{variants[col]}_{slots[row]}";
-                    ShopItem item = catalog.Find(id);
-                    var r = new Rect(52f + col * 345f, y, 322f, 433f);
-                    var card = RarityCard(c, id, r, item.rarity, Hex("#151C30"), Hex("#22304E"));
-                    Icon(card, id, new Rect(r.x + 26f, r.y + 50f, r.width - 52f, 240f), Color.white);
-                    RarityTag(card, r, item.rarity);
-                    var title = Txt(card, "Title", item.displayName, new Rect(r.x, r.y + 298f, r.width, 44f), fExtra, 28f, Color.white, localize: false);
-                    Button b = RedPill(card, new Rect(r.x + 22f, r.y + 356f, r.width - 44f, 60f), out TextMeshProUGUI price);
-                    cards.Add(Bind(card, id, b, title, null, price, true));
-                }
-            }
-        }
-
-        // ---------------- BOOSTS (market/boosts.jpg) ----------------
-        private static void BuildBoostsTab(Box page, List<ShopItemCard> cards)
-        {
-            Box c = VerticalScroll(page, "BoostsScroll", new Rect(0f, 113f, 1116f, NavTop - 113f), 2280f);
-            Chrome(Txt(c, "Title", "BOOSTS SHOP", new Rect(158f, 165f, 800f, 90f), fExtra, 62f, Color.white));
-            (string id, string art, string desc)[] boosts =
-            {
-                ("magnet", "boost_magnet_big", "Attracts nearby coins automatically."),
-                ("double_gold", "boost_x2_big", "Earn double gold coins for 24h."),
-                ("speed_boost", "boost_speed_big", "Temporarily increases speed."),
-                ("shield", "shield", "Blocks one hit from an obstacle."),
-            };
-            for (int i = 0; i < boosts.Length; i++)
-            {
-                var r = new Rect(90f, 293f + i * 495f, 937f, 439f);
-                ShopItem item = catalog.Find(boosts[i].id);
-                var card = Add(c, boosts[i].id, r);
-                Panel(card, "Face", r, Hex("#4A1428", 0.92f), Hex("#22305A", 0.92f), 18f, Hex("#8095C4"));
-                Icon(card, boosts[i].art, new Rect(r.x + 15f, r.y + 15f, 470f, 410f), Color.white);
-                var title = Txt(card, "Title", item.displayName, new Rect(r.x + 515f, r.y + 70f, 410f, 64f), fExtra, 44f, Color.white, TextAlignmentOptions.Left, localize: false);
-                Chrome(title);
-                Txt(card, "Description", boosts[i].desc, new Rect(r.x + 515f, r.y + 140f, 400f, 120f), fMedium, 30f, C.TextSoft, TextAlignmentOptions.TopLeft, wrap: true);
-                Button b = BluePill(card, new Rect(r.x + 515f, r.y + 300f, 312f, 90f), out TextMeshProUGUI price);
-                cards.Add(Bind(card, item.id, b, title, null, price, true));
-            }
-        }
-
-        // ---------------- CURRENCY (market/gold.jpg + gems.jpg) ----------------
-        private static void BuildCurrencyTab(Box page, List<ShopItemCard> cards)
-        {
-            Box c = VerticalScroll(page, "CurrencyScroll", new Rect(0f, 113f, 1116f, NavTop - 113f), 1500f);
-            (string title, float y, Color border, (string id, string art)[] items)[] groups =
-            {
-                ("GOLD PACKS", 150f, Hex("#C9A06A"), new[] { ("gold_small", "gold_pouch"), ("gold_medium", "gold_stack"), ("gold_large", "gold_vault") }),
-                ("GEM PACKS", 800f, Hex("#9AA8D8"), new[] { ("gem_small", "gem_pouch"), ("gem_medium", "gem_cluster"), ("gem_large", "gem_cache") }),
-            };
-            foreach (var g in groups)
-            {
-                SectionTitle(c, g.title, g.y);
-                for (int i = 0; i < g.items.Length; i++)
-                {
-                    var r = new Rect(58f + i * 341f, g.y + 90f, 317f, 491f);
-                    ShopItem item = catalog.Find(g.items[i].id);
-                    var card = Add(c, item.id, r);
-                    Panel(card, "Face", r, Hex("#151A2C", 0.95f), Hex("#232C46", 0.95f), 20f, g.border);
-                    Txt(card, "Name", item.displayName, new Rect(r.x, r.y + 22f, r.width, 50f), fBold, 31f, Color.white, localize: false);
-                    Icon(card, g.items[i].art, new Rect(r.x + 28f, r.y + 82f, r.width - 56f, 228f), Color.white);
-                    string amount = item.rewardGold > 0 ? $"{item.rewardGold} GOLD" : $"{item.rewardGems} GEMS";
-                    var title = Txt(card, "Amount", amount, new Rect(r.x, r.y + 322f, r.width, 48f), fExtra, 33f, Color.white, localize: false);
-                    Button b = PricePill(card, new Rect(r.x + 50f, r.y + 396f, r.width - 100f, 62f), out TextMeshProUGUI price);
-                    cards.Add(Bind(card, item.id, b, title, null, price, true));
-                }
-            }
-        }
+            "magnet" => "boost_magnet_big",
+            "double_gold" => "boost_x2_big",
+            "speed_boost" => "boost_speed_big",
+            "gold_small" => "gold_pouch",
+            "gold_medium" => "gold_stack",
+            "gold_large" => "gold_vault",
+            "gem_small" => "gem_pouch",
+            "gem_medium" => "gem_cluster",
+            "gem_large" => "gem_cache",
+            _ => null,
+        };
 
         /// <summary>
         /// Dikey kaydırma alanı. Dönen kutuya referans koordinatlarıyla eklenir; içerik viewport'un üstünden
@@ -617,66 +422,6 @@ namespace Jumpline.EditorTools
             scroll.movementType = ScrollRect.MovementType.Elastic;
             scroll.scrollSensitivity = 30f;
             return content;
-        }
-
-        private static SegmentedControl Tabs(Box parent, string[] names)
-        {
-            var strip = Add(parent, "Tabs", new Rect(0f, 0f, 1116f, 113f));
-            var stripImg = strip.go.AddComponent<Image>();
-            SkinSprite(stripImg, "navbar", new Rect(0f, 0f, 1116f, 113f), 0.4f);   // bazalt şerit, bakır kenar
-            float w = 1116f / names.Length;
-            var buttons = new Button[names.Length];
-            var selected = new GameObject[names.Length];
-            var labels = new TMP_Text[names.Length];
-            for (int i = 0; i < names.Length; i++)
-            {
-                var r = new Rect(i * w, 0f, w, 111f);
-                var tab = Add(strip, names[i] + "Tab", r);
-                var hit = tab.go.AddComponent<Image>();
-                hit.color = new Color(0f, 0f, 0f, 0f);
-                var sel = Add(tab, "Selected", new Rect(r.x + 8f, r.y + 10f, r.width - 16f, r.height - 18f));
-                var selImg = sel.go.AddComponent<Image>();
-                SkinSprite(selImg, "btn_saffron", new Rect(0f, 0f, r.width - 16f, r.height - 18f));
-                selImg.raycastTarget = false;
-                selected[i] = sel.go;
-                labels[i] = Txt(tab, "Label", names[i], r, fExtra, names[i].Length > 7 ? 32f : 36f, Color.white);
-                labels[i].enableAutoSizing = true;
-                labels[i].fontSizeMin = 20f;
-                labels[i].fontSizeMax = labels[i].fontSize;
-                buttons[i] = MakeButton(tab, hit, false);
-            }
-            var control = strip.go.AddComponent<SegmentedControl>();
-            SetArray(control, "segments", buttons);
-            SetArray(control, "selectedVisuals", selected);
-            SetArray(control, "labels", labels);
-            SetColor(control, "normalLabelColor", Hex("#E9D3A1"));
-            SetColor(control, "selectedLabelColor", Color.white);
-            control.SetWithoutNotify(0);
-            return control;
-        }
-
-        private static ShopItemCard DealCard(Box parent, int number, string itemId, Rect r, bool highlighted)
-        {
-            ShopItem item = catalog.Find(itemId);
-            bool gold = item.currency == CurrencyType.Gold;
-            var root = Add(parent, $"DealCard_{number}", r);
-            if (highlighted) Glow(root, Expand(r, 22f), Hex("#5AA8FF", 0.4f));
-            Panel(root, "Card", r, Hex("#5B1C30"), Hex("#263257"), 20f, highlighted ? Hex("#A9CCFF") : Hex("#8095C4"));
-            var tab = Panel(root, "NumberTab", new Rect(r.x + 10f, r.y + 10f, 50f, 50f), Hex("#2A3556"), Hex("#3A4A72"), 12f, Hex("#8095C4"));
-            Txt(tab, "Number", number.ToString(), new Rect(r.x + 10f, r.y + 12f, 50f, 46f), fExtra, 30f, Color.white, localize: false);
-            float bottom = r.yMax;
-            Thumb(root, itemId, new Rect(r.x + 30f, r.y + 20f, r.width - 60f, r.height - 190f));
-            var title = Txt(root, "Title", item.displayName, new Rect(r.x, bottom - 168f, r.width, 40f), fBold, 28f, Color.white, localize: false);
-            var price = Txt(root, "Price", "", new Rect(r.x, bottom - 130f, r.width, 40f), fExtra, 26f, gold ? C.Gold : C.Price, localize: false);
-            foreach (var t in new[] { title, price })
-            {
-                t.enableAutoSizing = true;
-                t.fontSizeMin = 14f;
-                t.fontSizeMax = t.fontSize;
-            }
-            Button buy = PillButton(root, "BuyButton", new Rect(r.center.x - 90f, bottom - 82f, 180f, 58f), "BUY", 26f, Color.white, 1f, out TextMeshProUGUI buyLabel,
-                gold ? Hex("#E2B45A") : Hex("#6EA6FF"), gold ? Hex("#F2C366") : C.Blue, false);
-            return Card(root, itemId, buy, title, price, buyLabel, null);
         }
 
         /// <summary>Kostüm ızgarası kartı (görsel alanı boş): alt kısımda ad ve durum.</summary>
