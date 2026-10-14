@@ -36,6 +36,7 @@ namespace Jumpline.EditorTools
         /// <summary>Humanoid + malzemeleri düzenlenebilir hale getir + ışık saçan slotlar için emisyon.</summary>
         public static void ConfigureImport()
         {
+            MeshyImport.Prepare(FbxPath);
             var imp = (ModelImporter)AssetImporter.GetAtPath(FbxPath);
             imp.animationType = ModelImporterAnimationType.Human;
             imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
@@ -69,6 +70,7 @@ namespace Jumpline.EditorTools
                 EditorUtility.SetDirty(mat);
             }
             AssetDatabase.SaveAssets();
+            MeshyImport.Tune(MaterialDir);
         }
 
         private const float CarbonTiling = 70f;
@@ -103,8 +105,35 @@ namespace Jumpline.EditorTools
             return AssetDatabase.LoadAssetAtPath<Texture2D>(CarbonPath);
         }
 
-        /// <summary>MPFB "game_engine" iskeleti → Unity Humanoid kemik eşlemesi.</summary>
-        internal static HumanDescription BuildHumanDescription(HumanDescription desc)
+        /// <summary>Mixamo iskeleti (Meshy Baran + kostümler, 14 Eki 2026) → Unity Humanoid kemik eşlemesi.
+        /// Eski MPFB "game_engine" iskeleti (hırsız modeli) de desteklenir: iskelette "pelvis" varsa o eşleme kullanılır.</summary>
+        internal static HumanDescription BuildHumanDescription(HumanDescription desc, string modelPath = FbxPath)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
+            var present = new HashSet<string>();
+            foreach (Transform t in model.GetComponentsInChildren<Transform>(true)) present.Add(t.name);
+            var map = present.Contains("pelvis") ? MpfbMap() : MixamoMap();
+
+            var human = new List<HumanBone>();
+            foreach (string traitName in HumanTrait.BoneName)
+            {
+                if (!map.TryGetValue(traitName, out string bone) || !present.Contains(bone)) continue;
+                var hb = new HumanBone { humanName = traitName, boneName = bone };
+                hb.limit.useDefaultValues = true;
+                human.Add(hb);
+            }
+
+            var skeleton = new List<SkeletonBone>();
+            foreach (Transform t in model.GetComponentsInChildren<Transform>(true))
+                skeleton.Add(new SkeletonBone { name = t.name, position = t.localPosition, rotation = t.localRotation, scale = t.localScale });
+
+            desc.human = human.ToArray();
+            desc.skeleton = skeleton.ToArray();
+            desc.hasTranslationDoF = false;
+            return desc;
+        }
+
+        private static Dictionary<string, string> MpfbMap()
         {
             var map = new Dictionary<string, string>
             {
@@ -128,25 +157,35 @@ namespace Jumpline.EditorTools
                     map[$"{side} {finger} Distal"] = $"{mpfb}_03_{s}";
                 }
             }
+            return map;
+        }
 
-            var human = new List<HumanBone>();
-            foreach (string traitName in HumanTrait.BoneName)
+        private static Dictionary<string, string> MixamoMap()
+        {
+            const string P = "mixamorig:";
+            var map = new Dictionary<string, string>
             {
-                if (!map.TryGetValue(traitName, out string bone)) continue;
-                var hb = new HumanBone { humanName = traitName, boneName = bone };
-                hb.limit.useDefaultValues = true;
-                human.Add(hb);
+                { "Hips", P + "Hips" }, { "Spine", P + "Spine" }, { "Chest", P + "Spine1" }, { "UpperChest", P + "Spine2" },
+                { "Neck", P + "Neck" }, { "Head", P + "Head" },
+            };
+            foreach (string side in new[] { "Left", "Right" })
+            {
+                map[$"{side}Shoulder"] = $"{P}{side}Shoulder";
+                map[$"{side}UpperArm"] = $"{P}{side}Arm";
+                map[$"{side}LowerArm"] = $"{P}{side}ForeArm";
+                map[$"{side}Hand"] = $"{P}{side}Hand";
+                map[$"{side}UpperLeg"] = $"{P}{side}UpLeg";
+                map[$"{side}LowerLeg"] = $"{P}{side}Leg";
+                map[$"{side}Foot"] = $"{P}{side}Foot";
+                map[$"{side}Toes"] = $"{P}{side}ToeBase";
+                foreach ((string finger, string mx) in new[] { ("Thumb", "Thumb"), ("Index", "Index"), ("Middle", "Middle"), ("Ring", "Ring"), ("Little", "Pinky") })
+                {
+                    map[$"{side} {finger} Proximal"] = $"{P}{side}Hand{mx}1";
+                    map[$"{side} {finger} Intermediate"] = $"{P}{side}Hand{mx}2";
+                    map[$"{side} {finger} Distal"] = $"{P}{side}Hand{mx}3";
+                }
             }
-
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath);
-            var skeleton = new List<SkeletonBone>();
-            foreach (Transform t in model.GetComponentsInChildren<Transform>(true))
-                skeleton.Add(new SkeletonBone { name = t.name, position = t.localPosition, rotation = t.localRotation, scale = t.localScale });
-
-            desc.human = human.ToArray();
-            desc.skeleton = skeleton.ToArray();
-            desc.hasTranslationDoF = false;
-            return desc;
+            return map;
         }
 
         // ---------------------------------------------------------------------

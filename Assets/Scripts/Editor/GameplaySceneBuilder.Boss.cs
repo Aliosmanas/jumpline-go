@@ -543,6 +543,7 @@ namespace Jumpline.EditorTools
         {
             if (AssetImporter.GetAtPath(path) is not ModelImporter imp) return;
             EnsureFolder(BossMatDir);
+            MeshyImport.Prepare(path);
             imp.importCameras = imp.importLights = false;
             imp.importAnimation = path == TepegozPath || path == SahmeranPath || path == HumbabaPath || path == StoneGuardianPath || path == VanMonsterPath || path == KarakoncolosPath || path == LamassuPath || path == DragonPath;   // canavarların animasyonları kalır
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { BossMatDir }))
@@ -619,6 +620,7 @@ namespace Jumpline.EditorTools
                 EditorUtility.SetDirty(mat);
             }
             AssetDatabase.SaveAssets();
+            MeshyImport.Tune(BossMatDir);
         }
     }
 }

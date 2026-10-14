@@ -132,7 +132,7 @@ namespace Jumpline.EditorTools
             {
                 imp.animationType = ModelImporterAnimationType.Human;
                 imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
-                imp.humanDescription = RunnerStageBuilder.BuildHumanDescription(imp.humanDescription);
+                imp.humanDescription = RunnerStageBuilder.BuildHumanDescription(imp.humanDescription, path);
             }
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { ThiefMatDir }))
             {

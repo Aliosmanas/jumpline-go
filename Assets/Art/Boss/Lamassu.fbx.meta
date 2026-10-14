@@ -67,6 +67,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Dragon_Mat
+    second: {fileID: 2100000, guid: 3e90bf436545c834dbe359ffc8b0170f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: HB_Bark
     second: {fileID: 2100000, guid: 6f6b844a07092e049b953edcf7be6b45, type: 2}
   - first:
@@ -94,6 +99,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: HB_Skin
     second: {fileID: 2100000, guid: 4da9456693bd99d428def7cfec514904, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Humbaba_Mat
+    second: {fileID: 2100000, guid: 4590a95e1c381074e8d63c7c8bb5c3cf, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -132,6 +142,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Karakoncolos_Mat
+    second: {fileID: 2100000, guid: 5f551e4b05557974d8d5e079baebedc8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: LM_Eye
     second: {fileID: 2100000, guid: be922cc847836e3439739d123a486259, type: 2}
   - first:
@@ -164,6 +179,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: LM_Wing
     second: {fileID: 2100000, guid: 1619a5f3055cc9442a6f7cf93f572e89, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Lamassu_Mat
+    second: {fileID: 2100000, guid: befe4c72574c13a43b53eeec6f65dc16, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -232,6 +252,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Sahmeran_Mat
+    second: {fileID: 2100000, guid: 1f94450e4f03e4c4cb87b8f878329f6b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: StoneGuardian_Mat
+    second: {fileID: 2100000, guid: 6df944f4f9b619b4d82c77f3770aa909, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: TG_Cloth
     second: {fileID: 2100000, guid: 36a235723a2df314fae8d9e7de01dc07, type: 2}
   - first:
@@ -294,6 +324,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: VM_Spine
     second: {fileID: 2100000, guid: 2ae83c9a829bc5147ab86e6b54e25975, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: VanMonster_Mat
+    second: {fileID: 2100000, guid: 77a40338d6ad9ab4c8e153662f824264, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -326,7 +361,7 @@ ModelImporter:
       takeName: LamassuRig|Defeat
       internalID: 172891834438548629
       firstFrame: 0
-      lastFrame: 30
+      lastFrame: 138
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -355,7 +390,7 @@ ModelImporter:
       takeName: LamassuRig|Hit
       internalID: -5935497840284874077
       firstFrame: 0
-      lastFrame: 20
+      lastFrame: 75
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -384,7 +419,7 @@ ModelImporter:
       takeName: LamassuRig|Idle
       internalID: -3909867163722861358
       firstFrame: 0
-      lastFrame: 80
+      lastFrame: 121
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -413,7 +448,7 @@ ModelImporter:
       takeName: LamassuRig|Roar
       internalID: 3136699672384147677
       firstFrame: 0
-      lastFrame: 52
+      lastFrame: 162
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -442,7 +477,7 @@ ModelImporter:
       takeName: LamassuRig|Run
       internalID: -8962283191828151607
       firstFrame: 0
-      lastFrame: 24
+      lastFrame: 26
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -471,7 +506,7 @@ ModelImporter:
       takeName: LamassuRig|Throw
       internalID: 7100185857307084969
       firstFrame: 0
-      lastFrame: 26
+      lastFrame: 66
       wrapMode: 0
       orientationOffsetY: 0
       level: 0

@@ -59,12 +59,42 @@ namespace Jumpline.Player
             _ => null,
         };
 
-        /// <summary>Kostüm renklerini uygular; ekipman parçalarına takılı çeşidin rengi (varsa) gelir.</summary>
+        private const string BodyPrefix = "Runner_Body_";
+        private const string DefaultBody = "rookie";
+
+        /// <summary>
+        /// Kostüm: Meshy modelleri ayrı gövde (Runner_Body_&lt;id&gt;); seçilen açılır, diğerleri kapanır.
+        /// Kendi gövdesi olmayan kostüm (glitch, frost) varsayılan gövdeyi kostüm rengiyle hafifçe tonlar.
+        /// Eski tek-model koşucu (M_Primary… slotları) için renk boyama yolu korunur.
+        /// </summary>
         public void Apply(SkinPreset skin)
         {
             if (skin == null) return;
             currentSkin = skin;
             block ??= new MaterialPropertyBlock();
+            bool hasBodies = false, hasOwn = false;
+            foreach (Renderer r in Renderers)
+            {
+                if (!r.name.StartsWith(BodyPrefix)) continue;
+                hasBodies = true;
+                if (r.name == BodyPrefix + skin.id) hasOwn = true;
+            }
+            if (hasBodies)
+            {
+                string show = hasOwn ? skin.id : DefaultBody;
+                foreach (Renderer r in Renderers)
+                {
+                    if (!r.name.StartsWith(BodyPrefix)) continue;
+                    bool on = r.name == BodyPrefix + show;
+                    r.enabled = on;
+                    if (!on) continue;
+                    r.GetPropertyBlock(block);
+                    block.Clear();
+                    if (!hasOwn) block.SetColor(BaseColor, Color.Lerp(Color.white, skin.primary, tintStrength));
+                    r.SetPropertyBlock(block);
+                }
+                return;
+            }
             foreach (Renderer target in Renderers)
             {
                 string slot = SlotOf(target.name);
@@ -72,6 +102,9 @@ namespace Jumpline.Player
                 Apply(gear ?? skin, target);
             }
         }
+
+        [Tooltip("Kendi gövdesi olmayan kostümde varsayılan gövdeye karışan renk oranı.")]
+        [SerializeField, Range(0f, 1f)] private float tintStrength = 0.45f;
 
         private void Apply(SkinPreset skin, Renderer target)
         {

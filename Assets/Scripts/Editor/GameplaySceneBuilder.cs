@@ -158,9 +158,9 @@ namespace Jumpline.EditorTools
             light.shadows = LightShadows.Soft;
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = Hex("#B9C6D8");
-            RenderSettings.ambientEquatorColor = Hex("#8A8F99");
-            RenderSettings.ambientGroundColor = Hex("#3A3A40");
+            RenderSettings.ambientSkyColor = Hex("#D2DCEA");
+            RenderSettings.ambientEquatorColor = Hex("#A6ABB5");
+            RenderSettings.ambientGroundColor = Hex("#5A5A62");
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = Hex("#C3CCD8");
@@ -513,9 +513,9 @@ namespace Jumpline.EditorTools
             SetFloat(sw, "rooftopModuleLength", RooftopModule);
             // sokak: BuildWorld değerleri (gündüz)
             // sokak: Sur içi ikindi/gün batımı — sıcak güneş, bal rengi pus, prosedürel gökyüzü
-            SetLook(sw, "streetLook", "#E6CFAE", "#E3C9A4", 30f, 190f, "#C9D6EA", "#A8968A", "#4A3F38", "#FFD9A6", 2.0f, new Vector3(26f, -35f, 0f), true);
+            SetLook(sw, "streetLook", "#E6CFAE", "#E3C9A4", 30f, 190f, "#DCE6F5", "#C4B4A6", "#6E6158", "#FFDDB0", 2.3f, new Vector3(26f, -35f, 0f), true);
             // çatı: fırtınalı gece (üst map.mp4) — lacivert gök, ay ışığı, koyu mavi pus
-            SetLook(sw, "rooftopLook", "#1B2536", "#1E2939", 18f, 130f, "#5A6E92", "#2E3A52", "#12151C", "#A9BEFF", 0.7f, new Vector3(42f, 35f, 0f), false);
+            SetLook(sw, "rooftopLook", "#1B2536", "#1E2939", 18f, 130f, "#7487AE", "#46557A", "#262C3A", "#B4C6FF", 1.0f, new Vector3(42f, 35f, 0f), false);
             return sw;
         }
 
@@ -736,14 +736,14 @@ namespace Jumpline.EditorTools
             bloom.intensity.Override(0.9f);
             bloom.scatter.Override(0.7f);
             var tone = profile.Add<Tonemapping>(true);
-            tone.mode.Override(TonemappingMode.ACES);
+            tone.mode.Override(TonemappingMode.Neutral);   // ACES orta tonları eziyordu (oyun karanlık görünüyordu)
             var color = profile.Add<ColorAdjustments>(true);   // sıcak, doygun Mezopotamya ikindisi
-            color.postExposure.Override(0.05f);
-            color.contrast.Override(14f);
-            color.saturation.Override(14f);
+            color.postExposure.Override(0.35f);
+            color.contrast.Override(8f);
+            color.saturation.Override(18f);
             color.colorFilter.Override(Hex("#FFF0DC"));
             var vignette = profile.Add<Vignette>(true);
-            vignette.intensity.Override(0.26f);
+            vignette.intensity.Override(0.15f);
             vignette.smoothness.Override(0.45f);
             // hareket bulanıklığı yok: telefonda görüntüyü lekeli gösteriyor ve pahalı (koşu hissini hız çizgileri veriyor)
             foreach (VolumeComponent c in new VolumeComponent[] { bloom, tone, color, vignette })
@@ -997,7 +997,7 @@ namespace Jumpline.EditorTools
             var kids = new System.Collections.Generic.List<Transform>();
             foreach (Transform c in vis.transform) kids.Add(c);
             foreach (Transform c in kids) c.SetParent(root.transform, true);
-            Object.DestroyImmediate(vis);
+            if (kids.Count > 0) Object.DestroyImmediate(vis);   // tek parçalı model (Meshy): kendisi kalır
             root.transform.localScale = Vector3.one * scale;
             var rs = root.GetComponentsInChildren<Renderer>();
             Bounds b = rs[0].bounds;
@@ -1075,9 +1075,48 @@ namespace Jumpline.EditorTools
             var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root.transform);
             vis.transform.localPosition = Vector3.zero;   // dönüş FBX'in kendi eksen dönüşü kalır (sıfırlanırsa araç dik durur)
             var obs = root.AddComponent<Obstacle>();
-            obs.Configure(Obstacle.Kind.Solid, 0.95f, RampTruckSegments);
+            obs.Configure(Obstacle.Kind.Solid, 0.95f, RampTruckSegments);   // rampa: çatıya çıkış (eski model; Meshy kamyonunda rampa yere inmiyor)
             EditorUtility.SetDirty(obs);
             return obs;
+        }
+
+        // Otomatik yüzey profili dilim boyu (m): koşucunun basamak çıkma payından (0.35) küçük adımlar → rampa tırmanılır.
+        private const float AutoSliceLength = 0.25f;
+
+        /// <summary>
+        /// Modelin kendi yüzeyinden çarpışma profili: koşu yönünde (yerel z) dilimler, her dilim şeritteki en yüksek nokta.
+        /// Rampa küçük basamaklara bölünür (koşucu çıkar), kabin önü gibi dik yüzler duvar olur. Boş dilim = yüzey yok.
+        /// </summary>
+        private static Obstacle.Segment[] AutoSegments(GameObject root, float halfWidth)
+        {
+            var pts = new System.Collections.Generic.List<Vector3>();
+            foreach (var mf in root.GetComponentsInChildren<MeshFilter>())
+            {
+                if (mf.sharedMesh == null) continue;
+                foreach (Vector3 v in mf.sharedMesh.vertices) pts.Add(root.transform.InverseTransformPoint(mf.transform.TransformPoint(v)));
+            }
+            if (pts.Count == 0) return null;
+            float zMin = float.MaxValue, zMax = float.MinValue;
+            foreach (var p in pts) if (Mathf.Abs(p.x) <= halfWidth) { zMin = Mathf.Min(zMin, p.z); zMax = Mathf.Max(zMax, p.z); }
+            if (zMax <= zMin) return null;
+            int n = Mathf.Max(1, Mathf.CeilToInt((zMax - zMin) / AutoSliceLength));
+            var h = new float[n];
+            foreach (var p in pts)
+            {
+                if (Mathf.Abs(p.x) > halfWidth) continue;
+                int i = Mathf.Clamp((int)((p.z - zMin) / AutoSliceLength), 0, n - 1);
+                h[i] = Mathf.Max(h[i], p.y);
+            }
+            var segs = new System.Collections.Generic.List<Obstacle.Segment>();
+            for (int i = 0; i < n; i++)
+            {
+                if (h[i] < 0.05f) continue;
+                float z0 = zMin + i * AutoSliceLength, z1 = Mathf.Min(zMax, z0 + AutoSliceLength);
+                if (segs.Count > 0 && Mathf.Abs(segs[^1].z1 - z0) < 1e-3f && Mathf.Abs(segs[^1].h0 - h[i]) < 0.02f)
+                { var last = segs[^1]; last.z1 = z1; segs[^1] = last; }
+                else segs.Add(Seg(z0, z1, h[i]));
+            }
+            return segs.Count > 0 ? segs.ToArray() : null;
         }
 
         /// <summary>Tek parçalı araç/kapı FBX'inden engel şablonu (FBX'in eksen dönüşü korunur).</summary>
@@ -1092,7 +1131,7 @@ namespace Jumpline.EditorTools
             var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root.transform);
             vis.transform.localPosition = Vector3.zero;
             var obs = root.AddComponent<Obstacle>();
-            obs.Configure(kind, halfWidth, segs, thickness);
+            obs.Configure(kind, halfWidth, segs ?? AutoSegments(root, halfWidth), thickness);
             EditorUtility.SetDirty(obs);
             return obs;
         }
@@ -1111,7 +1150,7 @@ namespace Jumpline.EditorTools
             var crates = new System.Collections.Generic.List<Transform>();
             foreach (Transform c in vis.transform) crates.Add(c);
             foreach (Transform c in crates) c.SetParent(root.transform, true);
-            Object.DestroyImmediate(vis);
+            if (crates.Count > 0) Object.DestroyImmediate(vis);   // tek parçalı model (Meshy): kendisi kalır, bütün devrilir
             root.transform.localScale = Vector3.one * 0.85f;   // yığın ~1.3 m: orta şarjla aşılır
             var rs = root.GetComponentsInChildren<Renderer>();
             Bounds b = rs[0].bounds;
@@ -1131,6 +1170,7 @@ namespace Jumpline.EditorTools
         {
             if (AssetImporter.GetAtPath(path) is not ModelImporter imp) return;
             EnsureFolder(TruckMatDir);
+            MeshyImport.Prepare(path);
             imp.importCameras = imp.importLights = imp.importAnimation = false;
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { TruckMatDir }))
             {
@@ -1182,6 +1222,7 @@ namespace Jumpline.EditorTools
                 EditorUtility.SetDirty(mat);
             }
             AssetDatabase.SaveAssets();
+            MeshyImport.Tune(TruckMatDir);
         }
 
         /// <summary>Hız çizgileri: kameranın önünde, kenarlardan kameraya doğru akar (SpeedLines yoğunluğu ayarlar).</summary>
