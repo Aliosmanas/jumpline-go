@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Jumpline.Level;
 using static Jumpline.EditorTools.UIKit;
 
 namespace Jumpline.EditorTools
@@ -164,6 +165,49 @@ namespace Jumpline.EditorTools
             var boat = PlaceMeshy("M15_Boat", root, new Vector3(left ? -16f : 17f, water - 0.25f, 8f + index * 7f), index * 47f, 1.1f);
             if (boat != null) foreach (var r in boat.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.On;
             PlaceMeshy("M12_BridgeArch", root, new Vector3(left ? 36f : -36f, water - 1f, 20f), 90f, 12f);
+        }
+
+        /// <summary>Meshy modelinden engel şablonu: yükseklik (0 = doğal), yön koşucuya (180°), taban/yükseklik sınırlardan.</summary>
+        private static Obstacle MeshyObstacle(string name, Transform parent, float height, float minHeight)
+        {
+            var root = new GameObject("Obs_" + name);
+            root.transform.SetParent(parent, false);
+            var pf = MeshyPrefab(name);
+            if (pf == null) { Object.DestroyImmediate(root); return null; }
+            float h = height;
+            if (h <= 0f) { var tmp = (GameObject)PrefabUtility.InstantiatePrefab(pf); h = LocalBounds(tmp).size.y; Object.DestroyImmediate(tmp); }
+            var vis = PlaceMeshy(name, root.transform, Vector3.zero, 180f, h);
+            vis.name = name;
+            Bounds b = LocalBounds(vis);
+            Vector3 c = b.center - root.transform.position;
+            float halfW = Mathf.Clamp(b.extents.x, 0.45f, 1.0f);
+            float halfD = Mathf.Max(b.extents.z, 0.35f);
+            float top = Mathf.Max(b.max.y - root.transform.position.y, minHeight);
+            var obs = root.AddComponent<Obstacle>();
+            obs.Configure(Obstacle.Kind.Solid, halfW, new[] { new Obstacle.Segment { z0 = c.z - halfD, z1 = c.z + halfD, h0 = top, h1 = top } });
+            if (minHeight <= 0f) root.AddComponent<Breakable>();
+            foreach (var r in root.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.On;
+            EditorUtility.SetDirty(obs);
+            return obs;
+        }
+
+        /// <summary>Sur kapısı yerine Meshy çarşı kemeri: üç şeridi aşar (9.5 m), tavan 3.7 m (kamyon üstündeki koşucu çarpar).</summary>
+        private static Obstacle MeshyGate(Transform parent)
+        {
+            var root = new GameObject("Obs_BazaarArchGate");
+            root.transform.SetParent(parent, false);
+            var vis = PlaceMeshy("M04_BazaarArch", root.transform, Vector3.zero, 180f, 1f);
+            if (vis == null) { Object.DestroyImmediate(root); return null; }
+            Bounds b = LocalBounds(vis);
+            float k = 9.5f / Mathf.Max(0.1f, b.size.x);
+            vis.transform.localScale *= k;
+            b = LocalBounds(vis);
+            vis.transform.position += new Vector3(root.transform.position.x - b.center.x, root.transform.position.y - b.min.y, root.transform.position.z - b.center.z);
+            var obs = root.AddComponent<Obstacle>();
+            obs.Configure(Obstacle.Kind.Ceiling, 3.65f, new[] { new Obstacle.Segment { z0 = -0.8f, z1 = 0.8f, h0 = 3.7f, h1 = 3.7f } });
+            foreach (var r in root.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.On;
+            EditorUtility.SetDirty(obs);
+            return obs;
         }
     }
 }

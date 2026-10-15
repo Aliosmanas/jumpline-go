@@ -20,6 +20,9 @@ namespace Jumpline.EditorTools
         private const string MapMatDir = MapsFbxDir + "/Materials";
         private const string MapPrefabDir = "Assets/Prefabs/Maps";
         private const float MapSegment = 30f;
+        // 15 Eki 2026 kullanıcı: evler doğal (Meshy) görünsün — boyalar kapalı; zemin eski taş yol (S_Paving / S_Curb)
+        private const bool UseHousePaints = false;
+        private const float PaveTile = 3.75f;   // 30 m'de tam 8 tekrar: parça sınırında desen kopmaz
 
         [System.Serializable] private class MapItem { public string a; public float[] p; public float r; public float[] s; public string paint; }
         [System.Serializable] private class MapLight { public float[] pos; public float[] color; public float energy; }
@@ -159,8 +162,9 @@ namespace Jumpline.EditorTools
                 {
                     var c = (GameObject)PrefabUtility.InstantiatePrefab(custom, content);
                     c.transform.localPosition = Vector3.zero;
-                    foreach (var r in c.GetComponentsInChildren<Renderer>())
+                    foreach (var r in c.GetComponentsInChildren<Renderer>(true))
                     {
+                        if (r.name.Contains("_Yol") || r.name.Contains("_Kaldirim")) { Object.DestroyImmediate(r.gameObject); continue; }
                         bool deco = r.name.StartsWith("Tente") || r.name.StartsWith("Bayrak") || r.name.StartsWith("Camasir");
                         r.shadowCastingMode = deco ? ShadowCastingMode.On : ShadowCastingMode.Off;
                     }
@@ -173,7 +177,7 @@ namespace Jumpline.EditorTools
                     go.transform.localPosition = new Vector3(-it.p[0], it.p[2], -it.p[1]);
                     go.transform.localRotation = Quaternion.Euler(0f, -it.r, 0f) * pf.transform.localRotation;
                     go.transform.localScale = Vector3.Scale(pf.transform.localScale, new Vector3(it.s[0], it.s[1], it.s[2]));
-                    if (!string.IsNullOrEmpty(it.paint))
+                    if (UseHousePaints && !string.IsNullOrEmpty(it.paint))
                         foreach (var r in go.GetComponentsInChildren<Renderer>())
                         {
                             var pm = PaintMaterial(it.a, it.paint, r.sharedMaterial);
@@ -192,6 +196,16 @@ namespace Jumpline.EditorTools
                         lg.type = LightType.Point; lg.color = new Color(l.color[0], l.color[1], l.color[2]);
                         lg.range = 7f; lg.intensity = 2.2f; lg.shadows = LightShadows.None;
                     }
+                // eski taş yol (kullanıcı beğeniyordu): bazalt plaka + şerit çizgileri + bordür
+                string zone = data.zone ?? "";
+                if (zone == "1_MAHALLE") OldStreetGround(root.transform, 0f, MapSegment, true);
+                else if (zone == "3_SUR_USTU_DENIZ") OldStreetGround(root.transform, 0f, MapSegment, false);
+                else if (zone == "2_GECIS")
+                {
+                    bool toSea = data.name.Contains("Mahalle_Sur");
+                    OldStreetGround(root.transform, toSea ? 0f : 15f, toSea ? 15f : 30f, true);
+                    OldStreetGround(root.transform, toSea ? 15f : 0f, toSea ? 30f : 15f, false);
+                }
                 string path = $"{MapPrefabDir}/{data.name}.prefab";
                 var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
                 Object.DestroyImmediate(root);
@@ -220,6 +234,63 @@ namespace Jumpline.EditorTools
             SetFloat(chain, "segmentLength", MapSegment);
             Debug.Log($"[Jumpline] Harita zinciri: {Z("1_MAHALLE").Count} mahalle, {Z("3_SUR_USTU_DENIZ").Count} sur üstü, {Z("2_GECIS").Count} geçiş");
             return root;
+        }
+
+        private static readonly Dictionary<string, Mesh> groundMeshes = new Dictionary<string, Mesh>();
+
+        /// <summary>Kutu: dünya-ölçekli UV (PaveTile m'de bir tekrar), alt mesh = malzeme dizini.</summary>
+        private static void AddBox(List<Vector3> v, List<Vector2> uv, List<int>[] tris, int sub, float x0, float x1, float y0, float y1, float z0, float z1)
+        {
+            void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, int ax, int ay)
+            {
+                int k = v.Count;
+                foreach (var p in new[] { a, b, c, d }) { v.Add(p); uv.Add(new Vector2(p[ax] / PaveTile, p[ay] / PaveTile)); }
+                tris[sub].AddRange(new[] { k, k + 1, k + 2, k, k + 2, k + 3 });
+            }
+            // üst (+y), yanlar (±x), ön/arka (±z) — Unity sol el: saat yönü = ön yüz
+            Quad(new Vector3(x0, y1, z0), new Vector3(x0, y1, z1), new Vector3(x1, y1, z1), new Vector3(x1, y1, z0), 0, 2);
+            Quad(new Vector3(x1, y0, z0), new Vector3(x1, y1, z0), new Vector3(x1, y1, z1), new Vector3(x1, y0, z1), 2, 1);
+            Quad(new Vector3(x0, y0, z1), new Vector3(x0, y1, z1), new Vector3(x0, y1, z0), new Vector3(x0, y0, z0), 2, 1);
+            Quad(new Vector3(x0, y0, z0), new Vector3(x0, y1, z0), new Vector3(x1, y1, z0), new Vector3(x1, y0, z0), 0, 1);
+            Quad(new Vector3(x1, y0, z1), new Vector3(x1, y1, z1), new Vector3(x0, y1, z1), new Vector3(x0, y0, z1), 0, 1);
+        }
+
+        /// <summary>
+        /// Eski sokak zemini (build_street.py ölçüleri): bazalt plaka |x| &lt; 4.4, şerit çizgileri x = ±1.1 / ±3.3 (şerit 2.2 m),
+        /// bordür 4.4–5.0 (0.18 m), mahallede kaldırım 5.0–5.6 (ev cephesine kadar). Malzemeler: S_Paving, S_Curb.
+        /// </summary>
+        private static void OldStreetGround(Transform root, float z0, float z1, bool sidewalks)
+        {
+            string key = $"Zemin_{(sidewalks ? "Sokak" : "Sur")}_{z1 - z0:0}m";
+            if (!groundMeshes.TryGetValue(key, out var mesh) || mesh == null)
+            {
+                string mp = $"{MapMatDir}/{key}.asset";
+                mesh = AssetDatabase.LoadAssetAtPath<Mesh>(mp);
+                if (mesh == null)
+                {
+                    float L = z1 - z0;
+                    var v = new List<Vector3>(); var uv = new List<Vector2>(); var tris = new[] { new List<int>(), new List<int>() };
+                    float half = sidewalks ? 4.4f : 4.6f;
+                    AddBox(v, uv, tris, 0, -half, half, -0.2f, 0f, 0f, L);
+                    foreach (float x in new[] { -3.3f, -1.1f, 1.1f, 3.3f }) AddBox(v, uv, tris, 1, x - 0.08f, x + 0.08f, -0.2f, 0.015f, 0f, L);
+                    if (sidewalks)
+                        foreach (int s in new[] { -1, 1 }) AddBox(v, uv, tris, 1, s > 0 ? 4.4f : -7.5f, s > 0 ? 7.5f : -4.4f, -0.2f, 0.18f, 0f, L);   // ev tabanlarının altına kadar (aradan gök görünmesin)
+                    mesh = new Mesh { name = key, indexFormat = IndexFormat.UInt32 };
+                    mesh.SetVertices(v); mesh.SetUVs(0, uv); mesh.subMeshCount = 2;
+                    mesh.SetTriangles(tris[0], 0); mesh.SetTriangles(tris[1], 1);
+                    mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds();
+                    AssetDatabase.CreateAsset(mesh, mp);
+                }
+                groundMeshes[key] = mesh;
+            }
+            var go = new GameObject("Eski_Tas_Yol");
+            go.transform.SetParent(root, false);
+            go.transform.localPosition = new Vector3(0f, 0f, z0);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterials = new[] { AssetDatabase.LoadAssetAtPath<Material>($"{StreetMatDir}/S_Paving.mat"),
+                                         AssetDatabase.LoadAssetAtPath<Material>($"{StreetMatDir}/S_Curb.mat") };
+            mr.shadowCastingMode = ShadowCastingMode.Off;
         }
     }
 }

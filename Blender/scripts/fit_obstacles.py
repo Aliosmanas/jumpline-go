@@ -13,7 +13,7 @@ ROOT = r"D:\Repolar\junpline"
 OBS = os.path.join(ROOT, "Assets", "Art", "Environment", "Obstacles")
 PROC = os.path.join(ROOT, "Blender", "meshy_processed")
 # Rampalı kamyon / karpuz kamyonu / traktör / kilim / kazan askısı / sur kapısı: eski modeller (rampa ve kayma açıklığı oynanışa uymuyor)
-NAMES = ["LowArch", "TeaCart", "TeaTable", "KebabGrill", "SlideBar", "MelonStall", "CrateStack", "CityBus", "Minibus", "PatPat", "SimitCart"]
+NAMES = ["RampTruck", "MelonTruck", "Tractor", "Taxi", "BusStop"]   # 15 Eki: kalan eski araçlar da Meshy (rampa: otomatik profil + düz rampa)
 BINS = 24
 
 
@@ -45,7 +45,8 @@ for name in NAMES:
     po = profile(vo, omn, omx)
     for o in list(bpy.context.scene.objects): bpy.data.objects.remove(o, do_unlink=True)
 
-    with bpy.data.libraries.load(os.path.join(PROC, name + ".blend")) as (src, dst):
+    src_name = "MelonTruck" if name == "RampTruck" else name
+    with bpy.data.libraries.load(os.path.join(PROC, src_name + ".blend")) as (src, dst):
         dst.objects = list(src.objects)
     new = next(o for o in dst.objects if o and o.type == "MESH")
     bpy.context.scene.collection.objects.link(new)
@@ -61,6 +62,41 @@ for name in NAMES:
         score = (0 if np.isnan(score) else score) - 1.5 * distort
         if best is None or score > best[0]: best = (score, k, mn, mx, s)
     score, k, mn, mx, s = best
+    if name in ("RampTruck", "MelonTruck", "Tractor"):
+        # uzun kenarı koşu yönünde (y) olan yönler arasından profili en iyi uyan
+        cands = []
+        for kk in range(4):
+            Rk = np.array(Matrix.Rotation(kk * math.pi / 2, 3, "Z")); vk = base @ Rk.T
+            kmn, kmx = vk.min(0), vk.max(0)
+            if (kmx - kmn)[1] < (kmx - kmn)[0]: continue
+            sc = float(np.corrcoef(profile(vk, kmn, kmx), po)[0, 1]) if po.std() > 1e-3 else 0.0
+            cands.append((0 if np.isnan(sc) else sc, kk, kmn, kmx))
+        if name in ("RampTruck", "MelonTruck"):   # Meshy karpuz kamyonu: rampa 90°'de koşucunun geldiği uçta (profilden doğrulandı)
+            cands = [c for c in cands if c[1] == 1] or cands
+        if cands:
+            _, k, mn, mx = max(cands)
+            s = np.array([1.0, 1.0, (omx[2] - omn[2]) / max(mx[2] - mn[2], 1e-6)])
+        # doğal oran: yalnız yükseklik eşleşir, genişlik şeridi aşmaz; rampalı uç (Blender +y = koşucunun geldiği uç) hizalanır
+        u = s[2]   # yükseklik eşleşir
+        ux = min(u, (omx[0] - omn[0]) * 1.05 / max(mx[0] - mn[0], 1e-6))   # genişlik şeride sığar
+        s = np.array([ux, u, u])
+        me = new.data
+        R = Matrix.Rotation(k * math.pi / 2, 4, "Z")
+        me.transform(R)
+        b = np.array([tuple(v.co) for v in me.vertices]); bmn, bmx = b.min(0), b.max(0)
+        me.transform(Matrix.Translation(Vector((((omn + omx) / 2)[0], omx[1], omn[2]))) @ Matrix.Diagonal((ux, u, u, 1.0)) @
+                     Matrix.Translation(Vector((-(bmn[0] + bmx[0]) / 2, -bmx[1], -bmn[2]))))
+        new.matrix_world = Matrix.Identity(4)
+        new.name = name; me.name = name + "_Mesh"
+        for i, sl in enumerate(new.material_slots):
+            if sl.material: sl.material.name = f"{name}_Mat" + (f"_{i}" if i else "")
+        tex_export.save_images(old_path, name)
+        bpy.ops.object.select_all(action="DESELECT"); new.select_set(True); bpy.context.view_layer.objects.active = new
+        bpy.ops.export_scene.fbx(filepath=old_path, use_selection=True, object_types={"MESH"}, apply_unit_scale=True,
+                                 apply_scale_options="FBX_SCALE_UNITS", axis_forward="-Z", axis_up="Y", mesh_smooth_type="FACE",
+                                 path_mode="RELATIVE", embed_textures=False)
+        print("FIT", name, "rot", k * 90, "dogal oran", round(u, 2), "boy", round((bmx[1] - bmn[1]) * u, 2), "eski boy", round(omx[1] - omn[1], 2))
+        continue
     me = new.data
     R = Matrix.Rotation(k * math.pi / 2, 4, "Z")
     S = Matrix.Diagonal((s[0], s[1], s[2], 1.0))

@@ -887,7 +887,13 @@ namespace Jumpline.EditorTools
                 return list.ToArray();
             }
             // duvarlar: çarpışma yüksekliği en yüksek zıplamanın üstünde → şerit değiştirmek şart
-            Obstacle[] low = Make(LowObstacles, 0f), high = Make(HighObstacles, 4f), walls = Make(WallObstacles, 4f);   // high: yanından geç
+            // 15 Eki 2026: eski dekor engelleri yerine Meshy modelleri (yükseklik oynanışa göre; yön koşucuya)
+            Obstacle[] low = { MeshyObstacle("ClayJug", templates.transform, 1.0f, 0f), MeshyObstacle("M06_StallDecor", templates.transform, 1.05f, 0f),
+                               MeshyObstacle("Watermelon", templates.transform, 0.8f, 0f) };
+            Obstacle[] high = { MeshyObstacle("KebabGrill", templates.transform, 0f, 4f), MeshyObstacle("TeaCart", templates.transform, 0f, 4f) };   // high: yanından geç
+            Obstacle[] walls = { MeshyObstacle("BusStop", templates.transform, 0f, 4f), MeshyObstacle("MelonStall", templates.transform, 0f, 4f),
+                                 MeshyObstacle("SimitCart", templates.transform, 0f, 4f) };
+            low = System.Array.FindAll(low, o => o != null); high = System.Array.FindAll(high, o => o != null); walls = System.Array.FindAll(walls, o => o != null);
             foreach (var o in low) o.gameObject.AddComponent<Breakable>();    // çarpınca savrulur
             foreach (var o in high) o.gameObject.AddComponent<Breakable>();
             Obstacle crates = CrateStackObstacle(templates.transform);
@@ -900,8 +906,7 @@ namespace Jumpline.EditorTools
                     new Obstacle.Segment { z0 = -2.95f, z1 = -2.2f, h0 = 1.15f, h1 = 1.15f },
                     new Obstacle.Segment { z0 = -2.2f, z1 = 2.92f, h0 = 2.35f, h1 = 2.35f },
                 });
-            Obstacle gate = VehicleObstacle(SurGatePath, "Obs_SurGate", templates.transform, Obstacle.Kind.Ceiling, 3.65f,
-                new[] { new Obstacle.Segment { z0 = -0.8f, z1 = 0.8f, h0 = 3.7f, h1 = 3.7f } });   // alt kenar 3.7 m
+            Obstacle gate = MeshyGate(templates.transform);   // Meshy çarşı kemeri (eski sur kapısı yerine); tavan 3.7 m   // alt kenar 3.7 m
             // kalas bariyer: alt kenar 1.15, kalınlık 0.35 (üstü 1.5) → kayarak altından ya da zıplayarak üstünden
             Obstacle bar = VehicleObstacle(SlideBarPath, "Obs_SlideBar", templates.transform, Obstacle.Kind.Ceiling, 1.0f,
                 new[] { new Obstacle.Segment { z0 = -0.3f, z1 = 0.3f, h0 = 1.15f, h1 = 1.15f } }, 0.35f);
@@ -947,20 +952,20 @@ namespace Jumpline.EditorTools
                                         Obstacle truck, Obstacle taxi, Obstacle bus, Obstacle gate, Obstacle bar, Portal[] portals)
         {
             templates.gameObject.SetActive(true);   // sınırlar ölçülebilsin
-            Obstacle V(string file, Obstacle.Kind kind, float hw, Obstacle.Segment[] segs, float thick = 0f) =>
-                VehicleObstacle($"{ObstacleDir}/{file}.fbx", "Obs_" + file, templates, kind, hw, segs, thick);
+            Obstacle V(string file, Obstacle.Kind kind, float hw, Obstacle.Segment[] segs, float thick = 0f, bool ramp = false) =>
+                VehicleObstacle($"{ObstacleDir}/{file}.fbx", "Obs_" + file, templates, kind, hw, segs, thick, ramp);
             const float Solid = 4f;   // yerden aşılamaz (şerit değiştir)
-            Obstacle melon = V("MelonTruck", Obstacle.Kind.Solid, 1.0f, new[] { Seg(0f, 4f, 0.05f, 2.35f), Seg(4f, 10f, 2.35f), Seg(10f, 12f, 1.95f) });
+            Obstacle melon = V("MelonTruck", Obstacle.Kind.Solid, 1.0f, null, 0f, true);   // Meshy: profil modelden + düz rampa
             Obstacle cityBus = V("CityBus", Obstacle.Kind.Solid, 1.05f, new[] { Seg(-4.6f, 4.6f, 2.95f) });
             Obstacle patpat = V("PatPat", Obstacle.Kind.Solid, 0.7f, new[] { Seg(-1.35f, 1.35f, 1.15f) });
-            Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, new[] { Seg(0f, 3f, 0.1f, 1.6f), Seg(3f, 6.8f, 1.6f), Seg(6.8f, 7.6f, 1.6f, 2.55f), Seg(7.6f, 8.1f, 2.55f), Seg(8.1f, 9.5f, 1.35f) });   // kabin önünde ön cam eğimi: üstte görünmez duvar yok
+            Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, null);   // Meshy traktör: profil modelden
             Obstacle stop = V("BusStop", Obstacle.Kind.Solid, 0.95f, new[] { Seg(-1.55f, 1.55f, Solid) });
             Obstacle teaCart = V("TeaCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
             Obstacle simitCart = V("SimitCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.7f, 0.7f, Solid) });
             Obstacle melonStall = V("MelonStall", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
             Obstacle grill = V("KebabGrill", Obstacle.Kind.Solid, 0.85f, new[] { Seg(-0.6f, 0.6f, Solid) });
-            Obstacle kilim = V("KilimLine", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.3f, 0.3f, 1.15f) }, 1.15f);   // yalnız kay
-            Obstacle potRack = V("PotRack", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.3f, 0.3f, 1.15f) }, 0.95f);
+            Obstacle kilim = bar;   // Meshy bariyer (eski kilim ipi; Meshy kilimi kayma açıklığına uymuyor)
+            Obstacle potRack = V("LowArch", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.45f, 0.45f, 1.15f) }, 1.45f);   // Meshy alçak kemer
             Obstacle arch = V("LowArch", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.45f, 0.45f, 1.15f) }, 1.45f);
             Obstacle teaTable = PiecesObstacle($"{ObstacleDir}/TeaTable.fbx", "Obs_TeaTable", templates, 1f);
             Obstacle taxiWhite = Recolor(taxi, "Obs_TaxiWhite", "T_Yellow", "#EDEAE3", templates);
@@ -975,11 +980,11 @@ namespace Jumpline.EditorTools
             // araç boyları (tren zinciri için; Blender build_obstacles / build_vehicles / build_course_assets)
             var lengths = new System.Collections.Generic.Dictionary<string, float>
             {
-                { "bus", 5.9f }, { "citybus", 9.2f }, { "taxi", 4.5f }, { "truck", 11.6f }, { "melon", 12f }, { "tractor", 9.5f },
+                { "bus", 5.9f }, { "citybus", 9.2f }, { "taxi", 4.5f }, { "truck", 6.6f }, { "melon", 6.6f }, { "tractor", 7.4f },
             };
             var sets = new (string id, float front, bool span, Obstacle[] v)[]
             {
-                ("low", 0.45f, false, low), ("crates", 0.45f, false, Arr(crates)), ("copper", 0.45f, false, Arr(Named(low, "CopperJugs"), Named(low, "CopperPlates"))),
+                ("low", 0.45f, false, low), ("crates", 0.45f, false, Arr(crates)), ("copper", 0.45f, false, Arr(Named(low, "ClayJug"), Named(low, "M06_StallDecor"))),
                 ("teatable", 0.45f, false, Arr(teaTable)), ("bar", 0.3f, false, Arr(bar, kilim, potRack)), ("kilim", 0.3f, false, Arr(kilim)),
                 ("potrack", 0.3f, false, Arr(potRack)), ("arch", 0.45f, false, Arr(arch)), ("wall", 0.6f, false, walls.Concat(high).ToArray()),
                 ("busstop", 1.55f, false, Arr(stop)), ("grill", 0.6f, false, Arr(grill)),
@@ -1110,7 +1115,7 @@ namespace Jumpline.EditorTools
             var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root.transform);
             vis.transform.localPosition = Vector3.zero;   // dönüş FBX'in kendi eksen dönüşü kalır (sıfırlanırsa araç dik durur)
             var obs = root.AddComponent<Obstacle>();
-            obs.Configure(Obstacle.Kind.Solid, 0.95f, RampTruckSegments);   // rampa: çatıya çıkış (eski model; Meshy kamyonunda rampa yere inmiyor)
+            obs.Configure(Obstacle.Kind.Solid, 0.95f, AutoSegments(root, 0.95f, true) ?? RampTruckSegments);   // Meshy kamyon: profil modelden, rampa düzleştirilir
             EditorUtility.SetDirty(obs);
             return obs;
         }
@@ -1122,7 +1127,7 @@ namespace Jumpline.EditorTools
         /// Modelin kendi yüzeyinden çarpışma profili: koşu yönünde (yerel z) dilimler, her dilim şeritteki en yüksek nokta.
         /// Rampa küçük basamaklara bölünür (koşucu çıkar), kabin önü gibi dik yüzler duvar olur. Boş dilim = yüzey yok.
         /// </summary>
-        private static Obstacle.Segment[] AutoSegments(GameObject root, float halfWidth)
+        private static Obstacle.Segment[] AutoSegments(GameObject root, float halfWidth, bool ramp = false)
         {
             var pts = new System.Collections.Generic.List<Vector3>();
             foreach (var mf in root.GetComponentsInChildren<MeshFilter>())
@@ -1142,6 +1147,12 @@ namespace Jumpline.EditorTools
                 int i = Mathf.Clamp((int)((p.z - zMin) / AutoSliceLength), 0, n - 1);
                 h[i] = Mathf.Max(h[i], p.y);
             }
+            if (ramp)
+            {   // rampa (koşucunun geldiği uç, z küçük): ilk %45'te en yükseğe kadar düz eğim → her dilim basamak payının altında
+                int lim = Mathf.Max(2, (int)(n * 0.45f)), top = 0;
+                for (int i = 1; i < lim; i++) if (h[i] > h[top]) top = i;
+                for (int i = 0; i < top; i++) h[i] = Mathf.Lerp(0.05f, h[top], (float)i / top);
+            }
             var segs = new System.Collections.Generic.List<Obstacle.Segment>();
             for (int i = 0; i < n; i++)
             {
@@ -1156,7 +1167,7 @@ namespace Jumpline.EditorTools
 
         /// <summary>Tek parçalı araç/kapı FBX'inden engel şablonu (FBX'in eksen dönüşü korunur).</summary>
         private static Obstacle VehicleObstacle(string path, string name, Transform parent, Obstacle.Kind kind, float halfWidth, Obstacle.Segment[] segs,
-                                                float thickness = 0f)
+                                                float thickness = 0f, bool ramp = false)
         {
             ConfigureVehicleImport(path);
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -1166,7 +1177,7 @@ namespace Jumpline.EditorTools
             var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root.transform);
             vis.transform.localPosition = Vector3.zero;
             var obs = root.AddComponent<Obstacle>();
-            obs.Configure(kind, halfWidth, segs ?? AutoSegments(root, halfWidth), thickness);
+            obs.Configure(kind, halfWidth, segs ?? AutoSegments(root, halfWidth, ramp), thickness);
             EditorUtility.SetDirty(obs);
             return obs;
         }
