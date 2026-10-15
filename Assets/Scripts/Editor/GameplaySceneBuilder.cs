@@ -958,7 +958,7 @@ namespace Jumpline.EditorTools
             Obstacle melon = V("MelonTruck", Obstacle.Kind.Solid, 1.0f, null, 0f, true);   // Meshy: profil modelden + düz rampa
             Obstacle cityBus = V("CityBus", Obstacle.Kind.Solid, 1.05f, new[] { Seg(-4.6f, 4.6f, 2.95f) });
             Obstacle patpat = V("PatPat", Obstacle.Kind.Solid, 0.7f, new[] { Seg(-1.35f, 1.35f, 1.15f) });
-            Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, null);   // Meshy traktör: profil modelden
+            Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, null, 0f, true);   // Meshy traktör: profil modelden + rampa (üstüne çıkılır)
             Obstacle stop = V("BusStop", Obstacle.Kind.Solid, 0.95f, new[] { Seg(-1.55f, 1.55f, Solid) });
             Obstacle teaCart = V("TeaCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
             Obstacle simitCart = V("SimitCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.7f, 0.7f, Solid) });
@@ -1148,10 +1148,12 @@ namespace Jumpline.EditorTools
                 h[i] = Mathf.Max(h[i], p.y);
             }
             if (ramp)
-            {   // rampa (koşucunun geldiği uç, z küçük): ilk %45'te en yükseğe kadar düz eğim → her dilim basamak payının altında
-                int lim = Mathf.Max(2, (int)(n * 0.45f)), top = 0;
-                for (int i = 1; i < lim; i++) if (h[i] > h[top]) top = i;
-                for (int i = 0; i < top; i++) h[i] = Mathf.Lerp(0.05f, h[top], (float)i / top);
+            {   // rampa (koşucunun geldiği uç, z küçük): ana düzlüğe (ilk %80'in en yükseği) ilk ulaşılan dilime kadar kesintisiz düz eğim
+                int lim = Mathf.Max(2, (int)(n * 0.8f)); float peak = 0f;
+                for (int i = 0; i < lim; i++) peak = Mathf.Max(peak, h[i]);
+                int top = 0;
+                while (top < lim - 1 && h[top] < peak * 0.95f) top++;
+                for (int i = 0; i < top; i++) h[i] = Mathf.Lerp(0.05f, h[top], (float)i / Mathf.Max(1, top));
             }
             var segs = new System.Collections.Generic.List<Obstacle.Segment>();
             for (int i = 0; i < n; i++)
