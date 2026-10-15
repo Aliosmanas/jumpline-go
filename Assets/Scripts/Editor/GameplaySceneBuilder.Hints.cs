@@ -20,12 +20,15 @@ namespace Jumpline.EditorTools
             var jump = HintMaterial("Hint_Jump", Hex("#FFD23F"), 0);
             var slide = HintMaterial("Hint_Slide", Hex("#3FD2FF"), 1);
             var block = HintMaterial("Hint_Block", Hex("#FF3B3B"), 2);
+            var climb = HintMaterial("Hint_Climb", Hex("#3BFF6A"), 0);
             foreach (var s in spawners)
             {
                 if (s == null) continue;
                 Set(s, "hintJump", jump);
                 Set(s, "hintSlide", slide);
                 Set(s, "hintBlock", block);
+                Set(s, "hintClimb", climb);
+                SetFloat(s, "hintJumpClear", 1.75f);
             }
         }
 

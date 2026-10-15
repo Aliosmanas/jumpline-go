@@ -899,13 +899,8 @@ namespace Jumpline.EditorTools
             Obstacle crates = CrateStackObstacle(templates.transform);
             if (crates != null) low = new[] { crates, crates }.Concat(low).ToArray();   // en sık çıkan: sandık yığını
             Obstacle truck = TruckObstacle(templates.transform);
-            Obstacle taxi = VehicleObstacle(TaxiPath, "Obs_Taxi", templates.transform, Obstacle.Kind.Solid, 0.86f, TaxiSegments);
-            Obstacle bus = VehicleObstacle(MinibusPath, "Obs_Minibus", templates.transform, Obstacle.Kind.Solid, 1.0f,
-                new[]
-                {   // kaput 1.15 + tavan 2.35: yerden çıkılmaz (zıplama 1.9), kamyon tavanından atlanıp üstünde koşulur
-                    new Obstacle.Segment { z0 = -2.95f, z1 = -2.2f, h0 = 1.15f, h1 = 1.15f },
-                    new Obstacle.Segment { z0 = -2.2f, z1 = 2.92f, h0 = 2.35f, h1 = 2.35f },
-                });
+            Obstacle taxi = VehicleObstacle(TaxiPath, "Obs_Taxi", templates.transform, Obstacle.Kind.Solid, 0.86f, null);   // Meshy taksi: profil modelden
+            Obstacle bus = VehicleObstacle(MinibusPath, "Obs_Minibus", templates.transform, Obstacle.Kind.Solid, 1.0f, null);   // Meshy minibüs: profil modelden (tavanda koşulur)
             Obstacle gate = MeshyGate(templates.transform);   // Meshy çarşı kemeri (eski sur kapısı yerine); tavan 3.7 m   // alt kenar 3.7 m
             // kalas bariyer: alt kenar 1.15, kalınlık 0.35 (üstü 1.5) → kayarak altından ya da zıplayarak üstünden
             Obstacle bar = VehicleObstacle(SlideBarPath, "Obs_SlideBar", templates.transform, Obstacle.Kind.Ceiling, 1.0f,
@@ -956,8 +951,8 @@ namespace Jumpline.EditorTools
                 VehicleObstacle($"{ObstacleDir}/{file}.fbx", "Obs_" + file, templates, kind, hw, segs, thick, ramp);
             const float Solid = 4f;   // yerden aşılamaz (şerit değiştir)
             Obstacle melon = V("MelonTruck", Obstacle.Kind.Solid, 1.0f, null, 0f, true);   // Meshy: profil modelden + düz rampa
-            Obstacle cityBus = V("CityBus", Obstacle.Kind.Solid, 1.05f, new[] { Seg(-4.6f, 4.6f, 2.95f) });
-            Obstacle patpat = V("PatPat", Obstacle.Kind.Solid, 0.7f, new[] { Seg(-1.35f, 1.35f, 1.15f) });
+            Obstacle cityBus = V("CityBus", Obstacle.Kind.Solid, 1.05f, null);   // Meshy otobüs: profil modelden
+            Obstacle patpat = V("PatPat", Obstacle.Kind.Solid, 0.7f, null);   // Meshy patpat: profil modelden
             Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, null, 0f, true);   // Meshy traktör: profil modelden + rampa (üstüne çıkılır)
             Obstacle stop = V("BusStop", Obstacle.Kind.Solid, 0.95f, new[] { Seg(-1.55f, 1.55f, Solid) });
             Obstacle teaCart = V("TeaCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
@@ -965,8 +960,8 @@ namespace Jumpline.EditorTools
             Obstacle melonStall = V("MelonStall", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
             Obstacle grill = V("KebabGrill", Obstacle.Kind.Solid, 0.85f, new[] { Seg(-0.6f, 0.6f, Solid) });
             Obstacle kilim = bar;   // Meshy bariyer (eski kilim ipi; Meshy kilimi kayma açıklığına uymuyor)
-            Obstacle potRack = V("LowArch", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.45f, 0.45f, 1.15f) }, 1.45f);   // Meshy alçak kemer
-            Obstacle arch = V("LowArch", Obstacle.Kind.Ceiling, 1.0f, new[] { Seg(-0.45f, 0.45f, 1.15f) }, 1.45f);
+            Obstacle potRack = bar;   // alçak kemer kaldırıldı (kullanıcı: gereksiz yükselti) → Meshy bariyer
+            Obstacle arch = bar;   // alçak kemer kaldırıldı (gereksiz yükselti)
             Obstacle teaTable = PiecesObstacle($"{ObstacleDir}/TeaTable.fbx", "Obs_TeaTable", templates, 1f);
             Obstacle taxiWhite = Recolor(taxi, "Obs_TaxiWhite", "T_Yellow", "#EDEAE3", templates);
             Obstacle taxiRed = Recolor(taxi, "Obs_TaxiRed", "T_Yellow", "#B3262E", templates);
@@ -986,7 +981,7 @@ namespace Jumpline.EditorTools
             {
                 ("low", 0.45f, false, low), ("crates", 0.45f, false, Arr(crates)), ("copper", 0.45f, false, Arr(Named(low, "ClayJug"), Named(low, "M06_StallDecor"))),
                 ("teatable", 0.45f, false, Arr(teaTable)), ("bar", 0.3f, false, Arr(bar, kilim, potRack)), ("kilim", 0.3f, false, Arr(kilim)),
-                ("potrack", 0.3f, false, Arr(potRack)), ("arch", 0.45f, false, Arr(arch)), ("wall", 0.6f, false, walls.Concat(high).ToArray()),
+                ("potrack", 0.3f, false, Arr(potRack)), ("arch", 0.3f, false, Arr(bar)), ("wall", 0.6f, false, walls.Concat(high).ToArray()),
                 ("busstop", 1.55f, false, Arr(stop)), ("grill", 0.6f, false, Arr(grill)),
                 ("stall", 0.75f, false, Arr(teaCart, simitCart, melonStall)), ("teacart", 0.75f, false, Arr(teaCart)),
                 ("simitcart", 0.7f, false, Arr(simitCart)), ("melonstall", 0.75f, false, Arr(melonStall)),
@@ -1155,14 +1150,20 @@ namespace Jumpline.EditorTools
                 while (top < lim - 1 && h[top] < peak * 0.95f) top++;
                 for (int i = 0; i < top; i++) h[i] = Mathf.Lerp(0.05f, h[top], (float)i / Mathf.Max(1, top));
             }
+            // pürüzsüz yüzey: komşu dilimle fark basamak payı içindeyse kenar yüksekliği ortalama (eğim) → koşucu
+            // basamak basamak "ışınlanmaz"; büyük farklar (kabin önü, tampon) dik duvar kalır
+            const float SmoothStep = 0.32f;
             var segs = new System.Collections.Generic.List<Obstacle.Segment>();
             for (int i = 0; i < n; i++)
             {
                 if (h[i] < 0.05f) continue;
                 float z0 = zMin + i * AutoSliceLength, z1 = Mathf.Min(zMax, z0 + AutoSliceLength);
-                if (segs.Count > 0 && Mathf.Abs(segs[^1].z1 - z0) < 1e-3f && Mathf.Abs(segs[^1].h0 - h[i]) < 0.02f)
+                float a = i > 0 && h[i - 1] >= 0.05f && Mathf.Abs(h[i] - h[i - 1]) <= SmoothStep ? (h[i] + h[i - 1]) * 0.5f : h[i];
+                float b = i < n - 1 && h[i + 1] >= 0.05f && Mathf.Abs(h[i + 1] - h[i]) <= SmoothStep ? (h[i] + h[i + 1]) * 0.5f : h[i];
+                if (i == 0 && ramp) a = 0.05f;
+                if (segs.Count > 0 && Mathf.Abs(segs[^1].z1 - z0) < 1e-3f && Mathf.Abs(segs[^1].h1 - a) < 0.01f && Mathf.Abs(segs[^1].h0 - segs[^1].h1) < 0.01f && Mathf.Abs(a - b) < 0.01f && Mathf.Abs(segs[^1].h1 - b) < 0.01f)
                 { var last = segs[^1]; last.z1 = z1; segs[^1] = last; }
-                else segs.Add(Seg(z0, z1, h[i]));
+                else segs.Add(Seg(z0, z1, a, b));
             }
             return segs.Count > 0 ? segs.ToArray() : null;
         }

@@ -50,6 +50,8 @@ namespace Jumpline.Level
         [SerializeField] private Material hintJump;
         [SerializeField] private Material hintSlide;
         [SerializeField] private Material hintBlock;
+        [Tooltip("Yeşil ▲ — rampalı araç: üstüne çıkılır.")]
+        [SerializeField] private Material hintClimb;
         [Tooltip("Bu yükseklikten alçak katı engel 'zıpla' sayılır (m).")]
         [SerializeField, Min(0.3f)] private float hintJumpClear = 1.45f;
         [SerializeField, Min(0.3f)] private float hintLength = 2.2f;
@@ -334,7 +336,8 @@ namespace Jumpline.Level
             o.enabled = true;   // güçle parçalanıp kapatılmış olabilir
             o.gameObject.SetActive(true);
             bool inLanes = player == null || Mathf.Abs(x - OriginX) <= player.LaneWidth * 1.2f;   // kaldırımdaki süs direkleri işaretsiz
-            ObstacleHint.Apply(o, hintJumpClear, inLanes ? hintJump : null, inLanes ? hintSlide : null, inLanes ? hintBlock : null, hintLength, hintGap);
+            ObstacleHint.Apply(o, hintJumpClear, inLanes ? hintJump : null, inLanes ? hintSlide : null, inLanes ? hintBlock : null, hintLength, hintGap,
+                               inLanes ? hintClimb : null);
             active.Add(o);
         }
 
