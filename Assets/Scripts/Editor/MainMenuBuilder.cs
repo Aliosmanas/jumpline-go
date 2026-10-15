@@ -978,8 +978,9 @@ namespace Jumpline.EditorTools
                     },
                     // denge (telefon testi: "çok zor"): yumuşak hız eğrisi, seyrek başlayan parkur
                     runSpeed = 10.5f + 0.45f * i, maxSpeed = 16.5f + 0.6f * i,
-                    obstacleGap = new Vector2(Mathf.Max(8.5f, 12f - 0.45f * i), Mathf.Max(12.5f, 18f - 0.6f * i)),
-                    courseSpacing = 1.25f - 0.03f * i,
+                    // 15 Eki 2026 kullanıcı: "Subway Surfers gibi dolu dolu" → engeller sık (trenler ve açık şerit kuralı aynı)
+                    obstacleGap = new Vector2(Mathf.Max(6.5f, 9.5f - 0.3f * i), Mathf.Max(9.5f, 13.5f - 0.4f * i)),
+                    courseSpacing = Mathf.Max(0.72f, 0.92f - 0.02f * i),
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,
                     stoneTint = stops[i].city == "MARDIN" ? new Color(2.1f, 1.75f, 1.2f)      // Mardin: bal rengi kalker
                               : stops[i].city == "HASANKEYF" ? new Color(1.75f, 1.35f, 1.05f)   // Hasankeyf: kırmızımsı kum taşı

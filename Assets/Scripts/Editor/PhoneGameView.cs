@@ -30,7 +30,9 @@ namespace Jumpline.EditorTools
                 Assembly asm = typeof(EditorWindow).Assembly;
                 Type sizesType = asm.GetType("UnityEditor.GameViewSizes");
                 object sizes = typeof(ScriptableSingleton<>).MakeGenericType(sizesType).GetProperty("instance").GetValue(null, null);
-                object group = sizesType.GetMethod("GetGroup").Invoke(sizes, new object[] { (int)GameViewSizeGroupType.Standalone });
+                // etkin platformun grubu (proje Android → Android grubu; Standalone'a eklenen boyut Game penceresinde görünmez)
+                object current = sizesType.GetProperty("currentGroupType", Flags)?.GetValue(sizes, null) ?? GameViewSizeGroupType.Android;
+                object group = sizesType.GetMethod("GetGroup").Invoke(sizes, new object[] { (int)current });
                 Type groupType = group.GetType();
 
                 int index = FindSize(groupType, group);

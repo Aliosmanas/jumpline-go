@@ -33,9 +33,19 @@ namespace Jumpline.EditorTools
             var config = GetOrCreateAsset<GameConfig>(MainMenuBuilder.ConfigPath, null);
 
             SegmentCombiner.EnsureReadable(StreetPath, DecorPath, RooftopPath, LandmarkPath);   // modüller açılışta birleşir
-            Transform street = BuildWorld();
+            Transform oldStreet = BuildWorld();   // ışık + sis (eski Blender sokağı kurulmaz: UseMeshyMaps)
             Transform runner = BuildRunner();
-            Set(street.gameObject.AddComponent<StreetRecycler>(), "player", runner);
+            Transform street;
+            if (UseMeshyMaps)
+            {
+                Object.DestroyImmediate(oldStreet.gameObject);
+                street = BuildMapStreet(runner);   // Blender/Harita: 12 mahalle + geçişler + 6 sur üstü, rastgele zincir
+            }
+            else
+            {
+                street = oldStreet;
+                Set(street.gameObject.AddComponent<StreetRecycler>(), "player", runner);
+            }
             Transform rooftop = BuildRooftopWorld(runner);
             BuildCameraAndEvents(false);
             var cam = Camera.main;
@@ -146,6 +156,8 @@ namespace Jumpline.EditorTools
         private const string StreetMatDir = "Assets/Art/Environment/Diyarbakir/Materials";
         private const float StreetSegment = 60f;   // build_street.py SEGMENT
         private const int StreetCopies = 3;
+        // 15 Eki 2026: sokak artık Blender/Harita'daki Meshy haritalarından rastgele zincir (GameplaySceneBuilder.Maps)
+        private const bool UseMeshyMaps = true;
 
         private static Transform BuildWorld()
         {
@@ -171,7 +183,7 @@ namespace Jumpline.EditorTools
             decorPrefab = null;
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(StreetPath);
             var root = new GameObject("Street").transform;
-            for (int i = -1; i < StreetCopies; i++) // bir modül karakterin arkasında (kamera boşluk görmesin)
+            for (int i = -1; i < (UseMeshyMaps ? -1 : StreetCopies); i++) // bir modül karakterin arkasında (kamera boşluk görmesin)
             {
                 var seg = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root);
                 seg.name = $"StreetSegment_{i}";
@@ -181,6 +193,7 @@ namespace Jumpline.EditorTools
                 PlaceSigns(seg.transform);
                 if (i == 0) PlaceLandmark(seg.transform, "Landmark_DortAyakliMinare", new Vector3(14f, 0f, 28f));
                 if (i == 2) PlaceLandmark(seg.transform, "Landmark_UluCamiMinaret", new Vector3(-16f, 0f, 40f));
+                DressStreetWithMeshy(seg.transform);   // Meshy binaları (eski evler/kemerler kalkar)
                 SegmentCombiner.Combine(seg.transform);   // performans: sabit mesh'ler malzemeye göre tek çizim
             }
             return root;
@@ -229,6 +242,13 @@ namespace Jumpline.EditorTools
             {
                 Transform src = decorPrefab.transform.Find("Decor_" + d.name);
                 if (src == null) continue;
+                var meshy = MeshyDecorFor(d.name, root, src);   // Meshy karpuz / testi
+                if (meshy != null)
+                {
+                    meshy.transform.localRotation = Quaternion.Euler(0f, d.rot, 0f) * meshy.transform.localRotation;
+                    meshy.transform.localPosition += new Vector3(d.x, d.y, d.z);
+                    continue;
+                }
                 var go = Object.Instantiate(src.gameObject, root);
                 go.name = d.name;
                 go.transform.localPosition = new Vector3(d.x, d.y, d.z);
@@ -669,6 +689,7 @@ namespace Jumpline.EditorTools
         private static CoinField BuildCoins(Transform runner)
         {
             EnsureFolder(CoinMatDir);
+            MeshyImport.Prepare(CoinPath);   // Meshy akçe (dokulu)
             if (AssetImporter.GetAtPath(CoinPath) is ModelImporter imp)
             {
                 imp.importCameras = imp.importLights = imp.importAnimation = false;
@@ -696,6 +717,16 @@ namespace Jumpline.EditorTools
                     mat.SetColor("_EmissionColor", Hex(hex) * glow);   // gölgede de parlasın
                 }
                 EditorUtility.SetDirty(mat);
+            }
+            AssetDatabase.SaveAssets();
+            MeshyImport.Tune(CoinMatDir);
+            foreach (string guid in AssetDatabase.FindAssets("Coin_Mat t:Material", new[] { CoinMatDir }))
+            {   // akçe gölgede de parlasın, hafif metalik altın
+                var cm = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                cm.SetFloat("_Metallic", 0.55f); cm.SetFloat("_Smoothness", 0.6f);
+                cm.EnableKeyword("_EMISSION"); cm.SetTexture("_EmissionMap", cm.GetTexture("_BaseMap"));
+                cm.SetColor("_EmissionColor", new Color(0.35f, 0.28f, 0.12f));
+                EditorUtility.SetDirty(cm);
             }
             AssetDatabase.SaveAssets();
 
@@ -1047,11 +1078,15 @@ namespace Jumpline.EditorTools
             if (src == null) return null;
             var root = new GameObject("Obs_" + name);
             root.transform.SetParent(parent, false);
-            var vis = Object.Instantiate(src.gameObject, root.transform);
-            vis.name = name;
-            vis.transform.localPosition = Vector3.zero;
-            vis.transform.localRotation = src.localRotation;
-            vis.transform.localScale = src.localScale;
+            var vis = MeshyDecorFor(name, root.transform, src);   // Meshy karpuz / testi
+            if (vis == null)
+            {
+                vis = Object.Instantiate(src.gameObject, root.transform);
+                vis.name = name;
+                vis.transform.localPosition = Vector3.zero;
+                vis.transform.localRotation = src.localRotation;
+                vis.transform.localScale = src.localScale;
+            }
             var rs = vis.GetComponentsInChildren<Renderer>();
             Bounds b = rs[0].bounds;
             foreach (var r in rs) b.Encapsulate(r.bounds);
@@ -1307,7 +1342,7 @@ namespace Jumpline.EditorTools
         private static Transform BuildRunner()
         {
             var library = RunnerStageBuilder.EnsureLibrary();
-            var model = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(RunnerStageBuilder.FbxPath));
+            var model = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(RunnerStageBuilder.RunnerPrefabPath));
             model.name = "Runner";
             model.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             if (model.TryGetComponent(out Animator anim))

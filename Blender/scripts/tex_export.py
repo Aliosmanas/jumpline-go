@@ -5,7 +5,7 @@ import bpy, os
 MAX = 1024
 
 
-def save_images(fbx_path, prefix):
+def save_images(fbx_path, prefix, max_px=MAX):
     d = os.path.splitext(fbx_path)[0] + "_Tex"
     os.makedirs(d, exist_ok=True)
     used = set()
@@ -17,7 +17,7 @@ def save_images(fbx_path, prefix):
             for n in m.node_tree.nodes:
                 if n.type == "TEX_IMAGE" and n.image: used.add(n.image)
     for i, img in enumerate(sorted(used, key=lambda x: x.name)):
-        if img.size[0] > MAX: img.scale(MAX, int(MAX * img.size[1] / img.size[0]))
+        if img.size[0] > max_px: img.scale(max_px, int(max_px * img.size[1] / img.size[0]))
         kind = "base" if img.colorspace_settings.name == "sRGB" else "data"
         path = os.path.join(d, f"{prefix}_{i}_{kind}.png")
         img.filepath_raw = path; img.file_format = "PNG"; img.save()

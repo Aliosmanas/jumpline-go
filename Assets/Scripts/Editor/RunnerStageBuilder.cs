@@ -38,10 +38,11 @@ namespace Jumpline.EditorTools
         {
             MeshyImport.Prepare(FbxPath);
             var imp = (ModelImporter)AssetImporter.GetAtPath(FbxPath);
-            imp.animationType = ModelImporterAnimationType.Human;
+            // Generic: Mixamo klipleri bu iskeletin kendisinde üretildi → dönüştürmeden birebir oynar.
+            // (Humanoid hedeflemesi A-pozlu Meshy gövdesinde kolları büzüyor, koşuyu bozuyordu — 15 Eki 2026)
+            imp.animationType = ModelImporterAnimationType.Generic;
             imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
-            imp.importAnimation = true;
-            imp.humanDescription = BuildHumanDescription(imp.humanDescription);
+            imp.importAnimation = false;   // klipler Anims/ altındaki Mixamo dosyalarından (Blender FBX'i kolları büzüyordu)
             imp.SaveAndReimport();
 
             EnsureFolder(MaterialDir);
@@ -123,9 +124,43 @@ namespace Jumpline.EditorTools
                 human.Add(hb);
             }
 
+            // Humanoid avatar T-poz ister: Meshy modeli A-pozda (kollar aşağı) → kopyada kollar yana, bacaklar dik açılıp
+            // iskelet o pozdan kaydedilir. Yoksa kaslar yanlış kalibre olur, koşarken kollar/eller büzüşür.
+            var posed = (GameObject)Object.Instantiate(model);
+            var names = new Dictionary<string, Transform>();
+            foreach (Transform t in posed.GetComponentsInChildren<Transform>(true)) names[t.name] = t;
+            void Aim(string traitBone, string traitChild, Vector3 dir)
+            {
+                if (!map.TryGetValue(traitBone, out string b) || !map.TryGetValue(traitChild, out string c)) return;
+                if (!names.TryGetValue(b, out Transform tb) || !names.TryGetValue(c, out Transform tc)) return;
+                Vector3 cur = tc.position - tb.position;
+                if (cur.sqrMagnitude < 1e-8f) return;
+                tb.rotation = Quaternion.FromToRotation(cur, posed.transform.TransformDirection(dir)) * tb.rotation;
+            }
+            // yön modelden ölçülür: ileri = ayak bileği → ayak ucu; karakterin solu = ileri × yukarı (Unity sol el sistemi)
+            Vector3 fwd = Vector3.forward;
+            if (map.TryGetValue("LeftFoot", out string lf) && map.TryGetValue("LeftToes", out string lt) &&
+                names.TryGetValue(lf, out Transform tf) && names.TryGetValue(lt, out Transform tt))
+            {
+                Vector3 d = tt.position - tf.position; d.y = 0f;
+                if (d.sqrMagnitude > 1e-6f) fwd = posed.transform.InverseTransformDirection(d.normalized);
+            }
+            Vector3 leftDir = Vector3.Cross(fwd, Vector3.up).normalized;   // ileri +Z ise sol = -X
+            // sol el gerçekten bu tarafta mı? (iskelet adları ile yön çelişirse çevir)
+            if (map.TryGetValue("LeftUpperArm", out string la) && map.TryGetValue("RightUpperArm", out string ra) &&
+                names.TryGetValue(la, out Transform tla) && names.TryGetValue(ra, out Transform tra))
+            {
+                Vector3 side = posed.transform.InverseTransformDirection(tla.position - tra.position);
+                if (Vector3.Dot(side, leftDir) < 0f) leftDir = -leftDir;
+            }
+            Aim("LeftUpperArm", "LeftLowerArm", leftDir); Aim("LeftLowerArm", "LeftHand", leftDir);
+            Aim("RightUpperArm", "RightLowerArm", -leftDir); Aim("RightLowerArm", "RightHand", -leftDir);
+            Aim("LeftUpperLeg", "LeftLowerLeg", Vector3.down); Aim("LeftLowerLeg", "LeftFoot", Vector3.down);
+            Aim("RightUpperLeg", "RightLowerLeg", Vector3.down); Aim("RightLowerLeg", "RightFoot", Vector3.down);
             var skeleton = new List<SkeletonBone>();
-            foreach (Transform t in model.GetComponentsInChildren<Transform>(true))
-                skeleton.Add(new SkeletonBone { name = t.name, position = t.localPosition, rotation = t.localRotation, scale = t.localScale });
+            foreach (Transform t in posed.GetComponentsInChildren<Transform>(true))
+                skeleton.Add(new SkeletonBone { name = t.name == posed.name ? model.name : t.name, position = t.localPosition, rotation = t.localRotation, scale = t.localScale });
+            Object.DestroyImmediate(posed);
 
             desc.human = human.ToArray();
             desc.skeleton = skeleton.ToArray();
@@ -199,27 +234,110 @@ namespace Jumpline.EditorTools
         /// <summary>FBX'teki action'ları adlandırır, döngüleri ayarlar, menü (Idle) ve oyun (Run) controller'larını kurar.</summary>
         public static void SetupAnimations()
         {
-            var imp = (ModelImporter)AssetImporter.GetAtPath(FbxPath);
-            var clips = new List<ModelImporterClipAnimation>();
-            foreach (ModelImporterClipAnimation c in imp.defaultClipAnimations)
-            {
-                string shortName = c.takeName.Contains("|") ? c.takeName.Substring(c.takeName.LastIndexOf('|') + 1) : c.takeName;
-                if (System.Array.IndexOf(AllClips, shortName) < 0) continue;
-                c.name = shortName;
-                c.loopTime = System.Array.IndexOf(LoopClips, shortName) >= 0;
-                c.lockRootRotation = c.lockRootHeightY = c.lockRootPositionXZ = true;
-                c.keepOriginalOrientation = c.keepOriginalPositionY = c.keepOriginalPositionXZ = true;
-                clips.Add(c);
-            }
-            imp.clipAnimations = clips.ToArray();
-            imp.SaveAndReimport();
-
+            BuildRunnerPrefab();
             var byName = new Dictionary<string, AnimationClip>();
-            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(FbxPath))
-                if (o is AnimationClip clip && !clip.name.StartsWith("__preview")) byName[clip.name] = clip;
-
+            foreach (string name in AllClips)
+                foreach (Object o in AssetDatabase.LoadAllAssetsAtPath($"{AnimDir}/{name}.fbx"))
+                    if (o is AnimationClip clip && !clip.name.StartsWith("__preview")) { byName[name] = clip; break; }
             BuildController(MenuControllerPath, byName, "Idle");
             BuildController(GameControllerPath, byName, "Run");
+        }
+
+        // ---------------------------------------------------------------------
+        // Mixamo iskeleti + Meshy gövdeleri (15 Eki 2026): Unity, Blender'dan geçen iskelette Mixamo hareketini bozuyordu
+        // (kollar büzük). Mixamo'nun kendi FBX iskeleti ve klipleri kullanılır; dokulu gövdeler bu iskelete yeniden bağlanır.
+        // ---------------------------------------------------------------------
+        public const string AnimDir = "Assets/Art/Characters/Runner/Anims";
+        public const string SkeletonPath = AnimDir + "/Skeleton.fbx";
+        public const string RunnerPrefabPath = "Assets/Art/Characters/Runner/Runner.prefab";
+        private const string BoundMeshDir = "Assets/Art/Characters/Runner/BoundMeshes";
+        private const string HipsBone = "mixamorig:Hips";
+
+        private static void ConfigureMixamoImports()
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { AnimDir }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (AssetImporter.GetAtPath(path) is not ModelImporter imp) continue;
+                string name = System.IO.Path.GetFileNameWithoutExtension(path);
+                imp.animationType = ModelImporterAnimationType.Generic;
+                imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+                imp.motionNodeName = HipsBone;                 // kök hareketi kalçadan: ileri kayma pozun içine pişer (yerinde koşu)
+                imp.importAnimation = name != "Skeleton";
+                imp.materialImportMode = ModelImporterMaterialImportMode.None;
+                imp.SaveAndReimport();
+                if (!imp.importAnimation) continue;
+                var clips = imp.defaultClipAnimations;
+                foreach (var c in clips)
+                {
+                    c.name = name;
+                    c.loopTime = System.Array.IndexOf(LoopClips, name) >= 0;
+                    c.lockRootRotation = true; c.keepOriginalOrientation = true;
+                    c.lockRootPositionXZ = true; c.keepOriginalPositionXZ = true;   // ileri/yan kayma yok (oyun kodla ilerletir)
+                    c.lockRootHeightY = false;                                       // zıplama/kayma yüksekliği klipte kalsın
+                }
+                imp.clipAnimations = clips;
+                imp.SaveAndReimport();
+            }
+        }
+
+        /// <summary>Runner.prefab: Mixamo iskeleti (Skeleton.fbx) + Runner.fbx'teki Runner_Body_* gövdeleri yeniden bağlanmış.</summary>
+        public static GameObject BuildRunnerPrefab()
+        {
+            ConfigureMixamoImports();
+            EnsureFolder(BoundMeshDir);
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(SkeletonPath));
+            PrefabUtility.UnpackPrefabInstance(root, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            root.name = "Runner";
+            root.transform.position = Vector3.zero; root.transform.rotation = Quaternion.identity;
+            foreach (var proxy in root.GetComponentsInChildren<SkinnedMeshRenderer>(true)) Object.DestroyImmediate(proxy.gameObject);
+            var bones = new Dictionary<string, Transform>();
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true)) bones[t.name] = t;
+
+            var src = (GameObject)Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath));
+            src.transform.position = Vector3.zero; src.transform.rotation = Quaternion.identity;
+            // hizalama: iki iskeletin kalçası aynı yerde olmalı (aynı Mixamo dinlenme pozundan geliyorlar)
+            Transform srcHips = null;
+            foreach (Transform t in src.GetComponentsInChildren<Transform>(true)) if (t.name == HipsBone) srcHips = t;
+            Vector3 shift = srcHips != null && bones.ContainsKey(HipsBone) ? bones[HipsBone].position - srcHips.position : Vector3.zero;
+            if (shift.magnitude > 0.05f) Debug.LogWarning($"[Jumpline] Koşucu gövdesi iskelete {shift.magnitude:0.00} m kaydırıldı");
+
+            foreach (var smr in src.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (!smr.name.StartsWith("Runner_Body_")) continue;
+                var go = new GameObject(smr.name);
+                go.transform.SetParent(root.transform, false);
+                var mesh = Object.Instantiate(smr.sharedMesh);
+                mesh.name = smr.name;
+                // köşeler dinlenme pozunda (bağlanma anı) — gövde nesnesinin uzayından kök uzayına
+                Matrix4x4 m = Matrix4x4.Translate(shift) * smr.transform.localToWorldMatrix;
+                var v = mesh.vertices; var n = mesh.normals; var tg = mesh.tangents;
+                for (int i = 0; i < v.Length; i++) v[i] = m.MultiplyPoint3x4(v[i]);
+                for (int i = 0; i < n.Length; i++) n[i] = m.MultiplyVector(n[i]).normalized;
+                for (int i = 0; i < tg.Length; i++) { Vector3 d = m.MultiplyVector(tg[i]).normalized; tg[i] = new Vector4(d.x, d.y, d.z, tg[i].w); }
+                mesh.vertices = v; mesh.normals = n; mesh.tangents = tg;
+                var nb = new Transform[smr.bones.Length];
+                var bp = new Matrix4x4[nb.Length];
+                for (int i = 0; i < nb.Length; i++)
+                {
+                    nb[i] = smr.bones[i] != null && bones.TryGetValue(smr.bones[i].name, out Transform b) ? b : bones[HipsBone];
+                    bp[i] = nb[i].worldToLocalMatrix * go.transform.localToWorldMatrix;
+                }
+                mesh.bindposes = bp;
+                mesh.RecalculateBounds();
+                string mp = $"{BoundMeshDir}/{smr.name}.asset";
+                AssetDatabase.DeleteAsset(mp);
+                AssetDatabase.CreateAsset(mesh, mp);
+                var nsmr = go.AddComponent<SkinnedMeshRenderer>();
+                nsmr.sharedMesh = mesh; nsmr.bones = nb; nsmr.rootBone = bones[HipsBone];
+                nsmr.sharedMaterials = smr.sharedMaterials;
+                nsmr.localBounds = new Bounds(Vector3.zero, Vector3.one * 2.5f);
+            }
+            Object.DestroyImmediate(src);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(root, RunnerPrefabPath);
+            Object.DestroyImmediate(root);
+            AssetDatabase.SaveAssets();
+            return prefab;
         }
 
         private static void BuildController(string path, Dictionary<string, AnimationClip> clips, string defaultState)
@@ -301,7 +419,7 @@ namespace Jumpline.EditorTools
             Light("RimPink", stage, LightType.Point, new Vector3(-1.3f, 1.4f, -1.1f), Quaternion.identity, Hex("#FF4F8A"), 6f, 5f);
             Light("Fill", stage, LightType.Point, new Vector3(0f, 0.6f, 2.5f), Quaternion.identity, Hex("#9AB0FF"), 1.2f, 6f);
 
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RunnerPrefabPath);
             var model = (GameObject)PrefabUtility.InstantiatePrefab(prefab, stage);
             model.name = "Runner";
             model.transform.localPosition = Vector3.zero;
@@ -309,6 +427,7 @@ namespace Jumpline.EditorTools
             if (model.TryGetComponent(out Animator anim)) anim.enabled = false; // kartlar statik duruşla çekilir; FinishStage açar
 
             ApplyDisplayPose(model.transform);
+            SampleIdlePose(model);
             GroundModel(model.transform, stage.position.y);
             model.transform.localRotation = Quaternion.Euler(0f, DisplayYaw, 0f);
 
@@ -567,6 +686,13 @@ namespace Jumpline.EditorTools
             Aim(HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot, new Vector3(-0.02f, -1f, 0f));
             Aim(HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, new Vector3(0.06f, -1f, 0f));
             Aim(HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, new Vector3(0.02f, -1f, 0f));
+        }
+
+        /// <summary>Generic koşucu: vitrin/kart duruşu Idle klibinin ilk karesi (A-poz yerine doğal duruş).</summary>
+        private static void SampleIdlePose(GameObject model)
+        {
+            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath($"{AnimDir}/Idle.fbx"))
+                if (o is AnimationClip clip && !clip.name.StartsWith("__")) { clip.SampleAnimation(model, 0f); return; }
         }
 
         private static void GroundModel(Transform model, float groundY)

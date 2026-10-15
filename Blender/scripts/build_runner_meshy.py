@@ -54,7 +54,7 @@ arm.select_set(True)
 for o in arm.children: o.select_set(True)
 bpy.context.view_layer.objects.active = arm
 bpy.ops.export_scene.fbx(filepath=FBX, use_selection=True, object_types={"ARMATURE", "MESH"},
-    apply_unit_scale=True, apply_scale_options="FBX_SCALE_UNITS", axis_forward="-Z", axis_up="Y", add_leaf_bones=False,
-    use_armature_deform_only=False, bake_anim=True, bake_anim_use_all_actions=True, bake_anim_use_nla_strips=False,
+    apply_unit_scale=True, apply_scale_options="FBX_SCALE_ALL", bake_space_transform=True, axis_forward="-Z", axis_up="Y", add_leaf_bones=False,
+    primary_bone_axis="Y", secondary_bone_axis="X", use_armature_deform_only=False, bake_anim=True, bake_anim_use_all_actions=True, bake_anim_use_nla_strips=False,
     bake_anim_force_startend_keying=True, bake_anim_simplify_factor=0.0, path_mode="RELATIVE", embed_textures=False)
 print("RUNNER_OK", [o.name for o in arm.children], [a.name for a in bpy.data.actions], os.path.getsize(FBX) // 1024, "KB")

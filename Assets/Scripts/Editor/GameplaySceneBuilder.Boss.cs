@@ -378,6 +378,7 @@ namespace Jumpline.EditorTools
                     var vis = (GameObject)PrefabUtility.InstantiatePrefab(prefab, seg);
                     vis.transform.localPosition = Vector3.zero;
                     foreach (var r in vis.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.On;
+                    DressBridgeSegment(seg, i);   // Meshy kayık + komşu köprü gözü
                 }
             }
             var rec = root.gameObject.AddComponent<StreetRecycler>();
