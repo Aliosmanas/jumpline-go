@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d92ac8a11714af439e0629be12804e3, type: 3}
+  m_Name: Chunk_portal_plaza
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.LevelChunk
+  id: portal_plaza
+  notes: "Portal meydan\u0131: iki yanda testi/karpuz, sonra durak + tezg\xE2h orta \u015Feride toplar, portal ortada."
+  difficulty: 1
+  world: 0
+  length: 90
+  obstacles:
+  - id: jug
+    lane: -1
+    z: 26
+    group: 0
+  - id: watermelon
+    lane: 1
+    z: 26
+    group: 0
+  - id: busstop
+    lane: -1
+    z: 48
+    group: 1
+  - id: melonstall
+    lane: 1
+    z: 48
+    group: 1
+  - id: portal
+    lane: 0
+    z: 66
+    group: 2
+  coins:
+  - shape: 0
+    lane: 0
+    toLane: 0
+    z: 20
+    length: 44
+  accent: 1
+  movingDecor: 3
+  special: 1

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d92ac8a11714af439e0629be12804e3, type: 3}
+  m_Name: Chunk_m_climb_melon
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.LevelChunk
+  id: m_climb_melon
+  notes: "Ortada karpuz kamyonu: rampadan \xE7\u0131k, tavanda ko\u015F; sonra iki yanda testi/karpuz."
+  difficulty: 1
+  world: 0
+  length: 45
+  obstacles:
+  - id: melon
+    lane: 0
+    z: 6
+    group: 0
+  - id: jug
+    lane: -1
+    z: 25
+    group: 1
+  - id: watermelon
+    lane: 1
+    z: 25
+    group: 1
+  coins:
+  - shape: 0
+    lane: 0
+    toLane: 0
+    z: 2
+    length: 20
+  - shape: 0
+    lane: 0
+    toLane: 0
+    z: 22
+    length: 8
+  accent: 0
+  movingDecor: 3
+  special: 0

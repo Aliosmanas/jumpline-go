@@ -4,12 +4,13 @@ namespace Jumpline.Level
 {
     /// <summary>
     /// Engelin hemen önünde yerde parlayan işaret — oyuncu ne yapacağını uzaktan okusun:
-    /// sarı ▲ zıpla (alçak engel, çukur, üstüne zıplanan araç) · yeşil ▲ çık (rampalı araç: üstünden koşulur) ·
-    /// mavi ▼ kay (tavan) · kırmızı ✕ şerit değiştir (aşılamaz duvar). Engel havuzdan her yerleşişte yeniden hesaplanır.
+    /// renk kodu (16 Eki 2026, sabit): turuncu ▲ zıpla · turkuaz ▼ kay · kırmızı ✕ şerit değiştir · sarı-siyah hareketli ·
+    /// yeşil ▲ çık (rampalı araç: üstünden koşulur). Chunk sisteminde hareket engel tanımından gelir (ApplyAction);
+    /// tanımsız engelde geometriden sınıflanır (Apply). Engel havuzdan her yerleşişte yeniden hesaplanır.
     /// </summary>
     public static class ObstacleHint
     {
-        public enum Action { None, Jump, Slide, Block, Climb }
+        public enum Action { None, Jump, Slide, Block, Climb, Moving }
 
         /// <summary>Rampa: koşucunun geldiği uçta alçaktan başlar, basamaksız (her adım ≤ 0.4 m) en az 1 m yükselir.</summary>
         public static bool IsRamp(Obstacle o)
@@ -46,9 +47,15 @@ namespace Jumpline.Level
         public static void Apply(Obstacle o, float jumpClear, Material jump, Material slide, Material block, float length, float gap, Material climb = null)
         {
             Action a = Classify(o, jumpClear);
+            Material m = a == Action.Jump ? jump : a == Action.Slide ? slide : a == Action.Climb ? climb : a == Action.Block ? block : null;
+            ApplyAction(o, a, m, length, gap);
+        }
+
+        /// <summary>Hareketi belli işareti koyar (m null ya da hareket yoksa işaret gizlenir).</summary>
+        public static void ApplyAction(Obstacle o, Action a, Material m, float length, float gap)
+        {
             Transform t = o.transform.Find("Hint");
-            if (a == Action.None || (a == Action.Jump && jump == null) || (a == Action.Slide && slide == null) || (a == Action.Block && block == null)
-                || (a == Action.Climb && climb == null))
+            if (a == Action.None || m == null)
             {
                 if (t != null) t.gameObject.SetActive(false);
                 return;
@@ -65,7 +72,7 @@ namespace Jumpline.Level
                 mr.receiveShadows = false;
             }
             else mr = t.GetComponent<MeshRenderer>();
-            mr.sharedMaterial = a == Action.Jump ? jump : a == Action.Slide ? slide : a == Action.Climb ? climb : block;
+            mr.sharedMaterial = m;
             float z0 = o.Segments.Length > 0 ? o.Segments[0].z0 : 0f;
             float w = Mathf.Clamp(o.HalfWidth * 2f, 0.9f, 1.5f);
             t.localPosition = new Vector3(0f, 0.035f, z0 - gap - length * 0.5f);

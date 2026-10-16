@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4138b5e5205bfac4cadb9eaee497df3b, type: 3}
+  m_Name: Obs_bar
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.ObstacleDefinition
+  id: bar
+  prefab: {fileID: 5210483884253632263, guid: 4816f84c34bd21c489c6144d85bf2d75, type: 3}
+  variants: []
+  kind: 1
+  size: {x: 2.3, y: 1.8695679, z: 0.6}
+  frontToPivot: 0.3
+  collider: {x: 1, y: 1.25, z: 0.6}
+  laneSpan: 1
+  minDifficulty: 0
+  walkableTop: 0
+  ramp: 0
+  ceilingThickness: 0.38043478
+  moveSpeed: 0
+  activateDistance: 45
+  accentColor: {r: 0.13, g: 0.83, b: 0.93, a: 1}

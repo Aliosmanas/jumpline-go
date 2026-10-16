@@ -27,7 +27,7 @@ namespace Jumpline.Level
 
         [SerializeField] private GameConfig config;
         [SerializeField] private PlayerController player;
-        [SerializeField] private ObstacleSpawner[] spawners;
+        [SerializeField] private Jumpline.Level.Chunks.ChunkSpawner[] spawners;
         [SerializeField] private BossChase boss;
         [SerializeField] private LevelFlowController flow;
         [SerializeField] private BossBody[] bodies;
@@ -51,7 +51,7 @@ namespace Jumpline.Level
             Current = config.GetLevel(GameSession.Level);
             Active = Current;
             if (player != null) player.SetSpeeds(Current.runSpeed, Current.maxSpeed);
-            if (spawners != null) foreach (var s in spawners) if (s != null) { s.SetGap(Current.obstacleGap); s.SetCourseSpacing(Current.courseSpacing); }
+            if (spawners != null) foreach (var s in spawners) if (s != null) s.SetLevel(GameSession.Level, Current.portalDistance);
             if (boss != null)
             {
                 boss.SetDifficulty(Current.bossHearts, Current.bossDrift);

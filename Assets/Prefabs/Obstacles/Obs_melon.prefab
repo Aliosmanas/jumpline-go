@@ -1,0 +1,264 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6569565829946995000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3595462304264670752}
+  - component: {fileID: 893110314979350172}
+  m_Layer: 0
+  m_Name: Obs_melon
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3595462304264670752
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6569565829946995000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 50, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5029301453801436437}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &893110314979350172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6569565829946995000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 290c2ec9ac07208478672261149ca3b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Obstacle
+  kind: 0
+  halfWidth: 1
+  segments:
+  - z0: -0.0000000035905938
+    z1: 0.24096067
+    h0: 0.048192136
+    h1: 0.11887384
+  - z0: 0.24096067
+    z1: 0.48192134
+    h0: 0.11887384
+    h1: 0.26023725
+  - z0: 0.48192134
+    z1: 0.72288203
+    h0: 0.26023725
+    h1: 0.4016007
+  - z0: 0.72288203
+    z1: 0.9638427
+    h0: 0.4016007
+    h1: 0.5429641
+  - z0: 0.9638427
+    z1: 1.2048033
+    h0: 0.5429641
+    h1: 0.68432754
+  - z0: 1.2048033
+    z1: 1.4457641
+    h0: 0.68432754
+    h1: 0.82569087
+  - z0: 1.4457641
+    z1: 1.6867247
+    h0: 0.82569087
+    h1: 0.96705437
+  - z0: 1.6867247
+    z1: 1.9276854
+    h0: 0.96705437
+    h1: 1.1084177
+  - z0: 1.9276854
+    z1: 2.168646
+    h0: 1.1084177
+    h1: 1.2497811
+  - z0: 2.168646
+    z1: 2.4096067
+    h0: 1.2497811
+    h1: 1.3911445
+  - z0: 2.4096067
+    z1: 2.6505673
+    h0: 1.3911445
+    h1: 1.5325079
+  - z0: 2.6505673
+    z1: 2.8915281
+    h0: 1.5325079
+    h1: 1.6738714
+  - z0: 2.8915281
+    z1: 3.1324887
+    h0: 1.6738714
+    h1: 1.8152349
+  - z0: 3.1324887
+    z1: 3.3734493
+    h0: 1.8152349
+    h1: 1.9565982
+  - z0: 3.3734493
+    z1: 3.6144102
+    h0: 1.9565982
+    h1: 2.0979617
+  - z0: 3.6144102
+    z1: 3.8553708
+    h0: 2.0979617
+    h1: 2.239325
+  - z0: 3.8553708
+    z1: 4.0963316
+    h0: 2.239325
+    h1: 2.3453498
+  - z0: 4.0963316
+    z1: 4.337292
+    h0: 2.3453498
+    h1: 2.380154
+  - z0: 4.337292
+    z1: 4.578253
+    h0: 2.380154
+    h1: 2.378288
+  - z0: 4.578253
+    z1: 4.8192134
+    h0: 2.378288
+    h1: 2.3664544
+  - z0: 4.8192134
+    z1: 5.060174
+    h0: 2.3664544
+    h1: 2.355948
+  - z0: 5.060174
+    z1: 5.3011346
+    h0: 1.6618661
+    h1: 1.5950997
+  - z0: 5.3011346
+    z1: 5.5420957
+    h0: 1.5950997
+    h1: 1.5188086
+  - z0: 5.5420957
+    z1: 5.7830563
+    h0: 1.5188086
+    h1: 1.4949298
+  - z0: 5.7830563
+    z1: 6.024017
+    h0: 1.4949298
+    h1: 1.4580151
+  - z0: 6.024017
+    z1: 6.2622156
+    h0: 1.4580151
+    h1: 1.4354544
+  thickness: 0
+--- !u!1 &7008417072275019255
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5029301453801436437}
+  - component: {fileID: 7509114167507966096}
+  m_Layer: 0
+  m_Name: Visual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5029301453801436437
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7008417072275019255}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.9638427, y: 0.9638427, z: 0.9638427}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2995348425832695127}
+  m_Father: {fileID: 3595462304264670752}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7509114167507966096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7008417072275019255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04842537c23d6994bbf297d5eb5a7937, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.ObstacleVisual
+  overrides: []
+  codeColor: {r: 0.23, g: 1, b: 0.42, a: 1}
+--- !u!1001 &3322289800017732284
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5029301453801436437}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071067
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+      propertyPath: m_Name
+      value: MelonTruck
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+--- !u!4 &2995348425832695127 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b17931feeb5f6e64b8eeb95f1d9366e7, type: 3}
+  m_PrefabInstance: {fileID: 3322289800017732284}
+  m_PrefabAsset: {fileID: 0}

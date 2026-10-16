@@ -23,7 +23,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<ObstacleSpawner>(FindObjectsSortMode.None))
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
             {
                 sp.ClearRange(-1e6f, 1e6f);
                 sp.enabled = false;
@@ -35,10 +35,9 @@ namespace Jumpline.Tests
 
         private Obstacle WallAhead(float dist)
         {
-            Obstacle tpl = null;
-            foreach (var o in Resources.FindObjectsOfTypeAll<Obstacle>())
-                if (o.name == "Obs_Minibus") { tpl = o; break; }
-            Assert.IsNotNull(tpl, "dolmuş şablonu yok");
+            var lib = Resources.FindObjectsOfTypeAll<Jumpline.Level.Chunks.ObstacleLibrary>();
+            Obstacle tpl = lib.Length > 0 ? lib[0].Get("minibus")?.prefab : null;
+            Assert.IsNotNull(tpl, "dolmuş prefab'ı yok");
             var w = Object.Instantiate(tpl);
             w.gameObject.SetActive(true);
             w.enabled = true;

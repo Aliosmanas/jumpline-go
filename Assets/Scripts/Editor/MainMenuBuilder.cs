@@ -986,11 +986,10 @@ namespace Jumpline.EditorTools
                         "sahmeran" => 1.45f, "humbaba" => 0.8f, "stone_guardian" => 0.62f, "van_monster" => 1.25f,
                         "karakoncolos" => 1.12f, "lamassu" => 0.9f, "dragon" => 0.7f, _ => 1f,
                     },
-                    // denge (telefon testi: "çok zor"): yumuşak hız eğrisi, seyrek başlayan parkur
-                    runSpeed = 10.5f + 0.45f * i, maxSpeed = 16.5f + 0.6f * i,
-                    // 15 Eki 2026 kullanıcı: "Subway Surfers gibi dolu dolu" → engeller sık (trenler ve açık şerit kuralı aynı)
-                    obstacleGap = new Vector2(Mathf.Max(6.5f, 9.5f - 0.3f * i), Mathf.Max(9.5f, 13.5f - 0.4f * i)),
-                    courseSpacing = Mathf.Max(0.72f, 0.92f - 0.02f * i),
+                    // 16 Eki 2026 kullanıcı: bölüm 1 hız 8 → 16 m/sn, sonraki bölümler biraz daha hızlı;
+                    // yoğunluk chunk zorluğundan gelir (DifficultyDirector: bölüm ilerledikçe eşikler öne çekilir)
+                    runSpeed = 8f + 0.4f * i, maxSpeed = 16f + 0.5f * i,
+                    portalDistance = 1400f + 50f * i,
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,
                     stoneTint = stops[i].city == "MARDIN" ? new Color(2.1f, 1.75f, 1.2f)      // Mardin: bal rengi kalker
                               : stops[i].city == "HASANKEYF" ? new Color(1.75f, 1.35f, 1.05f)   // Hasankeyf: kırmızımsı kum taşı

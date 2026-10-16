@@ -286,7 +286,7 @@ namespace Jumpline.Level
             Show(failPanel, false);
             Vector3 p = player.transform.position;
             Vector3 safe = worldSwitcher != null ? worldSwitcher.SafeRevivePoint(p) : new Vector3(p.x, 0f, p.z);
-            foreach (var sp in FindObjectsByType<ObstacleSpawner>(FindObjectsSortMode.None))
+            foreach (var sp in FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
                 if (sp.isActiveAndEnabled) sp.ClearRange(safe.z - 8f, safe.z + clearAhead);
             if (player.IsDead) player.Revive(safe);
             if (boss != null && boss.gameObject.activeSelf) boss.Recover();

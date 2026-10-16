@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d92ac8a11714af439e0629be12804e3, type: 3}
+  m_Name: Chunk_e_safe_lanterns
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.LevelChunk
+  id: e_safe_lanterns
+  notes: "G\xFCvenli alan: fener dizisi, ortada para."
+  difficulty: 0
+  world: 0
+  length: 30
+  obstacles: []
+  coins:
+  - shape: 0
+    lane: 0
+    toLane: 0
+    z: 4
+    length: 22
+  accent: 2
+  movingDecor: 4
+  special: 0

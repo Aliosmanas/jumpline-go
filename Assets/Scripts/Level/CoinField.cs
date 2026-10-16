@@ -75,6 +75,27 @@ namespace Jumpline.Level
             }
         }
 
+        /// <summary>
+        /// Chunk para rotası (yön gösterir): aynı şeritte düz dizi — önündeki zıplanır engelin üstünden yay, bariyerin
+        /// altında alçak hat (PlanTrail); farklı şeritte yumuşak S (şerit değiştirme rotası, yüzeyi izler).
+        /// </summary>
+        public void PlaceRoute(float xFrom, float xTo, float zStart, float length, float ground)
+        {
+            if (coinTemplate == null || length <= 0f) return;
+            int count = Mathf.Max(2, Mathf.RoundToInt(length / spacing) + 1);
+            if (Mathf.Abs(xTo - xFrom) < 0.01f) { PlanTrail(xFrom, zStart, count, ground); return; }
+            for (int k = 0; k < count; k++)
+            {
+                float z = zStart + k * spacing;
+                float t = Mathf.SmoothStep(0f, 1f, (float)k / (count - 1));
+                float x = Mathf.Lerp(xFrom, xTo, t);
+                float s = ObstacleField.SurfaceAt(x, z, ground);
+                if (s > ground + stepUp && ObstacleField.SolidAt(x, z) != null) break;   // S rotası engelden önce biter
+                bool low = ObstacleField.HitsCeiling(x, z, s, s + 1.7f);
+                Spawn(new Vector3(x, s + (low ? lowHeight : hoverHeight), z));
+            }
+        }
+
         /// <summary>Şeritte yürüyerek dizinin para yüksekliklerini hesaplar ve koyar.</summary>
         private void PlanTrail(float x, float start, int count, float ground)
         {

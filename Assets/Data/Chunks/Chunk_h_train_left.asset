@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d92ac8a11714af439e0629be12804e3, type: 3}
+  m_Name: Chunk_h_train_left
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.LevelChunk
+  id: h_train_left
+  notes: "Tren: solda kamyon + iki minib\xFCs (tavandan tavana), ortada minib\xFCsler; sa\u011F \u015Ferit yerden ka\xE7\u0131\u015F."
+  difficulty: 2
+  world: 0
+  length: 45
+  obstacles:
+  - id: truck
+    lane: -1
+    z: 6
+    group: 0
+  - id: minibus
+    lane: -1
+    z: 14.5
+    group: 0
+  - id: minibus
+    lane: -1
+    z: 22.4
+    group: 0
+  - id: minibus
+    lane: 0
+    z: 8
+    group: 0
+  - id: minibus
+    lane: 0
+    z: 15.9
+    group: 0
+  coins:
+  - shape: 0
+    lane: -1
+    toLane: -1
+    z: 1
+    length: 30
+  accent: 0
+  movingDecor: 3
+  special: 0

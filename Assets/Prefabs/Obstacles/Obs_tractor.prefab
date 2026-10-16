@@ -1,0 +1,272 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1147511096210702529
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6214577105254708362}
+  - component: {fileID: 1928793435519343544}
+  m_Layer: 0
+  m_Name: Obs_tractor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6214577105254708362
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147511096210702529}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 50, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2474321770006765795}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1928793435519343544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147511096210702529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 290c2ec9ac07208478672261149ca3b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Obstacle
+  kind: 0
+  halfWidth: 1
+  segments:
+  - z0: -0.00000011064623
+    z1: 0.23204187
+    h0: 0.046408396
+    h1: 0.12371746
+  - z0: 0.23204187
+    z1: 0.46408382
+    h0: 0.12371746
+    h1: 0.27833557
+  - z0: 0.46408382
+    z1: 0.6961258
+    h0: 0.27833557
+    h1: 0.43295372
+  - z0: 0.6961258
+    z1: 0.92816776
+    h0: 0.43295372
+    h1: 0.58757186
+  - z0: 0.92816776
+    z1: 1.1602098
+    h0: 0.58757186
+    h1: 0.74218994
+  - z0: 1.1602098
+    z1: 1.3922517
+    h0: 0.74218994
+    h1: 0.8968081
+  - z0: 1.3922517
+    z1: 1.6242937
+    h0: 0.8968081
+    h1: 1.0514263
+  - z0: 1.6242937
+    z1: 1.8563356
+    h0: 1.0514263
+    h1: 1.2060444
+  - z0: 1.8563356
+    z1: 2.0883777
+    h0: 1.2060444
+    h1: 1.3606626
+  - z0: 2.0883777
+    z1: 2.3204198
+    h0: 1.3606626
+    h1: 1.5152806
+  - z0: 2.3204198
+    z1: 2.5524616
+    h0: 1.5152806
+    h1: 1.6698987
+  - z0: 2.5524616
+    z1: 2.7845037
+    h0: 1.6698987
+    h1: 1.8245169
+  - z0: 2.7845037
+    z1: 3.0165455
+    h0: 1.8245169
+    h1: 1.9791349
+  - z0: 3.0165455
+    z1: 3.2485876
+    h0: 1.9791349
+    h1: 2.1337528
+  - z0: 3.2485876
+    z1: 3.4806294
+    h0: 2.1337528
+    h1: 2.2883713
+  - z0: 3.4806294
+    z1: 3.7126715
+    h0: 2.2883713
+    h1: 2.3894594
+  - z0: 3.7126715
+    z1: 3.9447136
+    h0: 2.3894594
+    h1: 2.4124472
+  - z0: 3.9447136
+    z1: 4.4087973
+    h0: 2.4124472
+    h1: 2.4079418
+  - z0: 4.4087973
+    z1: 4.8728814
+    h0: 2.4002106
+    h1: 2.3917644
+  - z0: 4.8728814
+    z1: 5.1049232
+    h0: 1.6174638
+    h1: 1.6174638
+  - z0: 5.1049232
+    z1: 5.336965
+    h0: 2.3060658
+    h1: 2.29612
+  - z0: 5.336965
+    z1: 5.5690074
+    h0: 2.29612
+    h1: 2.2861743
+  - z0: 5.5690074
+    z1: 5.801049
+    h0: 1.449625
+    h1: 1.449625
+  - z0: 5.801049
+    z1: 6.033091
+    h0: 1.7620794
+    h1: 1.7311002
+  - z0: 6.033091
+    z1: 6.2651334
+    h0: 1.7311002
+    h1: 1.7001209
+  - z0: 6.2651334
+    z1: 6.497175
+    h0: 0.73033595
+    h1: 0.69701993
+  - z0: 6.497175
+    z1: 6.729217
+    h0: 0.69701993
+    h1: 0.6546486
+  - z0: 6.729217
+    z1: 6.7946157
+    h0: 0.6546486
+    h1: 0.64559335
+  thickness: 0
+--- !u!1 &3695067601956825518
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2474321770006765795}
+  - component: {fileID: 6822753767852488069}
+  m_Layer: 0
+  m_Name: Visual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2474321770006765795
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3695067601956825518}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.9281679, y: 0.9281679, z: 0.9281679}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8145364826134682901}
+  m_Father: {fileID: 6214577105254708362}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6822753767852488069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3695067601956825518}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04842537c23d6994bbf297d5eb5a7937, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.ObstacleVisual
+  overrides: []
+  codeColor: {r: 0.23, g: 1, b: 0.42, a: 1}
+--- !u!1001 &8539000103414102782
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2474321770006765795}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071067
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+      propertyPath: m_Name
+      value: Tractor
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+--- !u!4 &8145364826134682901 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 21b7f7ebf273e5047bdd0e77b3a7d3de, type: 3}
+  m_PrefabInstance: {fileID: 8539000103414102782}
+  m_PrefabAsset: {fileID: 0}

@@ -51,14 +51,25 @@ namespace Jumpline.Tests
         {
             GameSession.Mode = RunMode.Campaign;
             UnityEngine.PlayerPrefs.SetInt("jl.introSeen", 1); UnityEngine.PlayerPrefs.SetInt("jl.tutorialDone", 1);
-            SceneManager.LoadScene("Gameplay");
-            yield return new WaitForSeconds(2f);
-            Assert.IsNotNull(Object.FindAnyObjectByType<GameplayAudio>(), "GameplayAudio yok");
-            Assert.AreEqual(1, PlayingMusic(), "tek müzik çalmalı (üst üste parça yok)");
-            AudioManager.Play("coin");
-            AudioManager.Play("roar");
-            yield return null;
-            LogAssert.NoUnexpectedReceived();
+            // yalnız hata/uyarı sayılır: sahne açılışındaki bilgi günlükleri (ör. [Perf] fps) testi bozmasın
+            var problems = new System.Collections.Generic.List<string>();
+            void OnLog(string msg, string stack, LogType type)
+            {
+                if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert || type == LogType.Warning) problems.Add(type + ": " + msg);
+            }
+            Application.logMessageReceived += OnLog;
+            try
+            {
+                SceneManager.LoadScene("Gameplay");
+                yield return new WaitForSeconds(2f);
+                Assert.IsNotNull(Object.FindAnyObjectByType<GameplayAudio>(), "GameplayAudio yok");
+                Assert.AreEqual(1, PlayingMusic(), "tek müzik çalmalı (üst üste parça yok)");
+                AudioManager.Play("coin");
+                AudioManager.Play("roar");
+                yield return null;
+            }
+            finally { Application.logMessageReceived -= OnLog; }
+            CollectionAssert.IsEmpty(problems, "ses sisteminden hata/uyarı");
         }
 
         [UnityTest]

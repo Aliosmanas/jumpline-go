@@ -1,0 +1,294 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6772081624155869608
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5203853129722352932}
+  - component: {fileID: 3114667330434326065}
+  - component: {fileID: 2786041437789499113}
+  m_Layer: 0
+  m_Name: RampTruck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5203853129722352932
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6772081624155869608}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2343389658588073947}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &3114667330434326065
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6772081624155869608}
+  m_Mesh: {fileID: 3101640222248264645, guid: d7bd09facd93e0644b57220895246537, type: 3}
+--- !u!23 &2786041437789499113
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6772081624155869608}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 1d77e39c13d346a4b95c33cda9c775ba, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &7642387531143919975
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4222409142036798652}
+  - component: {fileID: 6655233019494156230}
+  m_Layer: 0
+  m_Name: Obs_truck_Red
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4222409142036798652
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7642387531143919975}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 50, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2343389658588073947}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6655233019494156230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7642387531143919975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 290c2ec9ac07208478672261149ca3b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Obstacle
+  kind: 0
+  halfWidth: 0.95
+  segments:
+  - z0: -0.0000000037252903
+    z1: 0.25
+    h0: 0.05
+    h1: 0.12333324
+  - z0: 0.25
+    z1: 0.5
+    h0: 0.12333324
+    h1: 0.2699997
+  - z0: 0.5
+    z1: 0.75
+    h0: 0.2699997
+    h1: 0.4166662
+  - z0: 0.75
+    z1: 1
+    h0: 0.4166662
+    h1: 0.5633327
+  - z0: 1
+    z1: 1.25
+    h0: 0.5633327
+    h1: 0.7099992
+  - z0: 1.25
+    z1: 1.5
+    h0: 0.7099992
+    h1: 0.8566656
+  - z0: 1.5
+    z1: 1.75
+    h0: 0.8566656
+    h1: 1.0033321
+  - z0: 1.75
+    z1: 2
+    h0: 1.0033321
+    h1: 1.1499987
+  - z0: 2
+    z1: 2.25
+    h0: 1.1499987
+    h1: 1.2966651
+  - z0: 2.25
+    z1: 2.5
+    h0: 1.2966651
+    h1: 1.4433315
+  - z0: 2.5
+    z1: 2.75
+    h0: 1.4433315
+    h1: 1.589998
+  - z0: 2.75
+    z1: 3
+    h0: 1.589998
+    h1: 1.7366645
+  - z0: 3
+    z1: 3.25
+    h0: 1.7366645
+    h1: 1.8833311
+  - z0: 3.25
+    z1: 3.5
+    h0: 1.8833311
+    h1: 2.0299973
+  - z0: 3.5
+    z1: 3.75
+    h0: 2.0299973
+    h1: 2.1766639
+  - z0: 3.75
+    z1: 4
+    h0: 2.1766639
+    h1: 2.3233304
+  - z0: 4
+    z1: 4.25
+    h0: 2.3233304
+    h1: 2.4333324
+  - z0: 4.25
+    z1: 4.5
+    h0: 2.4333324
+    h1: 2.4694424
+  - z0: 4.5
+    z1: 4.75
+    h0: 2.4694424
+    h1: 2.4675064
+  - z0: 4.75
+    z1: 5
+    h0: 2.4675064
+    h1: 2.4552288
+  - z0: 5
+    z1: 5.25
+    h0: 2.4552288
+    h1: 2.4443283
+  - z0: 5.25
+    z1: 5.5
+    h0: 1.7242088
+    h1: 1.6549377
+  - z0: 5.5
+    z1: 5.75
+    h0: 1.6549377
+    h1: 1.5757847
+  - z0: 5.75
+    z1: 6
+    h0: 1.5757847
+    h1: 1.5510101
+  - z0: 6
+    z1: 6.25
+    h0: 1.5510101
+    h1: 1.5127106
+  - z0: 6.25
+    z1: 6.4971347
+    h0: 1.5127106
+    h1: 1.4893036
+  thickness: 0
+--- !u!1 &7680935919997507989
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2343389658588073947}
+  - component: {fileID: 2418582573582539871}
+  m_Layer: 0
+  m_Name: Visual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2343389658588073947
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7680935919997507989}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5203853129722352932}
+  m_Father: {fileID: 4222409142036798652}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2418582573582539871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7680935919997507989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04842537c23d6994bbf297d5eb5a7937, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.ObstacleVisual
+  overrides:
+  - slot: T_Paint
+    material: {fileID: 2100000, guid: 9f9e9534a3f79824ebea141be1416894, type: 2}
+  codeColor: {r: 0.23, g: 1, b: 0.42, a: 1}

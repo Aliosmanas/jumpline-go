@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d92ac8a11714af439e0629be12804e3, type: 3}
+  m_Name: Chunk_m_taxi_rows
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.LevelChunk
+  id: m_taxi_rows
+  notes: "Solda sonra sa\u011Fda taksi; ortada uzun para dizisi."
+  difficulty: 1
+  world: 0
+  length: 45
+  obstacles:
+  - id: taxi
+    lane: -1
+    z: 6
+    group: 0
+  - id: taxi
+    lane: 1
+    z: 22.5
+    group: 1
+  coins:
+  - shape: 0
+    lane: 0
+    toLane: 0
+    z: 2
+    length: 36
+  accent: 5
+  movingDecor: 3
+  special: 0

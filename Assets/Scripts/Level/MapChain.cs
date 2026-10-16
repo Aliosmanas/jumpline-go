@@ -21,8 +21,9 @@ namespace Jumpline.Level
         [SerializeField, Min(2)] private int ahead = 6;
         [Tooltip("Arkada bırakılan parça sayısı (kamera geriye baktığında boşluk görünmesin).")]
         [SerializeField, Min(0)] private int behind = 1;
-        [SerializeField] private Vector2Int neighborhoodRun = new Vector2Int(4, 7);
-        [SerializeField] private Vector2Int seaWallRun = new Vector2Int(3, 5);
+        [Tooltip("Tema her 500–800 m'de değişir (kullanıcı kuralı): 30 m parçadan 17–26 tane, arada 30 m geçiş parçası.")]
+        [SerializeField] private Vector2Int neighborhoodRun = new Vector2Int(17, 26);
+        [SerializeField] private Vector2Int seaWallRun = new Vector2Int(17, 26);
         [SerializeField] private int seed;
 
         private readonly List<(GameObject prefab, GameObject instance, float z)> live = new List<(GameObject, GameObject, float)>();

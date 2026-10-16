@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4138b5e5205bfac4cadb9eaee497df3b, type: 3}
+  m_Name: Obs_taxi_moving
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.ObstacleDefinition
+  id: taxi_moving
+  prefab: {fileID: 1336193233865150369, guid: 58e11befac9665f43b067f15df7fd34e, type: 3}
+  variants: []
+  kind: 4
+  size: {x: 1.8400002, y: 1.6200027, z: 4.4299994}
+  frontToPivot: 2.2199998
+  collider: {x: 0.86, y: 1.6194992, z: 4.4299994}
+  laneSpan: 1
+  minDifficulty: 1
+  walkableTop: 1
+  ramp: 0
+  ceilingThickness: 0
+  moveSpeed: 3
+  activateDistance: 45
+  accentColor: {r: 1, g: 0.82, b: 0.12, a: 1}

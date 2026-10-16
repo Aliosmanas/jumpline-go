@@ -1,0 +1,264 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1605302166502305845
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4125456893097212025}
+  - component: {fileID: 7401777190969882777}
+  m_Layer: 0
+  m_Name: Obs_citybus
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4125456893097212025
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605302166502305845}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 50, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2907688579180283705}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7401777190969882777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605302166502305845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 290c2ec9ac07208478672261149ca3b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Obstacle
+  kind: 0
+  halfWidth: 1
+  segments:
+  - z0: -4.6199994
+    z1: -4.3699994
+    h0: 2.6803436
+    h1: 2.7202435
+  - z0: -4.3699994
+    z1: -4.1199994
+    h0: 2.7202435
+    h1: 2.76437
+  - z0: -4.1199994
+    z1: -3.6199994
+    h0: 2.76437
+    h1: 2.7642574
+  - z0: -3.6199994
+    z1: -3.3699994
+    h0: 2.7601128
+    h1: 2.8112202
+  - z0: -3.3699994
+    z1: -3.1199994
+    h0: 2.8112202
+    h1: 2.9156418
+  - z0: -3.1199994
+    z1: -2.8699994
+    h0: 2.9156418
+    h1: 2.9845753
+  - z0: -2.8699994
+    z1: -2.6199994
+    h0: 2.9845753
+    h1: 2.9850006
+  - z0: -2.6199994
+    z1: -2.3699994
+    h0: 2.9850006
+    h1: 2.973257
+  - z0: -2.3699994
+    z1: -0.3699994
+    h0: 2.973257
+    h1: 2.9750557
+  - z0: -0.3699994
+    z1: -0.11999941
+    h0: 2.9699364
+    h1: 2.888071
+  - z0: -0.11999941
+    z1: 0.13000059
+    h0: 2.888071
+    h1: 2.7847996
+  - z0: 0.13000059
+    z1: 0.3800006
+    h0: 2.7847996
+    h1: 2.752346
+  - z0: 0.3800006
+    z1: 0.8800006
+    h0: 2.752346
+    h1: 2.7549553
+  - z0: 0.8800006
+    z1: 1.1300006
+    h0: 2.7648869
+    h1: 2.7674599
+  - z0: 1.1300006
+    z1: 1.3800006
+    h0: 2.7674599
+    h1: 2.7985744
+  - z0: 1.3800006
+    z1: 1.6300006
+    h0: 2.7985744
+    h1: 2.827509
+  - z0: 1.6300006
+    z1: 2.1300006
+    h0: 2.827509
+    h1: 2.8215122
+  - z0: 2.1300006
+    z1: 2.3800006
+    h0: 2.816721
+    h1: 2.8043518
+  - z0: 2.3800006
+    z1: 2.6300006
+    h0: 2.8043518
+    h1: 2.78483
+  - z0: 2.6300006
+    z1: 2.8800006
+    h0: 2.78483
+    h1: 2.765051
+  - z0: 2.8800006
+    z1: 3.3800006
+    h0: 2.765051
+    h1: 2.7661114
+  - z0: 3.3800006
+    z1: 3.6300006
+    h0: 2.7716408
+    h1: 2.7797375
+  - z0: 3.6300006
+    z1: 3.8800006
+    h0: 2.7797375
+    h1: 2.8017845
+  - z0: 3.8800006
+    z1: 4.1300006
+    h0: 2.8017845
+    h1: 2.792986
+  - z0: 4.1300006
+    z1: 4.3800006
+    h0: 2.792986
+    h1: 2.7795792
+  - z0: 4.3800006
+    z1: 4.5299993
+    h0: 1.7758179
+    h1: 1.7758179
+  thickness: 0
+--- !u!1 &3723643000537928360
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2907688579180283705}
+  - component: {fileID: 3799352483973332313}
+  m_Layer: 0
+  m_Name: Visual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2907688579180283705
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3723643000537928360}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1024344727911260191}
+  m_Father: {fileID: 4125456893097212025}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3799352483973332313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3723643000537928360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04842537c23d6994bbf297d5eb5a7937, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.ObstacleVisual
+  overrides: []
+  codeColor: {r: 1, g: 0.23, b: 0.23, a: 1}
+--- !u!1001 &701872591199832052
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2907688579180283705}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071067
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+      propertyPath: m_Name
+      value: CityBus
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+--- !u!4 &1024344727911260191 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b6e65ef5c90f306479cc8db8776c8d47, type: 3}
+  m_PrefabInstance: {fileID: 701872591199832052}
+  m_PrefabAsset: {fileID: 0}

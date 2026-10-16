@@ -24,7 +24,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.ObstacleSpawner>())
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
                 sp.ClearRange(-1e6f, 120f);   // koşucu çarpıp ölmesin (ölüyken atış yok)
             yield return new WaitForSeconds(5f);
             var throws = Object.FindAnyObjectByType<Jumpline.Boss.ThrowSystem>();

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4138b5e5205bfac4cadb9eaee497df3b, type: 3}
+  m_Name: Obs_crates
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.ObstacleDefinition
+  id: crates
+  prefab: {fileID: 6233332389557038851, guid: d435f416fe1bfe440a5d5d5853a15f7e, type: 3}
+  variants: []
+  kind: 0
+  size: {x: 1.1696182, y: 1.0999985, z: 0.710133}
+  frontToPivot: 0.3550665
+  collider: {x: 0.5848091, y: 1.1, z: 0.710133}
+  laneSpan: 1
+  minDifficulty: 0
+  walkableTop: 0
+  ramp: 0
+  ceilingThickness: 0
+  moveSpeed: 0
+  activateDistance: 45
+  accentColor: {r: 1, g: 0.54, b: 0.12, a: 1}

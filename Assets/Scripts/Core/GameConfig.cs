@@ -19,10 +19,8 @@ namespace Jumpline.Core
             public bool built;
             [Min(1f)] public float runSpeed = 11f;
             [Min(1f)] public float maxSpeed = 18f;
-            [Tooltip("Engel desenleri arası boşluk (m), küçük = yoğun.")]
-            public Vector2 obstacleGap = new Vector2(11f, 17f);
-            [Tooltip("Hazır parkur satır aralığı çarpanı (1 = tasarım; büyük = seyrek).")]
-            [Min(0.5f)] public float courseSpacing = 1f;
+            [Tooltip("Bölüm içinde portal meydanı chunk'ının geleceği mesafe (m). Zorluk eşikleri DifficultyDirector'da.")]
+            [Min(100f)] public float portalDistance = 1400f;
             [Range(1, 8)] public int bossHearts = 4;
             [Tooltip("Canavarın kaçma hızı çarpanı (1 = bölüm 1).")]
             [Min(0.1f)] public float bossDrift = 1f;

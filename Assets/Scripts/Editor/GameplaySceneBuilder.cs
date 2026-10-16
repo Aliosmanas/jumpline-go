@@ -79,9 +79,9 @@ namespace Jumpline.EditorTools
             Portal down = BuildPortal(runner, switcher, false, "PortalDown", Hex("#FF3C8E"));  // çatı → sokak (pembe)
             var (streetObs, roofObs) = BuildObstacles(runner, switcher, new[] { up, down });
             var coins = BuildCoins(runner);
-            BuildObstacleHints(streetObs.GetComponent<ObstacleSpawner>(), roofObs.GetComponent<ObstacleSpawner>());   // ▲ zıpla ▼ kay ✕ şerit
-            Set(streetObs.GetComponent<ObstacleSpawner>(), "coins", coins);
-            Set(roofObs.GetComponent<ObstacleSpawner>(), "coins", coins);
+            BuildObstacleHints(streetObs, roofObs);   // renk kodlu işaretler: ▲ zıpla ▼ kay ✕ kaç, sarı-siyah hareketli, yeşil çık
+            Set(streetObs, "coins", coins);
+            Set(roofObs, "coins", coins);
             if (coinLabel != null)
             {
                 var counter = coinLabel.gameObject.AddComponent<Jumpline.UI.CoinCounter>();
@@ -99,14 +99,14 @@ namespace Jumpline.EditorTools
                 SetArray(canvas.GetComponent<LevelFlowController>(), "quickRaceOnly", new Object[] { x2.go });
             }
             BuildPowerUps(runner, coins);
-            BuildBossChase(runner, follow, switcher, streetObs.GetComponent<ObstacleSpawner>(), up, down, canvas.GetComponent<LevelFlowController>());
+            BuildBossChase(runner, follow, switcher, streetObs, up, down, canvas.GetComponent<LevelFlowController>());
             BuildGameplayAudio(runner, coins, switcher, canvas.GetComponent<LevelFlowController>());
             BuildStory(safe, runner);
             BuildDailyMission(runner, canvas.GetComponent<LevelFlowController>());
             var director = new GameObject("LevelDirector").AddComponent<LevelDirector>();   // bölüm zorluğu (GameConfig.LevelSpec)
             Set(director, "config", config);
             Set(director, "player", runner.GetComponent<Jumpline.Player.PlayerController>());
-            SetArray(director, "spawners", new Object[] { streetObs.GetComponent<ObstacleSpawner>(), roofObs.GetComponent<ObstacleSpawner>() });
+            SetArray(director, "spawners", new Object[] { streetObs, roofObs });
             Set(director, "boss", Object.FindAnyObjectByType<Jumpline.Boss.BossChase>(FindObjectsInactive.Include));
             Set(director, "flow", canvas.GetComponent<LevelFlowController>());
             SetArray(director, "stoneMaterials", new[] { "S_Basalt", "S_BasaltTrim", "S_Paving", "S_Curb" }
@@ -871,148 +871,13 @@ namespace Jumpline.EditorTools
             new Obstacle.Segment { z0 = 10.8f, z1 = 11.6f, h0 = 1.25f, h1 = 1.25f },
         };
 
-        /// <summary>Şablonlar + sokak/çatı engel üreticileri. Döndürür: (sokak engel kökü, çatı engel kökü).</summary>
-        private static (GameObject street, GameObject roof) BuildObstacles(Transform runner, WorldSwitcher switcher, Portal[] portals)
-        {
-            var templates = new GameObject("ObstacleTemplates");
-            templates.transform.position = new Vector3(0f, -50f, 0f);   // sınırlar ölçülürken görünmesin
-            Obstacle[] Make(string[] names, float minHeight)
-            {
-                var list = new System.Collections.Generic.List<Obstacle>();
-                foreach (string n in names)
-                {
-                    var o = DecorObstacle(n, templates.transform, minHeight);
-                    if (o != null) list.Add(o);
-                }
-                return list.ToArray();
-            }
-            // duvarlar: çarpışma yüksekliği en yüksek zıplamanın üstünde → şerit değiştirmek şart
-            // 15 Eki 2026: eski dekor engelleri yerine Meshy modelleri (yükseklik oynanışa göre; yön koşucuya)
-            Obstacle[] low = { MeshyObstacle("ClayJug", templates.transform, 1.0f, 0f), MeshyObstacle("M06_StallDecor", templates.transform, 1.05f, 0f),
-                               MeshyObstacle("Watermelon", templates.transform, 0.8f, 0f) };
-            Obstacle[] high = { MeshyObstacle("KebabGrill", templates.transform, 0f, 4f), MeshyObstacle("TeaCart", templates.transform, 0f, 4f) };   // high: yanından geç
-            Obstacle[] walls = { MeshyObstacle("BusStop", templates.transform, 0f, 4f), MeshyObstacle("MelonStall", templates.transform, 0f, 4f),
-                                 MeshyObstacle("SimitCart", templates.transform, 0f, 4f) };
-            low = System.Array.FindAll(low, o => o != null); high = System.Array.FindAll(high, o => o != null); walls = System.Array.FindAll(walls, o => o != null);
-            foreach (var o in low) o.gameObject.AddComponent<Breakable>();    // çarpınca savrulur
-            foreach (var o in high) o.gameObject.AddComponent<Breakable>();
-            Obstacle crates = CrateStackObstacle(templates.transform);
-            if (crates != null) low = new[] { crates, crates }.Concat(low).ToArray();   // en sık çıkan: sandık yığını
-            Obstacle truck = TruckObstacle(templates.transform);
-            Obstacle taxi = VehicleObstacle(TaxiPath, "Obs_Taxi", templates.transform, Obstacle.Kind.Solid, 0.86f, null);   // Meshy taksi: profil modelden
-            Obstacle bus = VehicleObstacle(MinibusPath, "Obs_Minibus", templates.transform, Obstacle.Kind.Solid, 1.0f, null);   // Meshy minibüs: profil modelden (tavanda koşulur)
-            Obstacle gate = MeshyGate(templates.transform);   // Meshy çarşı kemeri (eski sur kapısı yerine); tavan 3.7 m   // alt kenar 3.7 m
-            // kalas bariyer: alt kenar 1.15, kalınlık 0.35 (üstü 1.5) → kayarak altından ya da zıplayarak üstünden
-            Obstacle bar = VehicleObstacle(SlideBarPath, "Obs_SlideBar", templates.transform, Obstacle.Kind.Ceiling, 1.0f,
-                new[] { new Obstacle.Segment { z0 = -0.3f, z1 = 0.3f, h0 = 1.15f, h1 = 1.15f } }, 0.35f);
-            templates.SetActive(false);   // şablonlar kayıt olmaz; üretici kopyalar (sınırlar açıkken ölçüldü)
-            var player = runner.GetComponent<Jumpline.Player.PlayerController>();
-
-            GameObject Spawner(string name, bool rooftop)
-            {
-                var go = new GameObject(name);
-                var sp = go.AddComponent<ObstacleSpawner>();
-                Set(sp, "player", player);
-                Set(sp, "switcher", switcher);
-                var so = new SerializedObject(sp);
-                so.FindProperty("rooftop").boolValue = rooftop;
-                so.ApplyModifiedPropertiesWithoutUndo();
-                SetArray(sp, "portals", portals);
-                SetArray(sp, "low", low);
-                SetArray(sp, "high", high);
-                SetArray(sp, "walls", walls);
-                Object[] One(Obstacle o) => rooftop || o == null ? new Object[0] : new Object[] { o };
-                SetArray(sp, "ramps", One(truck));
-                SetArray(sp, "cars", One(taxi));
-                SetArray(sp, "buses", One(bus));
-                SetArray(sp, "gates", One(gate));
-                SetArray(sp, "bars", bar == null ? new Object[0] : new Object[] { bar });   // çatıda da var
-                return go;
-            }
-            var streetGo = Spawner("StreetObstacles", false);
-            BuildCourse(streetGo.GetComponent<ObstacleSpawner>(), templates.transform, low, walls, high, truck, taxi, bus, gate, bar, portals);
-            return (streetGo, Spawner("RooftopObstacles", true));
-        }
-
         // ---------------------------------------------------------------------
-        // "Sur İçi Koşusu" parkuru (onaylanan önizleme) — Blender/scripts/build_course_assets.py + make_course_json.py
+        // Engel modelleri (Blender/scripts/build_course_assets.py, fit_obstacles.py) — chunk sistemi: GameplaySceneBuilder.Chunks.cs
         // ---------------------------------------------------------------------
         private const string ObstacleDir = "Assets/Art/Environment/Obstacles";
-        public const string CoursePath = "Assets/Data/Course_SurIci.json";
 
         private static Obstacle.Segment Seg(float z0, float z1, float h0, float h1) => new Obstacle.Segment { z0 = z0, z1 = z1, h0 = h0, h1 = h1 };
         private static Obstacle.Segment Seg(float z0, float z1, float h) => Seg(z0, z1, h, h);
-
-        private static void BuildCourse(ObstacleSpawner sp, Transform templates, Obstacle[] low, Obstacle[] walls, Obstacle[] high,
-                                        Obstacle truck, Obstacle taxi, Obstacle bus, Obstacle gate, Obstacle bar, Portal[] portals)
-        {
-            templates.gameObject.SetActive(true);   // sınırlar ölçülebilsin
-            Obstacle V(string file, Obstacle.Kind kind, float hw, Obstacle.Segment[] segs, float thick = 0f, bool ramp = false) =>
-                VehicleObstacle($"{ObstacleDir}/{file}.fbx", "Obs_" + file, templates, kind, hw, segs, thick, ramp);
-            const float Solid = 4f;   // yerden aşılamaz (şerit değiştir)
-            Obstacle melon = V("MelonTruck", Obstacle.Kind.Solid, 1.0f, null, 0f, true);   // Meshy: profil modelden + düz rampa
-            Obstacle cityBus = V("CityBus", Obstacle.Kind.Solid, 1.05f, null);   // Meshy otobüs: profil modelden
-            Obstacle patpat = V("PatPat", Obstacle.Kind.Solid, 0.7f, null);   // Meshy patpat: profil modelden
-            Obstacle tractor = V("Tractor", Obstacle.Kind.Solid, 1.0f, null, 0f, true);   // Meshy traktör: profil modelden + rampa (üstüne çıkılır)
-            Obstacle stop = V("BusStop", Obstacle.Kind.Solid, 0.95f, new[] { Seg(-1.55f, 1.55f, Solid) });
-            Obstacle teaCart = V("TeaCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
-            Obstacle simitCart = V("SimitCart", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.7f, 0.7f, Solid) });
-            Obstacle melonStall = V("MelonStall", Obstacle.Kind.Solid, 0.9f, new[] { Seg(-0.75f, 0.75f, Solid) });
-            Obstacle grill = V("KebabGrill", Obstacle.Kind.Solid, 0.85f, new[] { Seg(-0.6f, 0.6f, Solid) });
-            Obstacle kilim = bar;   // Meshy bariyer (eski kilim ipi; Meshy kilimi kayma açıklığına uymuyor)
-            Obstacle potRack = bar;   // alçak kemer kaldırıldı (kullanıcı: gereksiz yükselti) → Meshy bariyer
-            Obstacle arch = bar;   // alçak kemer kaldırıldı (gereksiz yükselti)
-            Obstacle teaTable = PiecesObstacle($"{ObstacleDir}/TeaTable.fbx", "Obs_TeaTable", templates, 1f);
-            Obstacle taxiWhite = Recolor(taxi, "Obs_TaxiWhite", "T_Yellow", "#EDEAE3", templates);
-            Obstacle taxiRed = Recolor(taxi, "Obs_TaxiRed", "T_Yellow", "#B3262E", templates);
-            Obstacle truckRed = Recolor(truck, "Obs_TruckRed", "T_Paint", "#9E2B25", templates);
-            Obstacle truckYellow = Recolor(truck, "Obs_TruckYellow", "T_Paint", "#D9A21B", templates);
-            templates.gameObject.SetActive(false);
-
-            Obstacle Named(Obstacle[] set, string n) => System.Array.Find(set, o => o != null && o.name == "Obs_" + n);
-            Obstacle[] Arr(params Obstacle[] xs) => System.Array.FindAll(xs, o => o != null);
-            Obstacle crates = Named(low, "CrateStack");
-            // araç boyları (tren zinciri için; Blender build_obstacles / build_vehicles / build_course_assets)
-            var lengths = new System.Collections.Generic.Dictionary<string, float>
-            {
-                { "bus", 5.9f }, { "citybus", 9.2f }, { "taxi", 4.5f }, { "truck", 6.6f }, { "melon", 6.6f }, { "tractor", 7.4f },
-            };
-            var sets = new (string id, float front, bool span, Obstacle[] v)[]
-            {
-                ("low", 0.45f, false, low), ("crates", 0.45f, false, Arr(crates)), ("copper", 0.45f, false, Arr(Named(low, "ClayJug"), Named(low, "M06_StallDecor"))),
-                ("teatable", 0.45f, false, Arr(teaTable)), ("bar", 0.3f, false, Arr(bar, kilim, potRack)), ("kilim", 0.3f, false, Arr(kilim)),
-                ("potrack", 0.3f, false, Arr(potRack)), ("arch", 0.3f, false, Arr(bar)), ("wall", 0.6f, false, walls.Concat(high).ToArray()),
-                ("busstop", 1.55f, false, Arr(stop)), ("grill", 0.6f, false, Arr(grill)),
-                ("stall", 0.75f, false, Arr(teaCart, simitCart, melonStall)), ("teacart", 0.75f, false, Arr(teaCart)),
-                ("simitcart", 0.7f, false, Arr(simitCart)), ("melonstall", 0.75f, false, Arr(melonStall)),
-                ("bus", 2.95f, false, Arr(bus)), ("citybus", 4.6f, false, Arr(cityBus)), ("taxi", 2.25f, false, Arr(taxi, taxiWhite, taxiRed)),
-                ("patpat", 1.35f, false, Arr(patpat)), ("truck", 0f, false, Arr(truck, truckRed, truckYellow)),
-                ("melon", 0f, false, Arr(melon)), ("tractor", 0f, false, Arr(tractor)), ("gate", 0.8f, true, Arr(gate)),
-            };
-            var so = new SerializedObject(sp);
-            var arr = so.FindProperty("assets");
-            arr.arraySize = sets.Length;
-            for (int i = 0; i < sets.Length; i++)
-            {
-                var e = arr.GetArrayElementAtIndex(i);
-                e.FindPropertyRelative("id").stringValue = sets[i].id;
-                e.FindPropertyRelative("frontToOrigin").floatValue = sets[i].front;
-                e.FindPropertyRelative("spansLanes").boolValue = sets[i].span;
-                e.FindPropertyRelative("length").floatValue = lengths.TryGetValue(sets[i].id, out float len) ? len : 0f;
-                var v = e.FindPropertyRelative("variants");
-                v.arraySize = sets[i].v.Length;
-                for (int k = 0; k < sets[i].v.Length; k++) v.GetArrayElementAtIndex(k).objectReferenceValue = sets[i].v[k];
-            }
-            so.FindProperty("course").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(CoursePath);
-            so.FindProperty("coursePortal").objectReferenceValue = portals != null && portals.Length > 0 ? portals[0] : null;
-            so.ApplyModifiedPropertiesWithoutUndo();
-            if (portals != null && portals.Length > 0 && portals[0] != null)
-            {
-                var pso = new SerializedObject(portals[0]);
-                pso.FindProperty("courseControlled").boolValue = true;   // sokak portalı parkurun Portal Meydanı'nda
-                pso.ApplyModifiedPropertiesWithoutUndo();
-            }
-        }
 
         /// <summary>Ayrı parçalı engel (çay masası + tabureler): parçalar köke bağlanır, Breakable savurur.</summary>
         private static Obstacle PiecesObstacle(string path, string name, Transform parent, float scale)

@@ -26,7 +26,7 @@ namespace Jumpline.Boss
         [SerializeField] private WorldSwitcher switcher;
         [SerializeField] private CameraFollow cameraFollow;
         [Tooltip("Sokak engel üreticisi: kovalamada parkurun kendi portal satırları kapatılır (çatıya canavarla gidilir).")]
-        [SerializeField] private ObstacleSpawner streetSpawner;
+        [SerializeField] private Jumpline.Level.Chunks.ChunkSpawner streetSpawner;
         [Tooltip("Sokak → çatı portalı (canavar 3. kalpte buradan kaçar).")]
         [SerializeField] private Portal upPortal;
         [Tooltip("Çatı → sokak portalı (canavar çatıda bunu görünce aşağı iner).")]
@@ -656,7 +656,7 @@ namespace Jumpline.Boss
             Time.timeScale = defeatSlowMo;
             if (cameraFollow != null) cameraFollow.Shake(1f);
             float z = transform.position.z;   // koşucu zafer anında rahat koşsun
-            foreach (var sp in FindObjectsByType<ObstacleSpawner>(FindObjectsSortMode.None))
+            foreach (var sp in FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
                 if (sp.isActiveAndEnabled) sp.ClearRange(player.transform.position.z - 2f, z + 60f);
         }
 

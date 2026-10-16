@@ -7,20 +7,22 @@ using static Jumpline.EditorTools.UIKit;
 namespace Jumpline.EditorTools
 {
     /// <summary>
-    /// Engel okunabilirliği: yerde parlayan işaret dokuları (▲ zıpla, ▼ kay, ✕ şerit değiştir) ve şeffaf malzemeleri;
-    /// sokak ve çatı üreticilerine bağlanır (ObstacleHint).
+    /// Engel okunabilirliği: yerde parlayan işaret dokuları ve şeffaf malzemeleri; sokak ve çatı chunk üreticilerine bağlanır
+    /// (ObstacleHint). Renk kodu sabit (16 Eki 2026): turuncu ▲ zıpla, turkuaz ▼ kay, kırmızı ✕ kaç, sarı-siyah şerit hareketli,
+    /// yeşil ▲ çık (rampa = güvenli rota). Renkler ObstacleDefinition.CodeColor ile aynı.
     /// </summary>
     public static partial class GameplaySceneBuilder
     {
         private const string HintDir = "Assets/Art/UI/Hints";
 
-        private static void BuildObstacleHints(params ObstacleSpawner[] spawners)
+        private static void BuildObstacleHints(params Jumpline.Level.Chunks.ChunkSpawner[] spawners)
         {
             EnsureFolder(HintDir);
-            var jump = HintMaterial("Hint_Jump", Hex("#FFD23F"), 0);
-            var slide = HintMaterial("Hint_Slide", Hex("#3FD2FF"), 1);
-            var block = HintMaterial("Hint_Block", Hex("#FF3B3B"), 2);
-            var climb = HintMaterial("Hint_Climb", Hex("#3BFF6A"), 0);
+            var jump = HintMaterial("Hint_Jump", Jumpline.Level.Chunks.ObstacleDefinition.CodeColor(Jumpline.Level.Chunks.ObstacleKind.Jump), 0);
+            var slide = HintMaterial("Hint_Slide", Jumpline.Level.Chunks.ObstacleDefinition.CodeColor(Jumpline.Level.Chunks.ObstacleKind.Slide), 1);
+            var block = HintMaterial("Hint_Block", Jumpline.Level.Chunks.ObstacleDefinition.CodeColor(Jumpline.Level.Chunks.ObstacleKind.Dodge), 2);
+            var climb = HintMaterial("Hint_Climb", Jumpline.Level.Chunks.ObstacleDefinition.CodeColor(Jumpline.Level.Chunks.ObstacleKind.Climb), 0);
+            var moving = HintMaterial("Hint_Moving", Jumpline.Level.Chunks.ObstacleDefinition.CodeColor(Jumpline.Level.Chunks.ObstacleKind.MovingObstacle), 3);
             foreach (var s in spawners)
             {
                 if (s == null) continue;
@@ -28,11 +30,11 @@ namespace Jumpline.EditorTools
                 Set(s, "hintSlide", slide);
                 Set(s, "hintBlock", block);
                 Set(s, "hintClimb", climb);
-                SetFloat(s, "hintJumpClear", 1.75f);
+                Set(s, "hintMoving", moving);
             }
         }
 
-        /// <summary>shape: 0 = iki yukarı ok (▲▲), 1 = iki aşağı ok (▼▼), 2 = çarpı (✕). Kenarlarda yumuşak parlama.</summary>
+        /// <summary>shape: 0 = iki yukarı ok (▲▲), 1 = iki aşağı ok (▼▼), 2 = çarpı (✕), 3 = sarı-siyah dikkat şeridi. Kenarlarda yumuşak parlama.</summary>
         private static Material HintMaterial(string name, Color color, int shape)
         {
             const int w = 128, h = 192;
@@ -43,7 +45,13 @@ namespace Jumpline.EditorTools
                 float u = (x + 0.5f) / w * 2f - 1f;     // -1..1 (yanlar)
                 float v = (y + 0.5f) / h;               // 0 (oyuncuya yakın) .. 1 (engele yakın)
                 float a = 0f;
-                if (shape == 2)
+                float ink = 1f;   // 0 = siyah şerit (renkle çarpılınca siyah kalır)
+                if (shape == 3)
+                {
+                    a = Mathf.Clamp01((0.95f - Mathf.Abs(u)) / 0.08f) * Mathf.Clamp01((0.96f - Mathf.Abs(v * 2f - 1f)) / 0.06f);
+                    ink = Mathf.Repeat((u * 0.5f + v) * 4f, 1f) < 0.5f ? 1f : 0.05f;
+                }
+                else if (shape == 2)
                 {
                     float vv = v * 2f - 1f;
                     float d = Mathf.Min(Mathf.Abs(u - vv * 0.75f), Mathf.Abs(u + vv * 0.75f));
@@ -61,7 +69,7 @@ namespace Jumpline.EditorTools
                     }
                 }
                 float edge = Mathf.Clamp01(1f - Mathf.Abs(u)) * 0.18f * Mathf.Sin(v * Mathf.PI);   // zemin parıltısı
-                px[y * w + x] = new Color(1f, 1f, 1f, Mathf.Clamp01(a + edge));
+                px[y * w + x] = new Color(ink, ink, ink, Mathf.Clamp01(a + edge));
             }
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
             tex.SetPixels(px);

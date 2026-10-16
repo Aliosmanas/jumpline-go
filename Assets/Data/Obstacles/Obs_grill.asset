@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4138b5e5205bfac4cadb9eaee497df3b, type: 3}
+  m_Name: Obs_grill
+  m_EditorClassIdentifier: Jumpline::Jumpline.Level.Chunks.ObstacleDefinition
+  id: grill
+  prefab: {fileID: 2800963961753282142, guid: 05b259bd37950bf40a931a8768a001c3, type: 3}
+  variants: []
+  kind: 2
+  size: {x: 1.5757087, y: 3.0999985, z: 2.512255}
+  frontToPivot: 1.2561275
+  collider: {x: 0.7878544, y: 4, z: 2.512255}
+  laneSpan: 1
+  minDifficulty: 0
+  walkableTop: 0
+  ramp: 0
+  ceilingThickness: 0
+  moveSpeed: 0
+  activateDistance: 45
+  accentColor: {r: 1, g: 0.23, b: 0.23, a: 1}

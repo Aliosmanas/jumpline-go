@@ -56,7 +56,7 @@ namespace Jumpline.EditorTools
         private static GameObject[] chaseHidden;
 
         private static void BuildBossChase(Transform runner, Jumpline.CameraSystem.CameraFollow follow, WorldSwitcher switcher,
-                                           ObstacleSpawner street, Portal up, Portal down, LevelFlowController flow)
+                                           Jumpline.Level.Chunks.ChunkSpawner street, Portal up, Portal down, LevelFlowController flow)
         {
             ConfigureBossImport(ThrowablesPath);
             ConfigureBossImport(TepegozBlockPath);
@@ -138,11 +138,8 @@ namespace Jumpline.EditorTools
             lm.startLifetime = new ParticleSystem.MinMaxCurve(0.4f, 0.9f);
             Set(boss, "landFx", land);
 
-            // fırlatılan engel: sokak üreticisinin sandık yığını şablonu (aşılabilir, kırılır)
-            var spso = new SerializedObject(street);
-            var lowArr = spso.FindProperty("low");
-            Obstacle crate = lowArr.arraySize > 0 ? lowArr.GetArrayElementAtIndex(0).objectReferenceValue as Obstacle : null;
-            Set(boss, "thrownTemplate", crate);
+            // fırlatılan engel: engel kütüphanesindeki sandık yığını (aşılabilir, kırılır)
+            Set(boss, "thrownTemplate", street.ThrownTemplate);
 
             // --- fırlatılabilirler + düşme işareti ---
             var throwPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ThrowablesPath);

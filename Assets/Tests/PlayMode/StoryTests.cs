@@ -23,7 +23,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<ObstacleSpawner>(FindObjectsSortMode.None))
+            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
             {
                 sp.ClearRange(-1e6f, 1e6f);
                 sp.enabled = false;
@@ -78,10 +78,9 @@ namespace Jumpline.Tests
             yield return Load(true, false);
             var player = Object.FindAnyObjectByType<PlayerController>();
             yield return new WaitForSeconds(3f);
-            Obstacle tpl = null;
-            foreach (var o in Resources.FindObjectsOfTypeAll<Obstacle>())
-                if (o.name == "Obs_CrateStack") { tpl = o; break; }
-            Assert.IsNotNull(tpl);
+            var lib = Resources.FindObjectsOfTypeAll<Jumpline.Level.Chunks.ObstacleLibrary>();
+            Obstacle tpl = lib.Length > 0 ? lib[0].Get("crates")?.prefab : null;
+            Assert.IsNotNull(tpl, "sandık prefab'ı yok");
             var crate = Object.Instantiate(tpl);
             crate.gameObject.SetActive(true);
             crate.enabled = true;

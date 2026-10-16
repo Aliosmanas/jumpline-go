@@ -1,7 +1,7 @@
 using System.Collections;
-using System.Reflection;
 using Jumpline.Core;
 using Jumpline.Level;
+using Jumpline.Level.Chunks;
 using Jumpline.Player;
 using NUnit.Framework;
 using UnityEngine;
@@ -16,8 +16,6 @@ namespace Jumpline.Tests
     /// </summary>
     public class RampTests
     {
-        private const BindingFlags Any = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
-
         [UnityTest]
         public IEnumerator MelonTruck_Climbable_60fps() => RunOver("melon", 1f / 60f);
 
@@ -37,22 +35,13 @@ namespace Jumpline.Tests
             yield return null;
             yield return null;
             var player = Object.FindAnyObjectByType<PlayerController>();
-            ObstacleSpawner street = null;
-            foreach (var sp in Object.FindObjectsByType<ObstacleSpawner>())
-                if (!(bool)typeof(ObstacleSpawner).GetField("rooftop", Any).GetValue(sp)) street = sp;
+            ChunkSpawner street = null;
+            foreach (var sp in Object.FindObjectsByType<ChunkSpawner>())
+                if (!sp.IsRooftop) street = sp;
             Assert.IsNotNull(street, "sokak üreticisi yok");
             street.ClearRange(-1e6f, 1e6f);
-            var sets = (System.Array)typeof(ObstacleSpawner).GetField("assets", Any).GetValue(street);
-            Obstacle template = null;
-            foreach (var s in sets)
-            {
-                var t = s.GetType();
-                if ((string)t.GetField("id").GetValue(s) == id) template = ((Obstacle[])t.GetField("variants").GetValue(s))[0];
-            }
-            Assert.IsNotNull(template, id + " şablonu yok");
-            float x = player.LaneOriginX + player.Lane * 0f;   // orta şerit
             float z0 = player.transform.position.z + 25f;
-            typeof(ObstacleSpawner).GetMethod("Spawn", Any).Invoke(street, new object[] { template, player.LaneOriginX, z0 });
+            Assert.IsNotNull(street.SpawnForTest(id, 0, z0), id + " tanımı yok");   // orta şerit
             Time.captureDeltaTime = dt;
             float maxY = 0f;
             for (int f = 0; f < 600 && player.transform.position.z < z0 + 13f; f++)
