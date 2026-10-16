@@ -359,7 +359,7 @@ namespace Jumpline.EditorTools
             Chunk("h_train_left", DHard, 45, VisualAccent.None, "Tren: solda kamyon + iki minibüs (tavandan tavana), ortada minibüsler; sağ şerit yerden kaçış.",
               new[] { Ob("truck", LnL, 6), Ob("minibus", LnL, 14.5f), Ob("minibus", LnL, 22.4f), Ob("minibus", LnM, 8), Ob("minibus", LnM, 15.9f) },
               CoinLine(LnL, 1, 30)),
-            Chunk("h_train_gate", DHard, 45, VisualAccent.None, "Tren sağda; tavanda çarşı kemerinin altından KAY. Sol şerit yerden kaçış.",
+            Chunk("h_train_gate", DHard, 45, VisualAccent.None, "Tren sağda, üstünden çarşı kemeri geçer (tavanda koşarken kemerin altından geçilir). Sol şerit yerden kaçış.",
               new[] { Ob("truck", LnR, 6), Ob("minibus", LnR, 14.5f), Ob("minibus", LnR, 22.4f), Ob("minibus", LnM, 8), Ob("minibus", LnM, 15.9f), Ob("gate", LnM, 9) },
               CoinLine(LnR, 1, 30)),
             Chunk("h_double_ramp", DHard, 45, VisualAccent.None, "İki yanda rampalı araç + minibüs; orta yerden açık.",
@@ -505,6 +505,7 @@ namespace Jumpline.EditorTools
                 inst.transform.GetChild(0).localScale *= 9.5f / Mathf.Max(0.1f, b.size.x);
                 b = VisualBounds(inst.transform);
                 inst.transform.GetChild(0).position += new Vector3(-b.center.x, -b.min.y, -b.center.z);
+                SinkFloorSlab(inst.transform.GetChild(0).gameObject, "M04_BazaarArch");   // döşeme yolun altına
                 PrefabUtility.ApplyPrefabInstance(inst, InteractionMode.AutomatedAction);
                 Object.DestroyImmediate(inst);
             }

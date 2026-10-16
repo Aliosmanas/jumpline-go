@@ -26,6 +26,20 @@ namespace Jumpline.EditorTools
             { "Watermelon", "Watermelon" }, { "CopperJugs", "ClayJug" },
         };
 
+        /// <summary>
+        /// Altında zemin döşemesi olan Meshy modelleri: döşeme kalınlığı / model yüksekliği. Model bu kadar yola gömülür →
+        /// döşeme yolun altında kalır, yolda basamak olmaz (16 Eki kullanıcı: "kemer yola sıfır olmalı"). Mesh değişmez.
+        /// M04 çarşı kemeri: 9.0 birim yükseklikte 0.42 birim taş döşeme (Blender ölçümü).
+        /// </summary>
+        private static readonly Dictionary<string, float> MeshyFloorSlab = new Dictionary<string, float> { { "M04_BazaarArch", 0.42f / 9.0f } };
+
+        /// <summary>Modeli zemin döşemesi kadar aşağı indirir (döşemesi yoksa dokunmaz).</summary>
+        private static void SinkFloorSlab(GameObject go, string model)
+        {
+            if (go == null || !MeshyFloorSlab.TryGetValue(model, out float frac)) return;
+            go.transform.position += Vector3.down * (LocalBounds(go).size.y * frac);
+        }
+
         private static GameObject MeshyPrefab(string name)
         {
             if (meshyPrefabs.TryGetValue(name, out var p) && p != null) return p;
@@ -191,7 +205,7 @@ namespace Jumpline.EditorTools
             return obs;
         }
 
-        /// <summary>Sur kapısı yerine Meshy çarşı kemeri: üç şeridi aşar (9.5 m), tavan 3.7 m (kamyon üstündeki koşucu çarpar).</summary>
+        /// <summary>Sur kapısı yerine Meshy çarşı kemeri: üç şeridi aşar (9.5 m); döşemesi yolun altında, tavan görünen fenerin altı (5.2 m).</summary>
         private static Obstacle MeshyGate(Transform parent)
         {
             var root = new GameObject("Obs_BazaarArchGate");
@@ -203,8 +217,10 @@ namespace Jumpline.EditorTools
             vis.transform.localScale *= k;
             b = LocalBounds(vis);
             vis.transform.position += new Vector3(root.transform.position.x - b.center.x, root.transform.position.y - b.min.y, root.transform.position.z - b.center.z);
+            SinkFloorSlab(vis, "M04_BazaarArch");   // döşeme yolun altına
             var obs = root.AddComponent<Obstacle>();
-            obs.Configure(Obstacle.Kind.Ceiling, 3.65f, new[] { new Obstacle.Segment { z0 = -0.8f, z1 = 0.8f, h0 = 3.7f, h1 = 3.7f } });
+            // tavan = görünen en alçak nokta (ortadaki asılı fenerin altı, gömüldükten sonra ≈ 5.2 m): görünmez tavan yok
+            obs.Configure(Obstacle.Kind.Ceiling, 3.65f, new[] { new Obstacle.Segment { z0 = -0.8f, z1 = 0.8f, h0 = 5.2f, h1 = 5.2f } });
             foreach (var r in root.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.On;
             EditorUtility.SetDirty(obs);
             return obs;

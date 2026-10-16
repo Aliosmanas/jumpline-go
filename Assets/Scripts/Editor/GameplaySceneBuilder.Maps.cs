@@ -177,6 +177,7 @@ namespace Jumpline.EditorTools
                     go.transform.localPosition = new Vector3(-it.p[0], it.p[2], -it.p[1]);
                     go.transform.localRotation = Quaternion.Euler(0f, -it.r, 0f) * pf.transform.localRotation;
                     go.transform.localScale = Vector3.Scale(pf.transform.localScale, new Vector3(it.s[0], it.s[1], it.s[2]));
+                    SinkFloorSlab(go, it.a);   // kemerin taş döşemesi yolun altında kalsın
                     if (UseHousePaints && !string.IsNullOrEmpty(it.paint))
                         foreach (var r in go.GetComponentsInChildren<Renderer>())
                         {
