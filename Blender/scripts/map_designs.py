@@ -445,8 +445,8 @@ def main():
             continue
         b, length, regions, rng, attempt = done
         dress(b, regions, rng)
-        b.save_json(length, [r[0] for r in regions])
-        preview(b, length)
+        b.save_json(length, [r[0] for r in regions], regions)
+        if os.environ.get("ONIZLEME", "1") == "1": preview(b, length)
         n_obs = sum(1 for it in b.items if it.get("kind") not in ("plank",))
         line = f"{b.name} uzunluk {length:.0f} m · bloklar {plan} · engel/araç {n_obs} · portal {len(b.portals)} · deneme {attempt}"
         report.append(line)

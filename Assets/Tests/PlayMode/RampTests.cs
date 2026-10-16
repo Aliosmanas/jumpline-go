@@ -39,14 +39,14 @@ namespace Jumpline.Tests
             foreach (var sp in Object.FindObjectsByType<ChunkSpawner>())
                 if (!sp.IsRooftop) street = sp;
             Assert.IsNotNull(street, "sokak üreticisi yok");
-            street.ClearRange(-1e6f, 1e6f);
+            Jumpline.Level.Course.ClearAll(true);
             float z0 = player.transform.position.z + 25f;
             Assert.IsNotNull(street.SpawnForTest(id, 0, z0), id + " tanımı yok");   // orta şerit
             Time.captureDeltaTime = dt;
             float maxY = 0f;
             for (int f = 0; f < 600 && player.transform.position.z < z0 + 13f; f++)
             {
-                street.ClearRange(z0 + 14f, 1e6f);   // arkadan gelen yeni engeller ölçümü bozmasın
+                Jumpline.Level.Course.ClearRange(z0 + 14f, 1e6f);   // arkadan gelen yeni engeller ölçümü bozmasın
                 maxY = Mathf.Max(maxY, player.transform.position.y);
                 Assert.IsFalse(player.IsDead, $"{id} rampasında öldü (dt={dt:F3}, y={player.transform.position.y:F2})");
                 yield return null;

@@ -238,7 +238,7 @@ namespace Jumpline.Boss
                 gameObject.SetActive(false);
                 return;
             }
-            if (streetSpawner != null) streetSpawner.IgnoreCoursePortal = true;
+            Jumpline.Level.Course.IgnorePortal(true);
         }
 
         private void OnEnable()
@@ -422,7 +422,7 @@ namespace Jumpline.Boss
         {
             if (upPortal == null) return;
             upPortalZ = transform.position.z + portalLead;
-            if (streetSpawner != null) streetSpawner.ClearRange(upPortalZ - 8f, upPortalZ + 6f);   // portalın önü açık
+            Jumpline.Level.Course.ClearRange(upPortalZ - 8f, upPortalZ + 6f);   // portalın önü açık
             upPortal.PlaceAt(upPortalZ, lane);
             upPortalOpen = true;
         }
@@ -458,7 +458,7 @@ namespace Jumpline.Boss
             {
                 gap += missedPortalPenalty;
                 upPortalZ = pz + 45f;
-                if (streetSpawner != null) streetSpawner.ClearRange(upPortalZ - 8f, upPortalZ + 6f);
+                Jumpline.Level.Course.ClearRange(upPortalZ - 8f, upPortalZ + 6f);
                 upPortal.PlaceAt(upPortalZ, Random.Range(-1, 2));
             }
         }
@@ -656,8 +656,7 @@ namespace Jumpline.Boss
             Time.timeScale = defeatSlowMo;
             if (cameraFollow != null) cameraFollow.Shake(1f);
             float z = transform.position.z;   // koşucu zafer anında rahat koşsun
-            foreach (var sp in FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
-                if (sp.isActiveAndEnabled) sp.ClearRange(player.transform.position.z - 2f, z + 60f);
+            Jumpline.Level.Course.ClearRange(player.transform.position.z - 2f, z + 60f);
         }
 
         private void UpdateDefeat()

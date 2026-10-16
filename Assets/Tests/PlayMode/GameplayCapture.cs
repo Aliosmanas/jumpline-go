@@ -59,8 +59,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
-                sp.ClearRange(-1e6f, 1e6f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 1e6f);
             var boss = Object.FindAnyObjectByType<BossChase>();
             var main = Camera.main;
             var close = new GameObject("CloseCam").AddComponent<Camera>();
@@ -142,11 +141,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
-            {
-                sp.ClearRange(-1e6f, 1e6f);
-                sp.enabled = false;
-            }
+            Jumpline.Level.Course.ClearAll(true);
             var boss = Object.FindAnyObjectByType<BossChase>();
             var sw = Object.FindAnyObjectByType<Jumpline.Level.WorldSwitcher>();
             yield return new WaitForSeconds(4f);
@@ -175,11 +170,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
-            {
-                sp.ClearRange(-1e6f, 1e6f);
-                sp.enabled = false;
-            }
+            Jumpline.Level.Course.ClearAll(true);
             var boss = Object.FindAnyObjectByType<BossChase>();
             var player = Object.FindAnyObjectByType<PlayerController>();
             var throws = Object.FindAnyObjectByType<ThrowSystem>();
@@ -212,8 +203,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
-                sp.ClearRange(-1e6f, 140f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 140f);
             var field = Object.FindAnyObjectByType<Jumpline.Level.PowerUpField>();
             typeof(Jumpline.Level.PowerUpField).GetField("nextDistance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(field, 5f);
             yield return new WaitForSeconds(4.2f);
@@ -254,8 +244,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
-                sp.ClearRange(-1e6f, 120f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 120f);
             yield return new WaitForSecondsRealtime(2.5f);
             Shot("daily_01_dialogue");
             var tap = GameObject.Find("TapArea").GetComponent<UnityEngine.UI.Button>();
@@ -288,8 +277,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
-                sp.ClearRange(-1e6f, 95f);   // ilk 95 m boş: koşucu çekim sırasında çarpmasın, ilerisi gerçek parkur
+                            Jumpline.Level.Course.ClearRange(-1e6f, 95f);   // ilk 95 m boş: koşucu çekim sırasında çarpmasın, ilerisi gerçek parkur
             yield return new WaitForSeconds(0.6f);
             Shot("chase_01_intro");
             yield return new WaitForSeconds(4.5f);
@@ -321,8 +309,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
-                sp.ClearRange(-1e6f, 95f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 95f);
             yield return new WaitForSeconds(0.8f);
             Shot("sahmeran_01_intro");
             yield return new WaitForSeconds(4.5f);
@@ -344,8 +331,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
-                sp.ClearRange(-1e6f, 95f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 95f);
             yield return new WaitForSeconds(0.8f);
             Shot("humbaba_01_intro");
             yield return new WaitForSeconds(4.5f);
@@ -363,8 +349,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
-                sp.ClearRange(-1e6f, 95f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 95f);
             yield return new WaitForSeconds(0.8f);
             Shot("stone_01_intro");
             yield return new WaitForSeconds(4.5f);
@@ -382,8 +367,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
-                sp.ClearRange(-1e6f, 95f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 95f);
             yield return new WaitForSeconds(0.8f);
             Shot("van_01_intro");
             yield return new WaitForSeconds(4.5f);
@@ -401,8 +385,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
-                sp.ClearRange(-1e6f, 95f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 95f);
             yield return new WaitForSeconds(0.8f);
             Shot("kara_01_intro");
             yield return new WaitForSeconds(4.5f);
@@ -420,8 +403,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
-                sp.ClearRange(-1e6f, 95f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 95f);
             yield return new WaitForSeconds(0.8f);
             Shot("lamassu_01_intro");
             yield return new WaitForSeconds(4.5f);
@@ -439,8 +421,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
-                sp.ClearRange(-1e6f, 95f);
+                            Jumpline.Level.Course.ClearRange(-1e6f, 95f);
             yield return new WaitForSeconds(0.8f);
             Shot("dragon_01_intro");
             yield return new WaitForSeconds(4.5f);

@@ -25,7 +25,7 @@ Kurallar `ChunkRules` ile her kurulumda ve EditMode testinde doğrulanır. z = e
 | melon | Climb | 2,30 × 2,38 × 6,26 | 1,00 / 2,38 | Medium | tavanı yürünür rampalı |
 | tractor | Climb | 2,30 × 2,41 × 6,79 | 1,00 / 2,41 | Medium | tavanı yürünür rampalı |
 | taxi_moving | MovingObstacle | 1,84 × 1,62 × 4,43 | 0,86 / 1,62 | Medium | tavanı yürünür 3 m/sn gelir |
-| gate | Overhead | 9,50 × 9,44 × 5,22 | 3,65 / 3,70 | Hard |  |
+| gate | Overhead | 9,50 × 9,00 × 5,22 | 3,65 / 5,20 | Hard |  |
 
 ## Sokak chunk'ları
 
@@ -51,7 +51,7 @@ Kurallar `ChunkRules` ile her kurulumda ve EditMode testinde doğrulanır. z = e
 | 18 | m_climb_melon | Medium | 45 | g0: melon orta @6<br>g1: jug sol @25<br>g1: watermelon sağ @25 | düz orta @2 (20 m)<br>düz orta @22 (8 m) | None / 3 | Ortada karpuz kamyonu: rampadan çık, tavanda koş; sonra iki yanda testi/karpuz. |
 | 19 | m_tractor | Medium | 45 | g0: tractor sağ @6<br>g1: bar sol @26 | düz sağ @2 (16 m)<br>S sağ→orta @19 (6 m)<br>düz orta @25 (6 m) | Column / 3 | Sağda traktör (çıkılır), sonra solda bariyer; paralar traktörden ortaya iner. |
 | 20 | h_train_left | Hard | 45 | g0: truck sol @6<br>g0: minibus sol @14,5<br>g0: minibus sol @22,4<br>g0: minibus orta @8<br>g0: minibus orta @15,9 | düz sol @1 (30 m) | None / 3 | Tren: solda kamyon + iki minibüs (tavandan tavana), ortada minibüsler; sağ şerit yerden kaçış. |
-| 21 | h_train_gate | Hard | 45 | g0: truck sağ @6<br>g0: minibus sağ @14,5<br>g0: minibus sağ @22,4<br>g0: minibus orta @8<br>g0: minibus orta @15,9<br>g0: gate orta @9 | düz sağ @1 (30 m) | None / 3 | Tren sağda; tavanda çarşı kemerinin altından KAY. Sol şerit yerden kaçış. |
+| 21 | h_train_gate | Hard | 45 | g0: truck sağ @6<br>g0: minibus sağ @14,5<br>g0: minibus sağ @22,4<br>g0: minibus orta @8<br>g0: minibus orta @15,9<br>g0: gate orta @9 | düz sağ @1 (30 m) | None / 3 | Tren sağda, üstünden çarşı kemeri geçer (tavanda koşarken kemerin altından geçilir). Sol şerit yerden kaçış. |
 | 22 | h_double_ramp | Hard | 45 | g0: truck sol @6<br>g0: minibus sol @14,5<br>g0: melon sağ @6<br>g0: minibus sağ @14,5 | düz sağ @1 (22 m) | None / 3 | İki yanda rampalı araç + minibüs; orta yerden açık. |
 | 23 | h_wall_slide | Hard | 45 | g0: minibus sol @6<br>g0: bar orta @8<br>g1: crates sağ @24<br>g2: teacart orta @37 | düz sağ @2 (34 m) | Lanterns / 3 | Solda minibüs + ortada bariyer (sağ açık) → sağda sandık → ortada araba. |
 | 24 | h_cart_maze | Hard | 45 | g0: teacart sol @6<br>g0: melonstall orta @6<br>g1: simitcart sağ @20,6<br>g1: grill orta @20,6<br>g2: bar sol @35,4 | düz sağ @2 (9 m)<br>S sağ→sol @12 (7 m)<br>düz sol @20 (12 m) | ShopFront / 3 | Araba labirenti: sol+orta kapalı → sağ; orta+sağ kapalı → sol; sonda solda bariyer. |

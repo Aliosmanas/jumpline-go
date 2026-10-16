@@ -130,7 +130,11 @@ class MapBuilder:
              "z": round(o.location.z, 3), "rz": round(math.degrees(o.rotation_euler.z), 2),
              "s": [round(v, 4) for v in o.scale], "y0": round(mn.y, 2), "y1": round(mx.y, 2), "top": round(mx.z, 2)}
         d["obj"] = o.name
-        d["r"] = [round(math.degrees(a), 2) for a in o.rotation_euler]
+        src = next((v for v in self.lib.src.values() if v.data == o.data), None)
+        d["yaw"] = round(math.degrees(o.rotation_euler.z - (src.rotation_euler.z if src else 0.0)), 2)
+        d["src"] = "G" if src is not None and src.name.startswith("G_") else "D"
+        d["min"] = [round(mn.x - self.ox, 3), round(mn.y, 3), round(mn.z, 3)]
+        d["max"] = [round(mx.x - self.ox, 3), round(mx.y, 3), round(mx.z, 3)]
         if extra: d.update(extra)
         self.items.append(d)
 
@@ -551,7 +555,7 @@ class MapBuilder:
             portal_ok = portal_ok and got
         return ok_all, portal_ok, [r[0] for r in results]
 
-    def save_json(self, length, theme):
+    def save_json(self, length, theme, regions=None):
         """Engeller (anlamlı kayıt) + kenar dekoru (kütüphane modeli, konum, dönüş, ölçek) → Unity birebir kurar."""
         os.makedirs(OUT_JSON, exist_ok=True)
         data_key = {src.data.name: k for k, src in self.lib.src.items()}
@@ -561,9 +565,12 @@ class MapBuilder:
             if o.type != "MESH" or o.data.name not in data_key or o.name in obstacle_names: continue
             if "_Zemin_" in o.name or "_Deniz_" in o.name: continue
             k = data_key[o.data.name]
-            decor.append({"m": k[2:], "src": k[:1], "x": round(o.location.x - self.ox, 3), "y": round(o.location.y, 3),
-                          "z": round(o.location.z, 3), "r": [round(math.degrees(a), 2) for a in o.rotation_euler],
-                          "s": [round(v, 4) for v in o.scale]})
+            src = self.lib.src[k]
+            mn, mx = bounds(o)
+            decor.append({"m": k[2:], "src": k[:1], "yaw": round(math.degrees(o.rotation_euler.z - src.rotation_euler.z), 2),
+                          "min": [round(mn.x - self.ox, 3), round(mn.y, 3), round(mn.z, 3)],
+                          "max": [round(mx.x - self.ox, 3), round(mx.y, 3), round(mx.z, 3)]})
         with open(os.path.join(OUT_JSON, self.name + ".json"), "w", encoding="utf-8") as f:
             json.dump({"name": self.name, "length": round(length, 2), "theme": theme, "sections": self.sections,
+                       "regions": [{"theme": t, "y0": round(a, 2), "y1": round(b, 2)} for t, a, b in (regions or [])],
                        "portals": self.portals, "items": self.items, "decor": decor}, f, ensure_ascii=False, indent=1)

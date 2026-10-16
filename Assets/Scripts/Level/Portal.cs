@@ -58,7 +58,8 @@ namespace Jumpline.Level
             if (player == null || !InMyWorld) return;
             Vector3 p = player.transform.position;
             if (p.z < transform.position.z) return;
-            if (Mathf.Abs(p.x - transform.position.x) < player.LaneWidth * 0.5f && p.z - transform.position.z < 3f && switcher != null)
+            if (Mathf.Abs(p.x - transform.position.x) < player.LaneWidth * 0.5f && p.z - transform.position.z < 3f && switcher != null
+                && Mathf.Abs(p.y - transform.position.y) < 1.5f)   // tavandaki portal: aşağıdan geçen girmez
             {
                 if (leadsToRooftop) switcher.EnterRooftop();
                 else switcher.ExitToStreet();
@@ -68,11 +69,12 @@ namespace Jumpline.Level
             Place(p.z + spacing);
         }
 
-        /// <summary>Parkur bu portalı z'ye, verilen şeride koyar.</summary>
-        public void PlaceAt(float z, int newLane)
+        /// <summary>Parkur bu portalı z'ye, verilen şeride koyar (y: tabanın dünya yüksekliği — araç tavanında portal).</summary>
+        public void PlaceAt(float z, int newLane, float? y = null)
         {
             lane = Mathf.Clamp(newLane, -1, 1);
             Place(z);
+            if (y.HasValue) transform.position = new Vector3(transform.position.x, y.Value, transform.position.z);
         }
 
         /// <summary>Parkur yeniden koyana kadar uzakta bekle (geçilemez).</summary>

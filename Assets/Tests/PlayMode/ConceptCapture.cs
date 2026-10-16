@@ -51,8 +51,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>())
-                sp.ClearRange(-1e6f, 40f);   // yakın plan boş, ileride gerçek engeller
+                            Jumpline.Level.Course.ClearRange(-1e6f, 40f);   // yakın plan boş, ileride gerçek engeller
             yield return new WaitForSeconds(3.2f);
             var cam = Camera.main;
             var rt = new RenderTexture(1080, 1920, 24, RenderTextureFormat.ARGB32);

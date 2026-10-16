@@ -36,7 +36,12 @@ namespace Jumpline.EditorTools
             Transform oldStreet = BuildWorld();   // ışık + sis (eski Blender sokağı kurulmaz: UseMeshyMaps)
             Transform runner = BuildRunner();
             Transform street;
-            if (UseMeshyMaps)
+            if (UseDesignedMaps)
+            {
+                Object.DestroyImmediate(oldStreet.gameObject);
+                street = BuildDesignedStreet(runner);   // 16 Eki: kullanıcının referans tarzında 54 tasarım haritası (engel + dekor + zemin)
+            }
+            else if (UseMeshyMaps)
             {
                 Object.DestroyImmediate(oldStreet.gameObject);
                 street = BuildMapStreet(runner);   // Blender/Harita: 12 mahalle + geçişler + 6 sur üstü, rastgele zincir
@@ -82,6 +87,16 @@ namespace Jumpline.EditorTools
             BuildObstacleHints(streetObs, roofObs);   // renk kodlu işaretler: ▲ zıpla ▼ kay ✕ kaç, sarı-siyah hareketli, yeşil çık
             Set(streetObs, "coins", coins);
             Set(roofObs, "coins", coins);
+            var designed = street.GetComponent<Jumpline.Level.Designed.DesignedMapChain>();
+            if (designed != null)
+            {   // sokak engelleri tasarım haritalarında: chunk üreticisi kapalı (fırlatılan sandık şablonu ve bölüm ayarı için durur)
+                Set(designed, "coins", coins);
+                Set(designed, "coursePortal", up);
+                var pso = new SerializedObject(up);
+                pso.FindProperty("courseControlled").boolValue = true;
+                pso.ApplyModifiedPropertiesWithoutUndo();
+                streetObs.enabled = false;
+            }
             if (coinLabel != null)
             {
                 var counter = coinLabel.gameObject.AddComponent<Jumpline.UI.CoinCounter>();
@@ -158,6 +173,8 @@ namespace Jumpline.EditorTools
         private const int StreetCopies = 3;
         // 15 Eki 2026: sokak artık Blender/Harita'daki Meshy haritalarından rastgele zincir (GameplaySceneBuilder.Maps)
         private const bool UseMeshyMaps = true;
+        /// <summary>16 Eki 2026: sokak = tasarım haritaları (Assets/Data/Designed). false → eski MapChain + chunk sistemi.</summary>
+        private const bool UseDesignedMaps = true;
 
         private static Transform BuildWorld()
         {

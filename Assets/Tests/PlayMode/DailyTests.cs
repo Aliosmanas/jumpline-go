@@ -28,11 +28,7 @@ namespace Jumpline.Tests
             SceneManager.LoadScene("Gameplay");
             yield return null;
             yield return null;
-            foreach (var sp in Object.FindObjectsByType<Jumpline.Level.Chunks.ChunkSpawner>(FindObjectsSortMode.None))
-            {
-                sp.ClearRange(-1e6f, 1e6f);
-                sp.enabled = false;
-            }
+            Jumpline.Level.Course.ClearAll(true);
         }
 
         [UnityTearDown]
