@@ -3,12 +3,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Düzen: üstte canlı ofis (2D, odalar + dinlenme salonu), altında canlı akış, projeler ve iş tahtası. */
+/* Düzen: üstte canlı ofis (2D: 6 departman odası, dinlenme salonu, eş odası), altında canlı akış, projeler ve iş tahtası. */
 :root {
   --bg: #efebe4; --panel: #f8f6f1; --ink: #23211f; --muted: #6d6760; --line: #d9d2c7;
   --accent: #b23a2b; --copper: #a8642f;
-  --floor: #e4ddd1; --wall: #3b3733; --hall: #d3cbbd; --desk: #8a6a4a; --screen: #2c3e50; --glow: #8fd3ff;
-  --claude: #d97757; --claude-dark: #b85c3e; --bubble: #ffffff; --bubble-ink: #23211f;
+  --floor: #e8dcc8; --plank: #dccdb4; --wall: #3b3733; --wall-in: #5a534c; --hall: #cfc6b6; --hall-tile: #c4baa8;
+  --desk: #8a6a4a; --desk-top: #a7825d; --screen: #22303d; --glow: #8fd3ff;
+  --sofa: #b85c3e; --sofa-dark: #8f452d; --rug: #c9a24a; --rug2: #9b3d2e; --plant: #3f7d4f; --pot: #a8642f;
+  --claude: #d97757; --claude-dark: #b85c3e; --cheek: #f2a48a; --bubble: #ffffff; --bubble-ink: #23211f;
+  --spouse-a: #8e7cc3; --spouse-b: #4fa3a5; --heart: #d6455d; --paper: #f4efe2; --paper-ink: #3b3733;
   --d-yapim: #b23a2b; --d-seviye: #2f7d55; --d-sanat: #8a4fa3; --d-unity: #3a6ea5; --d-qa: #b7791f; --d-yayin: #4b5563;
   --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
   --f-body: "Barlow", system-ui, sans-serif;
@@ -16,14 +19,20 @@
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #1b1a19; --panel: #252321; --ink: #ece7df; --muted: #a39b91; --line: #3a3633; --accent: #e0604d; --copper: #d08a50;
-  --floor: #2c2926; --wall: #0f0e0d; --hall: #23201e; --desk: #6b5038; --screen: #101820; --glow: #6fc3ff;
-  --claude: #e08463; --claude-dark: #b8603f; --bubble: #f3efe8; --bubble-ink: #1b1a19;
+  --floor: #3a332b; --plank: #342e27; --wall: #0f0e0d; --wall-in: #2a2622; --hall: #24211e; --hall-tile: #2b2824;
+  --desk: #6b5038; --desk-top: #7d5f43; --screen: #101820; --glow: #6fc3ff;
+  --sofa: #a8543a; --sofa-dark: #7a3c28; --rug: #8d7134; --rug2: #6e2c21; --plant: #4f9a62; --pot: #b9773f;
+  --claude: #e08463; --claude-dark: #b8603f; --cheek: #f0a08a; --bubble: #f3efe8; --bubble-ink: #1b1a19;
+  --spouse-a: #a395d6; --spouse-b: #62b8ba; --heart: #ee6077; --paper: #e8e1d2; --paper-ink: #2a2622;
   --d-yapim: #e0604d; --d-seviye: #5bb487; --d-sanat: #b585cc; --d-unity: #6b9ed6; --d-qa: #e0a84a; --d-yayin: #9aa3af;
   color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #1b1a19; --panel: #252321; --ink: #ece7df; --muted: #a39b91; --line: #3a3633; --accent: #e0604d; --copper: #d08a50;
-  --floor: #2c2926; --wall: #0f0e0d; --hall: #23201e; --desk: #6b5038; --screen: #101820; --glow: #6fc3ff;
-  --claude: #e08463; --claude-dark: #b8603f; --bubble: #f3efe8; --bubble-ink: #1b1a19;
+  --floor: #3a332b; --plank: #342e27; --wall: #0f0e0d; --wall-in: #2a2622; --hall: #24211e; --hall-tile: #2b2824;
+  --desk: #6b5038; --desk-top: #7d5f43; --screen: #101820; --glow: #6fc3ff;
+  --sofa: #a8543a; --sofa-dark: #7a3c28; --rug: #8d7134; --rug2: #6e2c21; --plant: #4f9a62; --pot: #b9773f;
+  --claude: #e08463; --claude-dark: #b8603f; --cheek: #f0a08a; --bubble: #f3efe8; --bubble-ink: #1b1a19;
+  --spouse-a: #a395d6; --spouse-b: #62b8ba; --heart: #ee6077; --paper: #e8e1d2; --paper-ink: #2a2622;
   --d-yapim: #e0604d; --d-seviye: #5bb487; --d-sanat: #b585cc; --d-unity: #6b9ed6; --d-qa: #e0a84a; --d-yayin: #9aa3af;
   color-scheme: dark }
 * { box-sizing: border-box; }
@@ -36,12 +45,14 @@ h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(32px, 6vw
 .count b { display: block; font-family: var(--f-display); font-size: 28px; line-height: 1; }
 .count span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
 h2 { font-family: var(--f-display); font-size: 21px; letter-spacing: .03em; text-transform: uppercase; margin: 0 0 10px; }
-.office { position: relative; border: 3px solid var(--wall); background: var(--hall); }
+.office { position: relative; border: 3px solid var(--wall); background: var(--hall); border-radius: 6px; overflow: hidden; }
 .office canvas { display: block; width: 100%; height: auto; cursor: pointer; }
-.live { display: flex; gap: 10px; align-items: center; background: var(--ink); color: var(--bg); padding: 8px 12px; font-family: var(--f-mono); font-size: 12.5px; min-width: 0; }
+.live { display: flex; gap: 10px; align-items: center; background: var(--ink); color: var(--bg); padding: 8px 12px; font-family: var(--f-mono); font-size: 12.5px; min-width: 0; border-radius: 6px; }
 .live .dot { width: 9px; height: 9px; border-radius: 50%; background: #3fd17a; flex: none; }
 .live .dot.off { background: var(--muted); }
 .live span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.feed { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); min-height: 20px; }
+.feed span { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
 .inspect { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--c, var(--line)); padding: 10px 12px; font-size: 14px; min-height: 44px; }
 .inspect b { font-family: var(--f-display); font-size: 18px; }
 .chip { font: 500 13px var(--f-body); border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
@@ -92,8 +103,9 @@ h2 { font-family: var(--f-display); font-size: 21px; letter-spacing: .03em; text
 
   <section style="display:grid;gap:8px">
     <div class="live"><span class="dot off" id="liveDot"></span><span id="liveText">Ofis açılıyor…</span></div>
-    <div class="office"><canvas id="office" width="960" height="600" aria-label="Ajanların çalıştığı ofis"></canvas></div>
-    <div class="inspect" id="inspect">Bir ajana dokun: ne üzerinde çalıştığını görürsün.</div>
+    <div class="office"><canvas id="office" width="960" height="640" aria-label="Ajanların çalıştığı ofis"></canvas></div>
+    <div class="feed" id="feed" aria-live="polite"></div>
+    <div class="inspect" id="inspect">Bir ajana ya da odaya dokun: ne yaptığını görürsün.</div>
   </section>
 
   <section>
@@ -124,213 +136,427 @@ const COLS = [{ id: "doing", name: "Sürüyor" }, { id: "todo", name: "Yapılaca
 let tasks = [], projects = [], live = null, proj = "all", tab = "doing";
 const $ = id => document.getElementById(id);
 const deptOf = id => DEPTS.find(d => d.id === id) || DEPTS[0];
+const nowS = () => performance.now() / 1000;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-/* ---------------- ofis ---------------- */
-const W = 960, H = 600, CY = 216, HX = 30;
+/* ---------------- ofis: yerleşim ---------------- */
+const W = 960, H = 640, CY = 216, HX = 30, LY = 548;   // CY: odalar arası koridor, HX: sol koridor, LY: salon yürüyüş hattı
 const cv = $("office"), cx = cv.getContext("2d");
 const rooms = {};
 DEPTS.forEach((d, i) => {
   const col = i % 3, row = Math.floor(i / 3);
   const x = 64 + col * 297, y = row === 0 ? 16 : 236, w = 286, h = 180;
-  rooms[d.id] = { x, y, w, h, cx: x + w / 2, desk: { x: x + w / 2, y: row === 0 ? y + 92 : y + 112 }, row };
+  rooms[d.id] = { x, y, w, h, cx: x + w / 2, desk: { x: x + w / 2, y: row === 0 ? y + 96 : y + 116 }, row };
 });
-const lounge = { x: 64, y: 456, w: 880, h: 132 };
-const restSpots = [
-  { x: 150, y: 540, kind: "sofa" }, { x: 200, y: 540, kind: "sofa" }, { x: 250, y: 540, kind: "sofa" },
-  { x: 430, y: 520, kind: "coffee" }, { x: 600, y: 540, kind: "pingpong" }, { x: 700, y: 540, kind: "pingpong" },
-  { x: 840, y: 525, kind: "plant" },
-];
+const lounge = { x: 64, y: 456, w: 536, h: 172 };
+const family = { x: 612, y: 456, w: 332, h: 172 };
+const spots = {
+  sofa:   [{ x: 132, y: 600 }, { x: 172, y: 600 }, { x: 212, y: 600 }],
+  paper:  [{ x: 318, y: 598 }, { x: 372, y: 598 }],
+  coffee: [{ x: 462, y: 540 }],
+  water:  [{ x: 528, y: 540 }],
+  chat:   [[{ x: 168, y: 528 }, { x: 204, y: 528 }], [{ x: 300, y: 530 }, { x: 336, y: 530 }], [{ x: 410, y: 600 }, { x: 446, y: 600 }]],
+  couple: [[{ x: 680, y: 598 }, { x: 716, y: 598 }], [{ x: 820, y: 598 }, { x: 856, y: 598 }]],
+};
 let T = {};
 function readTokens() {
-  const s = getComputedStyle(document.documentElement);
-  const g = n => s.getPropertyValue(n).trim();
-  T = { floor: g("--floor"), wall: g("--wall"), hall: g("--hall"), desk: g("--desk"), screen: g("--screen"), glow: g("--glow"),
-        claude: g("--claude"), claudeDark: g("--claude-dark"), bubble: g("--bubble"), bubbleInk: g("--bubble-ink"), ink: g("--ink"), muted: g("--muted"),
-        dept: Object.fromEntries(DEPTS.map(d => [d.id, g("--d-" + d.id)])) };
+  const s = getComputedStyle(document.documentElement), g = n => s.getPropertyValue(n).trim();
+  T = {};
+  for (const k of ["floor", "plank", "wall", "wall-in", "hall", "hall-tile", "desk", "desk-top", "screen", "glow", "sofa", "sofa-dark", "rug", "rug2",
+    "plant", "pot", "claude", "claude-dark", "cheek", "bubble", "bubble-ink", "spouse-a", "spouse-b", "heart", "paper", "paper-ink", "ink", "muted"])
+    T[k.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = g("--" + k);
+  T.dept = Object.fromEntries(DEPTS.map(d => [d.id, g("--d-" + d.id)]));
 }
 readTokens();
 try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readTokens); } catch (e) {}
 new MutationObserver(readTokens).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-const area = p => {
+const areaOf = p => {
   for (const d of DEPTS) { const r = rooms[d.id]; if (p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h) return d.id; }
-  if (p.y >= lounge.y) return "lounge";
+  if (p.y >= lounge.y && p.x >= family.x) return "family";
+  if (p.y >= lounge.y && p.x >= lounge.x) return "lounge";
   return "hall";
 };
+function exitPath(a) {
+  if (rooms[a]) return [{ x: rooms[a].cx, y: CY }];
+  if (a === "lounge") return [{ x: 100, y: LY }, { x: HX, y: LY }, { x: HX, y: CY }];
+  if (a === "family") return [{ x: 640, y: LY }, { x: 584, y: LY }, { x: 100, y: LY }, { x: HX, y: LY }, { x: HX, y: CY }];
+  return [{ x: HX, y: CY }];
+}
 function route(from, to) {
-  const a = area(from), b = area(to), pts = [];
+  const a = areaOf(from), b = areaOf(to);
   if (a === b && a !== "hall") return [to];
-  if (rooms[a]) pts.push({ x: rooms[a].cx, y: CY });
-  if (a === "lounge") pts.push({ x: 110, y: 520 }, { x: HX, y: 520 }, { x: HX, y: CY });
-  if (rooms[b]) pts.push({ x: rooms[b].cx, y: CY });
-  if (b === "lounge") pts.push({ x: HX, y: CY }, { x: HX, y: 520 }, { x: 110, y: 520 });
-  pts.push(to);
+  if (a === "lounge" && b === "family") return [{ x: 584, y: LY }, { x: 640, y: LY }, to];
+  if (a === "family" && b === "lounge") return [{ x: 640, y: LY }, { x: 584, y: LY }, to];
+  const pts = a === "hall" ? [{ x: HX, y: Math.min(Math.max(from.y, CY), LY) }] : exitPath(a);
+  pts.push(...exitPath(b).reverse(), to);
   return pts;
 }
-const rnd = (a, b) => a + Math.random() * (b - a);
+
+/* ---------------- karakterler ---------------- */
+const SPOUSE_NAMES = ["Ayşe", "Zeynep", "Elif", "Mert", "Deniz", "Ece", "Can", "Selin"];
 const agents = DEPTS.map((d, i) => ({
-  id: d.id, x: 120 + i * 120, y: 540, path: [], mode: "rest", until: 0, say: "", sayUntil: 0, phase: Math.random() * 6, face: 1, spot: null, cheer: 0, nextBreak: rnd(40, 80),
+  id: d.id, kind: "agent", x: 120 + i * 70, y: LY, path: [], mode: "rest", until: 0, say: "", sayUntil: 0, sayHeart: false,
+  phase: Math.random() * 6, face: 1, spot: null, cheer: 0, nextBreak: rnd(40, 80), sit: false, partner: null, prop: null,
 }));
-function goTo(a, p, mode) { a.path = route({ x: a.x, y: a.y }, p); a.mode = "walk"; a.after = mode; }
-function say(a, text, sec) { a.say = text; a.sayUntil = performance.now() / 1000 + sec; }
-function deptTasks(id, s) { return tasks.filter(t => t.dept === id && (t.status || "todo") === s); }
-function freeRest(a) {
-  const used = new Set(agents.filter(o => o !== a && o.spot).map(o => o.spot));
-  const free = restSpots.filter(s => !used.has(s));
-  return free.length ? free[Math.floor(Math.random() * free.length)] : restSpots[0];
+const spouses = [];
+let nextVisit = nowS() + rnd(25, 45);
+const feed = [];
+function log(text) { feed.unshift(text); feed.length = Math.min(feed.length, 4); const f = $("feed"); f.replaceChildren(...feed.map(t => { const s = document.createElement("span"); s.textContent = t; return s; })); }
+
+function goTo(a, p, mode) { a.path = route({ x: a.x, y: a.y }, p); a.mode = "walk"; a.after = mode; a.sit = false; a.prop = null; }
+function say(a, text, sec, heart) { a.say = text; a.sayUntil = nowS() + sec; a.sayHeart = !!heart; }
+const deptTasks = (id, s) => tasks.filter(t => t.dept === id && (t.status || "todo") === s);
+const used = () => new Set([...agents, ...spouses].filter(o => o.spot).map(o => o.spot));
+const freeSpot = list => { const u = used(); const f = list.filter(s => !u.has(s)); return f.length ? pick(f) : null; };
+const headline = () => {
+  const done = tasks.filter(t => t.status === "done").sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+  return done.length ? done[Math.floor(Math.random() * Math.min(5, done.length))].title : "Stüdyo büyüyor";
+};
+
+const CHAT = [
+  ["Rampa bugün çalıştı mı?", "Çözücü geçti, telefonda bakalım."],
+  ["Tepegöz yine kaçtı.", "Kalp sayısını mı düşürsek?"],
+  ["Kahve bitmiş!", "Yapımcıya söyleyelim, karta yazsın."],
+  ["Harita başı kaç üçgen?", "3.6 milyon… inceltmemiz lazım."],
+  ["Şahmeran'ın animasyonu nasıl?", "Kolları artık aşağıda, güzel."],
+  ["APK kaç MB oldu?", "255. Dokuları küçülteceğiz."],
+  ["Hafta sonu ne yapıyorsun?", "Diyarbakır'a, sur turu!"],
+  ["Testler yeşil mi?", "34'ün 34'ü geçti."],
+  ["Coinler rotayı göstermiyor.", "Kart açıldı, sırada."],
+  ["Gazeteyi gördün mü?", "Manşette bizim iş var!"],
+];
+const COUPLE = [
+  ["Eve ne zaman geliyorsun?", "Bu kart bitince, söz."],
+  ["Akşam kebap mı?", "Kebap tabii, ciğer de olur."],
+  ["Seni özledim.", "Ben de, iyi ki geldin."],
+  ["Bugün ne yaptın?", "Bir harita bitirdim, test geçti!"],
+  ["Yorgun görünüyorsun.", "Tepegöz yordu biraz."],
+  ["Çay getirdim.", "Tam zamanında!"],
+];
+
+function seat(a, spotObj, mode, sit) { a.spot = spotObj; goTo(a, { x: spotObj.x, y: spotObj.y }, mode); a.willSit = sit; }
+
+function startChat(a) {
+  const others = agents.filter(o => o !== a && !o.partner && (o.mode === "rest" || o.mode === "wander" || o.mode === "paper") && !hasWork(o));
+  if (!others.length) return false;
+  const b = pick(others), pair = spots.chat.find(p => !used().has(p[0]) && !used().has(p[1]));
+  if (!pair) return false;
+  a.partner = b; b.partner = a;
+  const lines = pick(CHAT);
+  a.chat = { lines, turn: 0, next: 0, starter: true }; b.chat = { lines, turn: 0, next: 0, starter: false };
+  seat(a, pair[0], "chat", false); seat(b, pair[1], "chat", false);
+  return true;
+}
+function hasWork(a) {
+  const liveHere = live && live.dept === a.id && nowS() - live.t < 600;
+  return deptTasks(a.id, "doing").length > 0 || liveHere;
 }
 function think(a, now) {
-  if (a.mode === "walk") return;
-  const r = rooms[a.id];
-  const doing = deptTasks(a.id, "doing"), blocked = deptTasks(a.id, "blocked");
-  const liveHere = live && live.dept === a.id && now - (live.t || 0) < 600;
-  const wantWork = doing.length > 0 || liveHere;
-  if (a.cheer > now) return;
-  if (wantWork) {
-    if (a.mode === "break" && now < a.until) return;
-    if (now > a.nextBreak && a.mode === "work") {   // kısa kahve molası
-      a.nextBreak = now + rnd(50, 90); a.spot = restSpots[3];
-      goTo(a, { x: restSpots[3].x + rnd(-14, 14), y: restSpots[3].y }, "break"); a.until = now + rnd(6, 10);
-      say(a, "kahve ☕", 3); return;
+  if (a.mode === "walk" || a.cheer > now) return;
+  if (a.mode === "visit") return;                      // eşiyle (eş kendi gidişini yönetir)
+  if (a.mode === "chat") {
+    const b = a.partner;
+    if (!b || b.partner !== a) { endChat(a); return; }
+    if (a.path.length || b.mode !== "chat" || b.path.length) return;
+    if (a.chat.starter && now > a.chat.next) {
+      const i = a.chat.turn;
+      if (i >= 4) { endChat(a); endChat(b); return; }
+      const speaker = i % 2 === 0 ? a : b;
+      say(speaker, a.chat.lines[i % 2] + (i >= 2 ? (i % 2 === 0 ? " Neyse…" : " Hadi işe!") : ""), 2.6);
+      a.chat.turn++; a.chat.next = now + 2.8;
     }
-    if (a.mode !== "work") { a.spot = null; goTo(a, { x: r.desk.x, y: r.desk.y + 26 }, "work"); }
     return;
   }
-  if (blocked.length) {
-    if (a.mode !== "wait") { a.spot = null; goTo(a, { x: r.desk.x, y: r.desk.y + 26 }, "wait"); }
+  const r = rooms[a.id];
+  const blocked = deptTasks(a.id, "blocked");
+  if (hasWork(a)) {
+    if (a.mode === "break" && now < a.until) return;
+    if (now > a.nextBreak && a.mode === "work") {
+      a.nextBreak = now + rnd(50, 90);
+      const s = freeSpot([...spots.coffee, ...spots.water]);
+      if (s) { seat(a, s, "break", false); a.until = now + rnd(6, 10); say(a, s === spots.water[0] ? "biraz su" : "kahve molası", 3); return; }
+    }
+    if (a.mode !== "work") { a.spot = null; goTo(a, { x: r.desk.x, y: r.desk.y + 28 }, "work"); }
     return;
   }
-  if (a.mode === "rest" && now < a.until) return;
-  if (a.mode === "wander" && now < a.until) return;
-  if (Math.random() < 0.7) { a.spot = freeRest(a); goTo(a, { x: a.spot.x, y: a.spot.y }, "rest"); a.until = now + rnd(10, 22); }
-  else { a.spot = null; goTo(a, { x: r.x + rnd(40, r.w - 40), y: r.y + rnd(60, r.h - 30) }, "wander"); a.until = now + rnd(5, 10); }
+  if (blocked.length) { if (a.mode !== "wait") { a.spot = null; goTo(a, { x: r.desk.x, y: r.desk.y + 28 }, "wait"); } return; }
+  if ((a.mode === "rest" || a.mode === "wander" || a.mode === "paper") && now < a.until) return;
+  const roll = Math.random();
+  if (roll < 0.28 && startChat(a)) return;
+  if (roll < 0.5) { const s = freeSpot(spots.paper); if (s) { seat(a, s, "paper", true); a.until = now + rnd(12, 20); return; } }
+  if (roll < 0.8) { const s = freeSpot([...spots.sofa, ...spots.coffee, ...spots.water]); if (s) { seat(a, s, "rest", spots.sofa.includes(s)); a.until = now + rnd(10, 18); return; } }
+  a.spot = null; goTo(a, { x: r.x + rnd(40, r.w - 40), y: r.y + rnd(70, r.h - 24) }, "wander"); a.until = now + rnd(5, 9);
 }
-function step(a, dt, now) {
-  if (a.mode !== "walk") return;
-  const p = a.path[0]; if (!p) { a.mode = a.after || "rest"; arrive(a, now); return; }
-  const dx = p.x - a.x, dy = p.y - a.y, d = Math.hypot(dx, dy), v = 95 * dt;
-  if (Math.abs(dx) > 0.5) a.face = Math.sign(dx);
-  if (d <= v) { a.x = p.x; a.y = p.y; a.path.shift(); } else { a.x += dx / d * v; a.y += dy / d * v; }
-}
+function endChat(a) { if (a.partner && a.partner.partner === a) a.partner.partner = null; a.partner = null; a.chat = null; a.mode = "rest"; a.until = 0; a.spot = null; }
+
 function arrive(a, now) {
+  a.sit = !!a.willSit; a.willSit = false;
   if (a.mode === "work") {
     const t = deptTasks(a.id, "doing")[0];
-    const text = live && live.dept === a.id && now - (live.t || 0) < 600 ? live.text : t ? t.title : "çalışıyor";
-    say(a, text, 6);
+    const liveHere = live && live.dept === a.id && now - live.t < 600;
+    say(a, liveHere ? live.text : t ? t.title : "çalışıyor", 6);
   } else if (a.mode === "wait") say(a, "karar bekliyorum ?", 6);
-  else if (a.mode === "rest") say(a, a.spot?.kind === "coffee" ? "☕" : a.spot?.kind === "pingpong" ? "pinpon!" : "zZ", 3);
-  else if (a.mode === "break") a.mode = "break";
+  else if (a.mode === "paper") { a.prop = "paper"; a.paperHead = headline(); if (Math.random() < 0.6) say(a, "Manşet: " + a.paperHead, 5); }
+  else if (a.mode === "rest") say(a, a.spot && spots.sofa.includes(a.spot) ? "zZ" : a.spot && spots.coffee.includes(a.spot) ? "kahve…" : "oh be", 3);
+  else if (a.mode === "visitSeat") { a.mode = "visit"; a.sit = true; }
 }
-function wrapText(text, max) {
-  const words = String(text).split(/\s+/); const lines = []; let cur = "";
-  for (const w of words) { if ((cur + " " + w).trim().length > max) { if (cur) lines.push(cur); cur = w; } else cur = (cur + " " + w).trim(); }
-  if (cur) lines.push(cur);
-  return lines.slice(0, 2).map((l, i, arr) => i === 1 && lines.length > 2 ? l.slice(0, max - 1) + "…" : l);
+
+/* ---------------- eş ziyareti ---------------- */
+function scheduleVisit(now) {
+  if (now < nextVisit || spouses.length >= 2) return;
+  nextVisit = now + rnd(70, 140);
+  const free = agents.filter(a => a.mode !== "visit" && a.mode !== "visitSeat" && !a.partner && !spouses.some(s => s.host === a));
+  const idle = free.filter(a => !hasWork(a));
+  const host = pick(idle.length ? idle : free);
+  const pair = spots.couple.find(p => !used().has(p[0]) && !used().has(p[1]));
+  if (!host || !pair) return;
+  const s = { kind: "spouse", host, name: pick(SPOUSE_NAMES), color: Math.random() < 0.5 ? "spouseA" : "spouseB", x: HX, y: H + 10, path: [],
+    mode: "walk", after: "visitSeat", say: "", sayUntil: 0, sayHeart: false, phase: Math.random() * 6, face: 1, spot: pair[1], sit: false, cheer: 0,
+    lines: pick(COUPLE), turn: 0, next: 0, leaveAt: 0 };
+  s.path = [{ x: HX, y: LY }, { x: 100, y: LY }, { x: 584, y: LY }, { x: 640, y: LY }, { x: pair[1].x, y: pair[1].y }];
+  spouses.push(s);
+  host.partner = null; host.chat = null; host.spot = pair[0];
+  goTo(host, { x: pair[0].x, y: pair[0].y }, "visitSeat"); host.willSit = true;
+  say(s, "Merhaba, " + deptOf(host.id).short + "!", 3);
+  log(s.name + " (" + deptOf(host.id).short + "'ın eşi) ziyarete geldi");
 }
-function drawRoom(d) {
+function spouseThink(s, now) {
+  if (s.mode === "walk") return;
+  if (s.mode === "visitSeat") { s.mode = "visit"; s.sit = true; s.leaveAt = now + rnd(22, 32); s.next = now + 1.5; }
+  if (s.mode === "visit") {
+    const h = s.host;
+    if (h.mode !== "visit" || h.path.length) return;           // eşi gelmeden sohbet yok
+    if (now > s.next && now < s.leaveAt) {
+      const who = s.turn % 2 === 0 ? s : h;
+      if (s.turn < 4) say(who, s.lines[s.turn % 2], 2.6);
+      else say(who, "♥", 2, true);
+      s.turn++; s.next = now + 2.9;
+    }
+    if (now >= s.leaveAt) {
+      say(s, "Kolay gelsin!", 2.5); say(h, "Görüşürüz ♥", 2.5, true);
+      s.mode = "walk"; s.after = "gone"; s.sit = false; s.spot = null;
+      s.path = [{ x: 640, y: LY }, { x: 584, y: LY }, { x: 100, y: LY }, { x: HX, y: LY }, { x: HX, y: H + 20 }];
+      h.mode = "rest"; h.sit = false; h.spot = null; h.until = 0;
+    }
+  }
+  if (s.mode === "gone") spouses.splice(spouses.indexOf(s), 1);
+}
+
+function step(o, dt, now) {
+  if (o.mode !== "walk") return;
+  const p = o.path[0];
+  if (!p) { o.mode = o.after || "rest"; if (o.kind === "agent") arrive(o, now); return; }
+  const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy), v = 95 * dt;
+  if (Math.abs(dx) > 0.5) o.face = Math.sign(dx);
+  if (d <= v) { o.x = p.x; o.y = p.y; o.path.shift(); } else { o.x += dx / d * v; o.y += dy / d * v; }
+}
+
+/* ---------------- çizim ---------------- */
+function sky(now) {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  if (h >= 7 && h < 17) return { top: "#7ec0ee", bot: "#cfe8f7", night: false };
+  if (h >= 17 && h < 19.5) return { top: "#f08a4b", bot: "#f7c873", night: false };
+  if (h >= 5.5 && h < 7) return { top: "#e9a1a6", bot: "#f6d4a8", night: false };
+  return { top: "#0f1d3a", bot: "#2a3b66", night: true };
+}
+function rr(x, y, w, h, r) { cx.beginPath(); if (cx.roundRect) cx.roundRect(x, y, w, h, r); else cx.rect(x, y, w, h); }
+function floor(x, y, w, h) {
+  cx.fillStyle = T.floor; cx.fillRect(x, y, w, h);
+  cx.fillStyle = T.plank;
+  for (let yy = y + 14; yy < y + h; yy += 14) cx.fillRect(x, yy, w, 1.5);
+  for (let yy = y, k = 0; yy < y + h; yy += 14, k++) for (let xx = x + (k % 2 ? 30 : 70); xx < x + w; xx += 90) cx.fillRect(xx, yy, 1.5, 14);
+}
+function walls(x, y, w, h) {
+  cx.strokeStyle = T.wall; cx.lineWidth = 6; cx.strokeRect(x, y, w, h);
+  cx.strokeStyle = T.wallIn; cx.lineWidth = 2; cx.strokeRect(x + 4, y + 4, w - 8, h - 8);
+}
+function windowAt(x, y, w, sk) {
+  const g = cx.createLinearGradient(0, y, 0, y + 22); g.addColorStop(0, sk.top); g.addColorStop(1, sk.bot);
+  cx.fillStyle = g; cx.fillRect(x, y, w, 22);
+  if (sk.night) { cx.fillStyle = "#fff"; for (let i = 0; i < 4; i++) cx.fillRect(x + 6 + (i * 37 % (w - 10)), y + 4 + (i * 7 % 12), 1.5, 1.5); }
+  cx.strokeStyle = T.wall; cx.lineWidth = 2; cx.strokeRect(x, y, w, 22); cx.beginPath(); cx.moveTo(x + w / 2, y); cx.lineTo(x + w / 2, y + 22); cx.stroke();
+}
+function lampGlow(x, y, r, sk) {
+  if (!sk.night) return;
+  const g = cx.createRadialGradient(x, y, 2, x, y, r); g.addColorStop(0, "rgba(255,210,130,.45)"); g.addColorStop(1, "rgba(255,210,130,0)");
+  cx.fillStyle = g; cx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function plantAt(x, y, s = 1) {
+  cx.fillStyle = T.pot; rr(x - 7 * s, y, 14 * s, 12 * s, 3); cx.fill();
+  cx.fillStyle = T.plant; for (const [dx, dy, r] of [[0, -6, 8], [-6, -2, 6], [6, -2, 6], [0, -12, 6]]) { cx.beginPath(); cx.arc(x + dx * s, y + dy * s, r * s, 0, 7); cx.fill(); }
+}
+function drawRoom(d, sk, now) {
   const r = rooms[d.id], c = T.dept[d.id];
-  cx.fillStyle = T.floor; cx.fillRect(r.x, r.y, r.w, r.h);
-  cx.globalAlpha = .13; cx.fillStyle = c; cx.fillRect(r.x, r.y, r.w, r.h); cx.globalAlpha = 1;
-  cx.strokeStyle = T.wall; cx.lineWidth = 6; cx.strokeRect(r.x, r.y, r.w, r.h);
-  // kapı
+  floor(r.x, r.y, r.w, r.h);
+  cx.globalAlpha = .1; cx.fillStyle = c; cx.fillRect(r.x, r.y, r.w, r.h); cx.globalAlpha = 1;
+  walls(r.x, r.y, r.w, r.h);
+  if (r.row === 0) windowAt(r.x + r.w - 110, r.y + 8, 90, sk);
   cx.fillStyle = T.hall; const dy = r.row === 0 ? r.y + r.h - 4 : r.y - 2; cx.fillRect(r.cx - 22, dy, 44, 6);
   // levha
-  cx.fillStyle = c; cx.fillRect(r.x + 10, r.y + 10, 8, 22);
-  cx.fillStyle = T.ink; cx.font = "700 20px 'Barlow Condensed', sans-serif"; cx.textBaseline = "top"; cx.fillText(d.name.toUpperCase(), r.x + 24, r.y + 10);
-  // masa + ekran
-  const k = r.desk;
-  cx.fillStyle = T.desk; cx.fillRect(k.x - 46, k.y - 4, 92, 22);
-  cx.fillStyle = T.screen; cx.fillRect(k.x - 20, k.y - 28, 40, 24);
-  const busy = deptTasks(d.id, "doing").length > 0;
-  cx.fillStyle = busy ? T.glow : T.muted; cx.globalAlpha = busy ? (.6 + .4 * Math.sin(performance.now() / 180)) : .4;
-  cx.fillRect(k.x - 16, k.y - 24, 32, 16); cx.globalAlpha = 1;
+  cx.fillStyle = c; rr(r.x + 10, r.y + 10, 8, 22, 2); cx.fill();
+  cx.fillStyle = T.ink; cx.font = "700 19px 'Barlow Condensed', sans-serif"; cx.textBaseline = "top"; cx.fillText(d.name.toUpperCase(), r.x + 24, r.y + 11);
+  // halı
+  cx.globalAlpha = .35; cx.fillStyle = c; rr(r.desk.x - 60, r.desk.y + 14, 120, 40, 8); cx.fill(); cx.globalAlpha = 1;
+  // masa + bilgisayar + kupa
+  const k = r.desk, busy = deptTasks(d.id, "doing").length > 0 || (live && live.dept === d.id && now - live.t < 600);
+  cx.fillStyle = "rgba(0,0,0,.12)"; cx.fillRect(k.x - 50, k.y + 16, 100, 6);
+  cx.fillStyle = T.desk; rr(k.x - 50, k.y - 6, 100, 24, 4); cx.fill();
+  cx.fillStyle = T.deskTop; cx.fillRect(k.x - 50, k.y - 6, 100, 6);
+  cx.fillStyle = T.screen; rr(k.x - 22, k.y - 34, 44, 28, 3); cx.fill();
+  cx.fillStyle = T.wall; cx.fillRect(k.x - 3, k.y - 6, 6, 4);
+  if (busy) {
+    cx.fillStyle = T.glow;
+    for (let i = 0; i < 4; i++) { const w = 8 + ((Math.floor(now * 3) + i * 5) % 22); cx.fillRect(k.x - 18, k.y - 30 + i * 6, w, 2.5); }
+    lampGlow(k.x, k.y - 20, 40, { night: true });
+  } else { cx.fillStyle = T.muted; cx.globalAlpha = .45; cx.fillRect(k.x - 18, k.y - 30, 36, 20); cx.globalAlpha = 1; }
+  cx.fillStyle = T.bubble; rr(k.x + 30, k.y - 14, 9, 9, 2); cx.fill(); cx.strokeStyle = T.muted; cx.lineWidth = 1; cx.stroke();
   // oda süsü
-  cx.fillStyle = c; cx.globalAlpha = .55;
-  if (d.id === "sanat") { cx.fillRect(r.x + r.w - 52, r.y + 40, 30, 38); }
-  if (d.id === "seviye") { for (let i = 0; i < 4; i++) cx.fillRect(r.x + r.w - 70 + i * 14, r.y + 50 + (i % 2) * 10, 10, 10); }
-  if (d.id === "qa") { cx.beginPath(); cx.arc(r.x + r.w - 40, r.y + 60, 14, 0, 7); cx.fill(); }
-  if (d.id === "yayin") { cx.fillRect(r.x + r.w - 60, r.y + 40, 12, 40); cx.fillRect(r.x + r.w - 44, r.y + 52, 12, 28); cx.fillRect(r.x + r.w - 28, r.y + 64, 12, 16); }
-  if (d.id === "unity") { cx.fillRect(r.x + r.w - 60, r.y + 44, 40, 26); }
-  if (d.id === "yapim") { cx.fillRect(r.x + r.w - 70, r.y + 40, 50, 6); cx.fillRect(r.x + r.w - 70, r.y + 52, 36, 6); cx.fillRect(r.x + r.w - 70, r.y + 64, 44, 6); }
+  cx.fillStyle = c; cx.globalAlpha = .6;
+  if (d.id === "sanat") { rr(r.x + 22, r.y + 50, 30, 38, 3); cx.fill(); cx.fillStyle = T.bubble; cx.fillRect(r.x + 26, r.y + 54, 22, 24); }
+  if (d.id === "seviye") { for (let i = 0; i < 4; i++) cx.fillRect(r.x + 24 + i * 14, r.y + 56 + (i % 2) * 10, 10, 10); }
+  if (d.id === "qa") { cx.beginPath(); cx.arc(r.x + 40, r.y + 66, 14, 0, 7); cx.fill(); }
+  if (d.id === "yayin") { cx.fillRect(r.x + 24, r.y + 50, 12, 40); cx.fillRect(r.x + 40, r.y + 62, 12, 28); cx.fillRect(r.x + 56, r.y + 74, 12, 16); }
+  if (d.id === "unity") { rr(r.x + 22, r.y + 52, 46, 30, 3); cx.fill(); }
+  if (d.id === "yapim") { cx.fillRect(r.x + 22, r.y + 50, 54, 6); cx.fillRect(r.x + 22, r.y + 62, 38, 6); cx.fillRect(r.x + 22, r.y + 74, 46, 6); }
   cx.globalAlpha = 1;
+  plantAt(r.x + r.w - 22, r.y + r.h - 30, .9);
+  lampGlow(r.x + r.w - 22, r.y + 40, 60, sk);
 }
-function drawLounge() {
-  cx.fillStyle = T.floor; cx.fillRect(lounge.x, lounge.y, lounge.w, lounge.h);
-  cx.strokeStyle = T.wall; cx.lineWidth = 6; cx.strokeRect(lounge.x, lounge.y, lounge.w, lounge.h);
-  cx.fillStyle = T.hall; cx.fillRect(lounge.x - 4, 500, 8, 40);
-  cx.fillStyle = T.ink; cx.font = "700 20px 'Barlow Condensed', sans-serif"; cx.textBaseline = "top"; cx.fillText("DİNLENME SALONU", lounge.x + 14, lounge.y + 10);
-  cx.fillStyle = T.claudeDark; cx.globalAlpha = .7; cx.fillRect(120, 552, 160, 26); cx.fillRect(120, 532, 160, 10); cx.globalAlpha = 1;   // kanepe
-  cx.fillStyle = T.screen; cx.fillRect(412, 478, 36, 34); cx.fillStyle = T.glow; cx.fillRect(420, 486, 8, 6);                        // kahve makinesi
-  cx.fillStyle = "#2f7d55"; cx.globalAlpha = .8; cx.fillRect(600, 552, 100, 20); cx.globalAlpha = 1; cx.fillStyle = T.bubble; cx.fillRect(648, 548, 4, 28); // pinpon
-  cx.fillStyle = "#2f7d55"; cx.beginPath(); cx.arc(860, 500, 18, 0, 7); cx.fill(); cx.fillStyle = T.desk; cx.fillRect(850, 512, 20, 18);  // bitki
+function clock(x, y) {
+  const d = new Date(), h = d.getHours() % 12 + d.getMinutes() / 60, m = d.getMinutes() + d.getSeconds() / 60;
+  cx.fillStyle = T.bubble; cx.beginPath(); cx.arc(x, y, 13, 0, 7); cx.fill(); cx.strokeStyle = T.wall; cx.lineWidth = 2.5; cx.stroke();
+  cx.lineWidth = 2; cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x + Math.sin(h / 12 * 6.283) * 7, y - Math.cos(h / 12 * 6.283) * 7); cx.stroke();
+  cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x + Math.sin(m / 60 * 6.283) * 10, y - Math.cos(m / 60 * 6.283) * 10); cx.stroke();
 }
-function drawAgent(a, now) {
-  const walking = a.mode === "walk";
-  const working = a.mode === "work" && !a.path.length;
-  const bob = walking ? Math.abs(Math.sin(now * 10 + a.phase)) * 3 : working ? Math.sin(now * 14 + a.phase) * 1 : Math.sin(now * 2 + a.phase) * 1.2;
-  const jump = a.cheer > now ? Math.abs(Math.sin(now * 9)) * 14 : 0;
-  const x = a.x, y = a.y - bob - jump;
-  // gölge
-  cx.fillStyle = T.wall; cx.globalAlpha = .18; cx.beginPath(); cx.ellipse(a.x, a.y + 2, 13, 4, 0, 0, 7); cx.fill(); cx.globalAlpha = 1;
-  // bacaklar
-  cx.strokeStyle = T.claudeDark; cx.lineWidth = 4; cx.lineCap = "round";
-  const sw = walking ? Math.sin(now * 12 + a.phase) * 5 : 0;
-  cx.beginPath(); cx.moveTo(x - 5, y - 6); cx.lineTo(x - 5 + sw, y); cx.moveTo(x + 5, y - 6); cx.lineTo(x + 5 - sw, y); cx.stroke();
-  // gövde (yuvarlak kare)
-  cx.fillStyle = T.claude; const bw = 26, bh = 24, bx = x - bw / 2, by = y - 6 - bh;
-  cx.beginPath(); cx.roundRect ? cx.roundRect(bx, by, bw, bh, 9) : cx.rect(bx, by, bw, bh); cx.fill();
-  // atkı (departman rengi)
-  cx.fillStyle = T.dept[a.id]; cx.fillRect(bx, by + bh - 7, bw, 5);
-  // gözler
-  cx.fillStyle = T.wall; const ex = a.face * 2;
-  const blink = (Math.floor(now * 1.3 + a.phase) % 5 === 0) && (now * 1.3 + a.phase) % 1 < .12;
-  if (a.mode === "rest" && a.spot?.kind === "sofa") { cx.fillRect(x - 7 + ex, by + 10, 5, 2); cx.fillRect(x + 2 + ex, by + 10, 5, 2); }
-  else if (blink) { cx.fillRect(x - 7 + ex, by + 10, 5, 2); cx.fillRect(x + 2 + ex, by + 10, 5, 2); }
-  else { cx.fillRect(x - 6 + ex, by + 7, 4, 6); cx.fillRect(x + 3 + ex, by + 7, 4, 6); }
-  // kollar: çalışırken klavye
-  if (working) { cx.strokeStyle = T.claudeDark; cx.lineWidth = 3; const k = Math.sin(now * 20 + a.phase) * 2;
-    cx.beginPath(); cx.moveTo(bx + 2, by + 14); cx.lineTo(bx - 3, by + 18 + k); cx.moveTo(bx + bw - 2, by + 14); cx.lineTo(bx + bw + 3, by + 18 - k); cx.stroke(); }
-  // isim
-  cx.fillStyle = T.ink; cx.font = "600 11px 'Barlow', sans-serif"; cx.textAlign = "center"; cx.textBaseline = "top";
-  cx.fillText(deptOf(a.id).short, x, a.y + 5); cx.textAlign = "left";
-  // konuşma balonu
-  if (a.say && now < a.sayUntil) {
-    const lines = wrapText(a.say, 24); cx.font = "500 12px 'Barlow', sans-serif";
-    const tw = Math.max(...lines.map(l => cx.measureText(l).width)) + 14, th = lines.length * 15 + 8;
-    let qx = Math.min(W - tw - 4, Math.max(4, x - tw / 2)), qy = by - th - 10;
-    cx.fillStyle = T.bubble; cx.strokeStyle = T.wall; cx.lineWidth = 1.5;
-    cx.beginPath(); cx.roundRect ? cx.roundRect(qx, qy, tw, th, 6) : cx.rect(qx, qy, tw, th); cx.fill(); cx.stroke();
-    cx.beginPath(); cx.moveTo(x - 4, qy + th); cx.lineTo(x, qy + th + 7); cx.lineTo(x + 4, qy + th); cx.fill();
-    cx.fillStyle = T.bubbleInk; cx.textBaseline = "top"; lines.forEach((l, i) => cx.fillText(l, qx + 7, qy + 5 + i * 15));
+function drawLounge(sk) {
+  floor(lounge.x, lounge.y, lounge.w, lounge.h); walls(lounge.x, lounge.y, lounge.w, lounge.h);
+  cx.fillStyle = T.hall; cx.fillRect(lounge.x - 4, LY - 20, 8, 40); cx.fillRect(lounge.x + lounge.w - 4, LY - 20, 8, 40);
+  cx.fillStyle = T.ink; cx.font = "700 19px 'Barlow Condensed', sans-serif"; cx.textBaseline = "top"; cx.fillText("DİNLENME SALONU", lounge.x + 14, lounge.y + 10);
+  windowAt(lounge.x + 170, lounge.y + 8, 120, sk); clock(lounge.x + 330, lounge.y + 22);
+  // halı
+  cx.fillStyle = T.rug; rr(110, 566, 150, 52, 10); cx.fill(); cx.strokeStyle = T.rug2; cx.lineWidth = 3; rr(116, 572, 138, 40, 8); cx.stroke();
+  // kanepe
+  cx.fillStyle = T.sofaDark; rr(108, 584, 128, 26, 8); cx.fill(); cx.fillStyle = T.sofa; rr(112, 598, 120, 18, 6); cx.fill();
+  cx.fillStyle = T.sofaDark; rr(104, 590, 10, 26, 4); cx.fill(); rr(230, 590, 10, 26, 4); cx.fill();
+  // gazete köşesi: iki koltuk + sehpa + gazetelik
+  for (const s of spots.paper) { cx.fillStyle = T.sofaDark; rr(s.x - 16, s.y - 12, 32, 22, 7); cx.fill(); cx.fillStyle = T.sofa; rr(s.x - 13, s.y - 2, 26, 14, 5); cx.fill(); }
+  cx.fillStyle = T.desk; rr(338, 588, 22, 16, 3); cx.fill(); cx.fillStyle = T.paper; cx.fillRect(341, 584, 16, 6);
+  // kahve makinesi, su sebili
+  cx.fillStyle = T.screen; rr(450, 488, 26, 34, 4); cx.fill(); cx.fillStyle = T.glow; cx.fillRect(456, 494, 6, 5); cx.fillStyle = T.desk; cx.fillRect(444, 520, 38, 6);
+  cx.fillStyle = "#9cc9e6"; rr(518, 482, 20, 20, 6); cx.fill(); cx.fillStyle = T.bubble; rr(516, 500, 24, 24, 3); cx.fill(); cx.strokeStyle = T.muted; cx.lineWidth = 1; cx.stroke();
+  plantAt(578, 500, 1.1); plantAt(84, 506, 1);
+  lampGlow(260, 500, 90, sk); lampGlow(470, 500, 70, sk);
+}
+function drawFamily(sk) {
+  floor(family.x, family.y, family.w, family.h);
+  cx.globalAlpha = .12; cx.fillStyle = T.heart; cx.fillRect(family.x, family.y, family.w, family.h); cx.globalAlpha = 1;
+  walls(family.x, family.y, family.w, family.h);
+  cx.fillStyle = T.hall; cx.fillRect(family.x - 4, LY - 20, 8, 40);
+  cx.fillStyle = T.ink; cx.font = "700 19px 'Barlow Condensed', sans-serif"; cx.textBaseline = "top"; cx.fillText("EŞ ODASI", family.x + 14, family.y + 10);
+  windowAt(family.x + 190, family.y + 8, 110, sk);
+  // kalpli halı
+  cx.fillStyle = T.rug2; rr(650, 570, 250, 50, 12); cx.fill();
+  cx.fillStyle = T.heart; for (const hx of [690, 780, 870]) heartShape(hx, 594, 6);
+  // iki kanepe
+  for (const pair of spots.couple) {
+    const x0 = pair[0].x - 22, x1 = pair[1].x + 22;
+    cx.fillStyle = T.sofaDark; rr(x0, pair[0].y - 14, x1 - x0, 24, 8); cx.fill(); cx.fillStyle = T.sofa; rr(x0 + 4, pair[0].y, x1 - x0 - 8, 16, 6); cx.fill();
   }
+  // çay masası + vazo
+  cx.fillStyle = T.desk; rr(752, 600, 36, 16, 4); cx.fill(); cx.fillStyle = T.bubble; cx.fillRect(758, 596, 6, 6); cx.fillRect(776, 596, 6, 6);
+  cx.fillStyle = T.pot; rr(910, 500, 14, 18, 4); cx.fill(); cx.fillStyle = T.heart; for (const [dx, dy] of [[0, -6], [-5, -2], [5, -2]]) { cx.beginPath(); cx.arc(917 + dx, 500 + dy, 4, 0, 7); cx.fill(); }
+  lampGlow(780, 500, 90, sk);
 }
-let last = performance.now() / 1000, thinkAt = 0;
-function frame() {
-  const now = performance.now() / 1000, dt = Math.min(.05, now - last); last = now;
-  if (now > thinkAt) { agents.forEach(a => think(a, now)); thinkAt = now + .5; }
-  agents.forEach(a => {
-    step(a, dt, now);
-    if (a.mode === "work" && !a.path.length && now > a.sayUntil + 4) arrive(a, now);
-  });
+function heartShape(x, y, s) { cx.beginPath(); cx.moveTo(x, y + s); cx.bezierCurveTo(x - s * 1.6, y - s * .2, x - s * .6, y - s * 1.4, x, y - s * .4); cx.bezierCurveTo(x + s * .6, y - s * 1.4, x + s * 1.6, y - s * .2, x, y + s); cx.fill(); }
+function drawHall() {
   cx.fillStyle = T.hall; cx.fillRect(0, 0, W, H);
-  DEPTS.forEach(drawRoom); drawLounge();
-  [...agents].sort((p, q) => p.y - q.y).forEach(a => drawAgent(a, now));
+  cx.fillStyle = T.hallTile; for (let y = 0; y < H; y += 24) for (let x = (y / 24) % 2 ? 0 : 12; x < W; x += 24) cx.fillRect(x, y, 12, 12);
+  cx.fillStyle = T.ink; cx.font = "600 10px 'Barlow', sans-serif"; cx.textBaseline = "middle";
+  cx.save(); cx.translate(14, H - 60); cx.rotate(-Math.PI / 2); cx.fillText("GİRİŞ", 0, 0); cx.restore();
+}
+function drawChar(o, now) {
+  const walking = o.mode === "walk", working = o.mode === "work" && !o.path.length;
+  const bob = walking ? Math.abs(Math.sin(now * 10 + o.phase)) * 3 : working ? Math.sin(now * 14 + o.phase) : Math.sin(now * 2 + o.phase) * 1.2;
+  const jump = o.cheer > now ? Math.abs(Math.sin(now * 9)) * 14 : 0;
+  const sitDrop = o.sit ? 6 : 0;
+  const x = o.x, y = o.y - bob - jump + sitDrop;
+  const body = o.kind === "spouse" ? T[o.color] : T.claude, dark = o.kind === "spouse" ? T.muted : T.claudeDark;
+  cx.fillStyle = "rgba(0,0,0,.18)"; cx.beginPath(); cx.ellipse(o.x, o.y + 2, 13, 4, 0, 0, 7); cx.fill();
+  if (!o.sit) {
+    cx.strokeStyle = dark; cx.lineWidth = 4; cx.lineCap = "round";
+    const sw = walking ? Math.sin(now * 12 + o.phase) * 5 : 0;
+    cx.beginPath(); cx.moveTo(x - 5, y - 6); cx.lineTo(x - 5 + sw, y); cx.moveTo(x + 5, y - 6); cx.lineTo(x + 5 - sw, y); cx.stroke();
+  }
+  const bw = o.kind === "spouse" ? 24 : 26, bh = 24, bx = x - bw / 2, by = y - 6 - bh;
+  cx.fillStyle = body; rr(bx, by, bw, bh, 9); cx.fill();
+  cx.fillStyle = "rgba(255,255,255,.18)"; rr(bx + 3, by + 2, bw - 10, 6, 3); cx.fill();
+  if (o.kind === "agent") { cx.fillStyle = T.dept[o.id]; cx.fillRect(bx, by + bh - 7, bw, 5); }
+  else { cx.fillStyle = T.heart; cx.beginPath(); cx.moveTo(x - 7, by - 1); cx.lineTo(x - 1, by + 3); cx.lineTo(x - 7, by + 7); cx.fill(); cx.beginPath(); cx.moveTo(x + 5, by - 1); cx.lineTo(x - 1, by + 3); cx.lineTo(x + 5, by + 7); cx.fill(); }
+  // yüz
+  const ex = o.face * 2, t = now * 1.3 + o.phase, blink = Math.floor(t) % 5 === 0 && t % 1 < .12;
+  cx.fillStyle = T.wall;
+  const asleep = o.mode === "rest" && o.sit;
+  if (asleep || blink) { cx.fillRect(x - 7 + ex, by + 10, 5, 2); cx.fillRect(x + 2 + ex, by + 10, 5, 2); }
+  else { cx.fillRect(x - 6 + ex, by + 7, 4, 6); cx.fillRect(x + 3 + ex, by + 7, 4, 6); }
+  cx.fillStyle = T.cheek; cx.globalAlpha = .7; cx.beginPath(); cx.arc(x - 8 + ex, by + 15, 2.5, 0, 7); cx.arc(x + 8 + ex, by + 15, 2.5, 0, 7); cx.fill(); cx.globalAlpha = 1;
+  if (working) {
+    cx.strokeStyle = dark; cx.lineWidth = 3; const k = Math.sin(now * 20 + o.phase) * 2;
+    cx.beginPath(); cx.moveTo(bx + 2, by + 14); cx.lineTo(bx - 3, by + 18 + k); cx.moveTo(bx + bw - 2, by + 14); cx.lineTo(bx + bw + 3, by + 18 - k); cx.stroke();
+  }
+  if (o.prop === "paper") {   // gazete yüzün önünde
+    cx.fillStyle = T.paper; rr(x - 15, by + 4, 30, 20, 2); cx.fill(); cx.strokeStyle = T.paperInk; cx.lineWidth = 1; cx.stroke();
+    cx.fillStyle = T.paperInk; cx.fillRect(x - 12, by + 7, 24, 3); for (let i = 0; i < 3; i++) cx.fillRect(x - 12, by + 13 + i * 3.5, 10, 1.2), cx.fillRect(x + 1, by + 13 + i * 3.5, 11, 1.2);
+  }
+  cx.fillStyle = T.ink; cx.font = "600 11px 'Barlow', sans-serif"; cx.textAlign = "center"; cx.textBaseline = "top";
+  cx.fillText(o.kind === "agent" ? deptOf(o.id).short : o.name, x, o.y + 5); cx.textAlign = "left";
+  if (o.say && now < o.sayUntil) bubble(x, by, o.say, o.sayHeart);
+}
+function wrapText(text, max) {
+  const words = String(text).split(/\s+/), lines = []; let cur = "";
+  for (const w of words) { if ((cur + " " + w).trim().length > max) { if (cur) lines.push(cur); cur = w; } else cur = (cur + " " + w).trim(); }
+  if (cur) lines.push(cur);
+  return lines.length > 2 ? [lines[0], lines[1].slice(0, max - 1) + "…"] : lines;
+}
+function bubble(x, by, text, heart) {
+  const lines = wrapText(text, 26); cx.font = "500 12px 'Barlow', sans-serif";
+  const tw = Math.max(...lines.map(l => cx.measureText(l).width)) + 14, th = lines.length * 15 + 8;
+  const qx = Math.min(W - tw - 4, Math.max(4, x - tw / 2)), qy = Math.max(4, by - th - 10);
+  cx.fillStyle = heart ? T.heart : T.bubble; cx.strokeStyle = T.wall; cx.lineWidth = 1.5;
+  rr(qx, qy, tw, th, 7); cx.fill(); cx.stroke();
+  cx.beginPath(); cx.moveTo(x - 4, qy + th); cx.lineTo(x, qy + th + 7); cx.lineTo(x + 4, qy + th); cx.fill();
+  cx.fillStyle = heart ? T.bubble : T.bubbleInk; cx.textBaseline = "top"; lines.forEach((l, i) => cx.fillText(l, qx + 7, qy + 5 + i * 15));
+}
+let last = nowS(), thinkAt = 0;
+function frame() {
+  const now = nowS(), dt = Math.min(.05, now - last); last = now;
+  if (now > thinkAt) { agents.forEach(a => think(a, now)); spouses.slice().forEach(s => spouseThink(s, now)); scheduleVisit(now); thinkAt = now + .4; }
+  agents.forEach(a => { step(a, dt, now); if (a.mode === "work" && !a.path.length && now > a.sayUntil + 4) arrive(a, now); });
+  spouses.forEach(s => step(s, dt, now));
+  const sk = sky(now);
+  drawHall(); DEPTS.forEach(d => drawRoom(d, sk, now)); drawLounge(sk); drawFamily(sk);
+  [...agents, ...spouses].sort((p, q) => p.y - q.y).forEach(o => drawChar(o, now));
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 cv.addEventListener("click", e => {
   const b = cv.getBoundingClientRect(), x = (e.clientX - b.left) * W / b.width, y = (e.clientY - b.top) * H / b.height;
   let best = null, bd = 30;
-  for (const a of agents) { const d = Math.hypot(a.x - x, a.y - 15 - y); if (d < bd) { bd = d; best = a; } }
-  if (!best) { const ar = area({ x, y }); if (rooms[ar]) best = agents.find(a => a.id === ar); }
+  for (const o of [...agents, ...spouses]) { const d = Math.hypot(o.x - x, o.y - 15 - y); if (d < bd) { bd = d; best = o; } }
+  const box = $("inspect"); box.replaceChildren();
+  const add = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; el.textContent = text; box.append(el); return el; };
+  if (best && best.kind === "spouse") { box.style.setProperty("--c", "var(--heart)"); add("b", "", best.name); add("div", "note", deptOf(best.host.id).name + " ajanının eşi, ziyarete geldi."); return; }
+  if (!best) { const ar = areaOf({ x, y }); if (rooms[ar]) best = agents.find(a => a.id === ar);
+    else if (ar === "family") { box.style.setProperty("--c", "var(--heart)"); add("b", "", "Eş odası"); add("div", "note", spouses.length ? `${spouses.length} ziyaretçi var.` : "Şu an ziyaretçi yok; eşler ara sıra uğrar."); return; }
+    else if (ar === "lounge") { box.style.setProperty("--c", "var(--copper)"); add("b", "", "Dinlenme salonu"); add("div", "note", "Kanepe, gazete köşesi, kahve ve su. Boştaki ajanlar burada dinlenir ve sohbet eder."); return; } }
   if (!best) return;
   const d = deptOf(best.id), doing = deptTasks(best.id, "doing"), todo = deptTasks(best.id, "todo"), done = deptTasks(best.id, "done");
-  const box = $("inspect"); box.style.setProperty("--c", `var(--d-${d.id})`); box.replaceChildren();
-  const b1 = document.createElement("b"); b1.textContent = d.name; box.append(b1, document.createTextNode(` · ${d.role}`));
-  const p = document.createElement("div"); p.className = "note";
-  p.textContent = doing.length ? `Şu an: ${doing.map(t => t.title).join(" · ")}` : best.mode === "wait" ? `Karar bekliyor: ${deptTasks(best.id, "blocked").map(t => t.title).join(" · ")}` : "Şu an boşta, dinleniyor.";
-  const q = document.createElement("div"); q.className = "note"; q.textContent = `${done.length} iş bitti · ${todo.length} sırada`;
-  box.append(p, q);
+  box.style.setProperty("--c", `var(--d-${d.id})`);
+  add("b", "", d.name); box.append(document.createTextNode(` · ${d.role}`));
+  const state = { work: "çalışıyor", wait: "karar bekliyor", paper: "gazete okuyor", chat: "sohbet ediyor", visit: "eşiyle oturuyor", visitSeat: "eşine gidiyor", rest: "dinleniyor", wander: "odasında dolaşıyor", break: "molada", walk: "yürüyor" }[best.mode] || "boşta";
+  add("div", "note", doing.length ? `Şu an: ${doing.map(t => t.title).join(" · ")}` : `Şu an ${state}.`);
+  add("div", "note", `${done.length} iş bitti · ${todo.length} sırada`);
 });
 
 /* ---------------- tahta ---------------- */
@@ -391,17 +617,16 @@ render();
 /* ---------------- canlı veri ---------------- */
 function setLive(text, on) { $("liveText").textContent = text; $("liveDot").className = "dot" + (on ? "" : " off"); }
 (async () => {
-  const db = await claude.use("db");
+  const db = window.claude ? await window.claude.use("db") : null;
   if (!db) { setLive("Canlı veriye bu görünümde ulaşılamıyor; claude.ai'de oturum açıkken aç.", false); return; }
   setLive("Bağlandı. Ajanlar işe göre hareket eder.", true);
   db.doc("studio/info").onSnapshot(s => { const d = s.data(); if (d?.name) $("studioName").textContent = d.name; }, () => {});
   db.doc("live/now").onSnapshot(s => {
     const d = s.data(); if (!d) return;
-    const t = Date.parse(d.at || "") / 1000;
-    const age = Date.now() / 1000 - t;
-    live = { dept: d.dept, text: d.text, t: performance.now() / 1000 - (isNaN(age) ? 0 : age) };
+    const age = Date.now() / 1000 - Date.parse(d.at || "") / 1000;
+    live = { dept: d.dept, text: d.text, t: nowS() - (isNaN(age) ? 0 : age) };
     const a = agents.find(x => x.id === d.dept);
-    if (a && age < 600) { say(a, d.text, 8); }
+    if (a && age < 600) say(a, d.text, 8);
     setLive(`${deptOf(d.dept).name}: ${d.text}`, age < 600);
   }, () => {});
   db.collection("projects").onSnapshot(s => { projects = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)); render(); }, () => {});
@@ -410,7 +635,7 @@ function setLive(text, on) { $("liveText").textContent = text; $("liveDot").clas
     const prev = new Map(tasks.map(t => [t.id, t.status]));
     tasks = s.docs.map(d => ({ id: d.id, ...d.data() }));
     if (!first) for (const t of tasks) if (t.status === "done" && prev.get(t.id) !== "done") {
-      const a = agents.find(x => x.id === t.dept); if (a) { a.cheer = performance.now() / 1000 + 2.5; say(a, "Bitti! " + t.title, 5); }
+      const a = agents.find(x => x.id === t.dept); if (a) { a.cheer = nowS() + 2.5; say(a, "Bitti! " + t.title, 5); log(deptOf(t.dept).short + ": " + t.title + " bitti"); }
     }
     first = false; render();
   }, () => setLive("Kartlar okunamadı; sayfayı yenile.", false));
