@@ -174,27 +174,30 @@ namespace Jumpline.EditorTools
         private static void BuildHome(Screen s)
         {
             // docs/flow_ui/anamenu_A.jpg — gece Diyarbakır arka planı, bazalt-bakır sahne halkası, dev safran OYNA
-            var logo = Add(s.top, "Logo", new Rect(318f, 6f, 480f, 240f));
+            // dikey düzen ekran boyuna uyar: logo üstte, sahne + kısayollar ortada (Middle), OYNA altta — kısa (16:9)
+            // telefonlarda OYNA kurdeleye binmez, uzunlarda boşluk eşit dağılır
+            var logo = Add(s.top, "Logo", new Rect(358f, 4f, 400f, 200f));
             var li = logo.go.AddComponent<Image>();
             li.sprite = Skin["logo"];
             li.preserveAspect = true;
             li.raycastTarget = false;
-            var stage = Add(s.top, "StageWindow", new Rect(218f, 300f, 680f, 680f));
+            var stage = Add(s.mid, "StageWindow", new Rect(253f, 375f, 610f, 610f));
             var sti = stage.go.AddComponent<Image>();
             sti.sprite = circle;
             sti.color = Hex("#16203C", 0.85f);
             stage.go.AddComponent<Mask>().showMaskGraphic = true;
             // sıradaki rakibin karikatür portresi (kullanıcı isteği 13 Eki: koşucu yerine canavar)
-            var legendBox = Add(stage, "LegendPortrait", new Rect(218f, 300f, 680f, 680f));
+            var legendBox = Add(stage, "LegendPortrait", new Rect(253f, 375f, 610f, 610f));
             var legendImg = legendBox.go.AddComponent<Image>();
             legendImg.sprite = LegendArt(0);
             legendImg.preserveAspect = true;
             legendImg.raycastTarget = false;
-            var ring = SkinImage(s.top, "StageRing", new Rect(168f, 250f, 780f, 780f), "stage_ring", true);
-            Link(MakeButton(new Box(ring.rectTransform, new Rect(168f, 250f, 780f, 780f)), ring), MenuLink.LinkAction.Open, "book");
-            AddSparkles(s.top, new Rect(168f, 250f, 780f, 780f), 8, 40f);
+            var ringRect = new Rect(208f, 330f, 700f, 700f);
+            var ring = SkinImage(s.mid, "StageRing", ringRect, "stage_ring", true);
+            Link(MakeButton(new Box(ring.rectTransform, ringRect), ring), MenuLink.LinkAction.Open, "book");
+            AddSparkles(s.mid, ringRect, 8, 40f);
             // kurdele gövdesi resmin %15-%62 yüksekliğinde; yazı tam gövdeye ortalı
-            var legendName = RibbonLabel(s.top, "LegendName", new Rect(248f, 1022f, 620f, 150f), "TEPEGOZ", 46f, false);
+            var legendName = RibbonLabel(s.mid, "LegendName", new Rect(278f, 1010f, 560f, 136f), "TEPEGOZ", 44f, false);
             var hlp = s.screen.gameObject.AddComponent<HomeLegendPortrait>();
             Set(hlp, "image", legendImg);
             Set(hlp, "nameLabel", legendName);
@@ -207,26 +210,29 @@ namespace Jumpline.EditorTools
             kp.arraySize = keys.Length;
             for (int i = 0; i < keys.Length; i++) kp.GetArrayElementAtIndex(i).stringValue = keys[i];
             hso.ApplyModifiedPropertiesWithoutUndo();
-            // sol kısayollar (görevler / etkinlikler / karakter)
-            (string icon, string label, string target)[] side = { ("scroll", "TASKS", "tasks"), ("calendar-star", "EVENTS", "events"), ("helmet", "CHARACTER", "character") };
+            // kısayollar: solda görevler / etkinlikler / karakter, sağda aynası hızlı yarış / envanter / geliştir
+            // (16 Eki kullanıcı isteği: her şey simetrik — iki sütun ekran ortasına göre ayna, OYNA tam ortada)
+            const float sideSize = 130f, sideMargin = 24f;
+            (string icon, string label, string target, bool left)[] side =
+            {
+                ("scroll", "TASKS", "tasks", true), ("calendar-star", "EVENTS", "events", true), ("helmet", "CHARACTER", "character", true),
+                ("bolt", "QUICK RACE", null, false), ("backpack", "INVENTORY", "inventory", false), ("speed_boost", "UPGRADE", "upgrade", false),
+            };
             for (int i = 0; i < side.Length; i++)
             {
-                var r = new Rect(24f, 300f + i * 200f, 130f, 130f);
-                var sb = Add(s.top, "Side" + side[i].target, r);
+                float x = side[i].left ? sideMargin : RefSize.x - sideMargin - sideSize;
+                var r = new Rect(x, 370f + (i % 3) * 200f, sideSize, sideSize);
+                string id = side[i].target ?? "quickrace";
+                var sb = Add(s.mid, "Side" + id, r);
                 var sbi = sb.go.AddComponent<Image>();
                 SkinSprite(sbi, "tab", r);
                 Icon(sb, side[i].icon, new Rect(r.x + 14f, r.y + 10f, 102f, 102f), Color.white);
-                Txt(s.top, "Side" + side[i].target + "Label", side[i].label, new Rect(r.x - 20f, r.yMax - 6f, 170f, 44f), fExtra, 24f, Color.white);
-                Link(MakeButton(sb, sbi), MenuLink.LinkAction.Open, side[i].target);
+                Txt(s.mid, "Side" + id + "Label", side[i].label, new Rect(r.center.x - 85f, r.yMax - 6f, 170f, 44f), fExtra, 24f, Color.white);
+                if (side[i].target != null) Link(MakeButton(sb, sbi), MenuLink.LinkAction.Open, side[i].target);
+                else Starts(MakeButton(sb, sbi), RunMode.QuickRace);
             }
-            Link(GlassPlayButton(s.bot, "PlayButton", new Rect(148f, 1188f, 680f, 230f), "PLAY", 128f), MenuLink.LinkAction.Open, "map");
-            var mode = Add(s.bot, "QuickRaceMode", new Rect(852f, 1200f, 206f, 206f));
-            var mi = mode.go.AddComponent<Image>();
-            SkinSprite(mi, "btn_turquoise", new Rect(852f, 1200f, 206f, 206f), 0.4f);
-            Icon(mode, "bolt", new Rect(892f, 1220f, 126f, 126f), Color.white);
-            Txt(mode, "Label", "QUICK RACE", new Rect(852f, 1340f, 206f, 50f), fExtra, 24f, Color.white);
-            Starts(MakeButton(mode, mi), RunMode.QuickRace);
-            Starts(TagButton(s.bot, "DailyChallengeButton", new Rect(188f, 1470f, 740f, 120f), "DAILY CHALLENGE", false, 44f), RunMode.Daily);
+            Link(GlassPlayButton(s.bot, "PlayButton", new Rect((RefSize.x - 680f) * 0.5f, 1250f, 680f, 220f), "PLAY", 124f), MenuLink.LinkAction.Open, "map");
+            Starts(TagButton(s.bot, "DailyChallengeButton", new Rect((RefSize.x - 700f) * 0.5f, 1500f, 700f, 112f), "DAILY CHALLENGE", false, 42f), RunMode.Daily);
         }
 
         // ---------------------------------------------------------------------
@@ -753,22 +759,23 @@ namespace Jumpline.EditorTools
             var gold = Txt(s.top, "GoldText", "GOLD: 5000", new Rect(296f, 246f, 430f, 66f), fExtra, 42f, C.Gold, TextAlignmentOptions.Right, localize: false);
             Icon(s.top, "coin", new Rect(744f, 246f, 66f, 66f), Color.white);
 
-            Txt(s.top, "DurationsHeader", "POWER-UP DURATIONS", new Rect(63f, 330f, 990f, 50f), fBold, 34f, Hex("#C9CCD6"));
+            // başlık ile ilk kartın kurdelesi (kartın 34 px üstüne taşar) arasında boşluk kalsın
+            Txt(s.top, "DurationsHeader", "POWER-UP DURATIONS", new Rect(63f, 338f, 990f, 50f), fBold, 34f, Hex("#C9CCD6"));
             var rows = new List<Dictionary<string, object>>();
             for (int i = 0; i < PowerUpRows.Length; i++)
             {
                 var pu = PowerUpRows[i];
-                float y = 395f + i * 345f;
-                var sec = Section(s.top, pu.id, pu.title, new Rect(63f, y, 990f, 325f));
-                Icon(sec, pu.icon, new Rect(93f, y + 108f, 180f, 180f), Color.white);
-                Txt(sec, "Desc", pu.desc, new Rect(300f, y + 104f, 720f, 40f), fMedium, 28f, Hex("#B5B9C6"), TextAlignmentOptions.Left);
-                RectTransform fill = ProgressBar(sec, "Bar", new Rect(300f, y + 152f, 720f, 28f), 0.5f);
-                var value = Txt(sec, "Value", "0", new Rect(300f, y + 186f, 300f, 46f), fExtra, 36f, Color.white, TextAlignmentOptions.Left, localize: false);
-                var level = Txt(sec, "Level", "", new Rect(620f, y + 186f, 400f, 46f), fBold, 30f, C.TextGrey, TextAlignmentOptions.Right, localize: false);
-                Button button = BoxButton(sec, "UpgradeButton", new Rect(400f, y + 240f, 520f, 76f), "", 32f, out TextMeshProUGUI cost, false);
+                float y = 440f + i * 340f;
+                var sec = Section(s.top, pu.id, pu.title, new Rect(63f, y, 990f, 318f));
+                Icon(sec, pu.icon, new Rect(103f, y + 100f, 170f, 170f), Color.white);
+                Txt(sec, "Desc", pu.desc, new Rect(300f, y + 96f, 690f, 40f), fMedium, 28f, Hex("#B5B9C6"), TextAlignmentOptions.Left);
+                RectTransform fill = ProgressBar(sec, "Bar", new Rect(300f, y + 142f, 690f, 28f), 0.5f);
+                var value = Txt(sec, "Value", "0", new Rect(300f, y + 174f, 300f, 46f), fExtra, 36f, Color.white, TextAlignmentOptions.Left, localize: false);
+                var level = Txt(sec, "Level", "", new Rect(590f, y + 174f, 400f, 46f), fBold, 30f, C.TextGrey, TextAlignmentOptions.Right, localize: false);
+                Button button = BoxButton(sec, "UpgradeButton", new Rect(385f, y + 226f, 520f, 72f), "", 32f, out TextMeshProUGUI cost, false);
                 rows.Add(new Dictionary<string, object>
                 {
-                    { "bar", new Dictionary<string, object> { { "statId", pu.id }, { "value", value }, { "level", level }, { "fill", fill }, { "fullWidth", 714f }, { "valueFormat", "{0} SEC" } } },
+                    { "bar", new Dictionary<string, object> { { "statId", pu.id }, { "value", value }, { "level", level }, { "fill", fill }, { "fullWidth", 684f }, { "valueFormat", "{0} SEC" } } },
                     { "button", button },
                     { "cost", cost },
                 });
@@ -857,6 +864,8 @@ namespace Jumpline.EditorTools
         {
             SolidBackground(s);
             Link(Header(s.top, "CREDITS"), MenuLink.LinkAction.Back);
+            bool ink = inkBody;
+            inkBody = false;   // jenerik koyu zeminde: açıklama yazıları mürekkep değil açık renk (okunsun)
             var sections = ReadCredits();
             const float lineH = 50f, headH = 120f;
             float contentH = 360f;
@@ -884,6 +893,7 @@ namespace Jumpline.EditorTools
                 }
                 y += 30f;
             }
+            inkBody = ink;
         }
 
         // ---------------------------------------------------------------------

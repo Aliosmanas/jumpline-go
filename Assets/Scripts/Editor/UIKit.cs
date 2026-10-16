@@ -592,13 +592,17 @@ namespace Jumpline.EditorTools
         }
 
         /// <summary>Başlıklı bölüm paneli (AUDIO / GRAPHICS / CONTROLS tarzı).</summary>
+        private const float SectionFrameRef = 420f;   // çerçeve kalınlığı bu boydaki panele göre (≈46 px)
+
         public static Box Section(Box parent, string name, string title, Rect r)
         {
             if (Skin.Count > 0)
             {
                 var sp = Add(parent, name + "Panel", r);
                 var spi = sp.go.AddComponent<Image>();
-                SkinSprite(spi, "panel_basalt", r, 0.11f);   // ince çerçeve: içerik kenara taşmasın
+                // ince çerçeve: içerik kenara taşmasın. Kalınlık panel boyundan bağımsız (uzun panelde kalınlaşıp
+                // yazının ilk harflerini örtüyordu) — her ekranda aynı çerçeve
+                SkinSprite(spi, "panel_basalt", new Rect(r.x, r.y, r.width, Mathf.Min(r.height, SectionFrameRef)), 0.11f);
                 spi.raycastTarget = true;
                 float rw = Mathf.Min(r.width * 0.8f, 640f);
                 RibbonLabel(sp, "Title", new Rect(r.center.x - rw * 0.5f, r.y - 34f, rw, 132f), title, 44f);

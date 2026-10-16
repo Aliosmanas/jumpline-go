@@ -11,9 +11,10 @@ namespace Jumpline.EditorTools
     /// </summary>
     public static class MenuScreenCapture
     {
-        private const int Width = 1116;
-        private const int Height = 2000;
-        private const string OutDir = "Logs/MenuCaptures";
+        // CAP_W / CAP_H ortam değişkeni: başka telefon oranında çekim (örn. Galaxy S23 1080x2340)
+        private static int Width => int.TryParse(System.Environment.GetEnvironmentVariable("CAP_W"), out int w) ? w : 1116;
+        private static int Height => int.TryParse(System.Environment.GetEnvironmentVariable("CAP_H"), out int h) ? h : 2000;
+        private static string OutDir => $"Logs/MenuCaptures/{Width}x{Height}";
 
         /// <summary>Toplu mod: ana menü sahnesini açıp tüm ekranları çeker (-executeMethod).</summary>
         public static void CaptureFromBatch()

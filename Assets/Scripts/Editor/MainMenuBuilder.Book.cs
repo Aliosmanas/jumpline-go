@@ -42,6 +42,13 @@ namespace Jumpline.EditorTools
             var artImg = art.go.AddComponent<Image>();
             artImg.sprite = Skin["bg_book"];
             artImg.raycastTarget = false;
+            // uzun telefonlarda (19.5:9) resmin altı boş kalıyordu: alta resmin aynası (halı deseni kesintisiz sürer)
+            var mirror = Add(s.top, "BookArtMirror", new Rect(0f, 2000f, 1116f, 2092f));
+            mirror.rt.localScale = new Vector3(1f, -1f, 1f);   // merkez pivotlu: üst kenarı asıl resmin alt kenarıyla birleşir
+            var mirrorImg = mirror.go.AddComponent<Image>();
+            mirrorImg.sprite = Skin["bg_book"];
+            mirrorImg.raycastTarget = false;
+            mirror.rt.SetSiblingIndex(art.rt.GetSiblingIndex());
 
             // başlık kurdelesi + geri + ilerleme
             Chrome(RibbonLabel(s.top, "Title", new Rect(178f, 30f, 760f, 180f), "LEGENDS BOOK", 60f, true, fTitle));

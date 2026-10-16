@@ -79,6 +79,7 @@ namespace Jumpline.Core
             { "EPIC", "DESTANSI" },
             { "LEGENDARY", "EFSANEVİ" },
             { "GOLD", "ALTIN" },
+            { "GEMS", "ELMAS" },
             { "PURCHASED! (DEV: FREE)", "SATIN ALINDI! (GELİŞTİRİCİ: ÜCRETSİZ)" },
             { "STORE COMING SOON", "MAĞAZA YAKINDA" },
             { "Attracts nearby coins automatically.", "Yakındaki altınları otomatik çeker." },
