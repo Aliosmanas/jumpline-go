@@ -3,7 +3,8 @@ import bpy, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tex_export
 ROOT = r"D:\Repolar\junpline"
-for n in ["Humbaba", "Karakoncolos", "StoneGuardian", "Lamassu", "VanMonster", "Sahmeran", "Dragon"]:
+NAMES = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else ["Tepegoz", "Humbaba", "Karakoncolos", "StoneGuardian", "Lamassu", "VanMonster", "Sahmeran", "Dragon"]
+for n in NAMES:
     bpy.ops.wm.open_mainfile(filepath=os.path.join(ROOT, "Blender", "rigged", n + ".blend"))
     arm = next(o for o in bpy.data.objects if o.type == "ARMATURE"); arm.name = n + "Rig"
     for o in bpy.data.objects:

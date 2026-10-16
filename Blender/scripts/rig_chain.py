@@ -276,8 +276,11 @@ def legs(ph, amp):
             if len(ns) > 1: rot_world(ns[1], X, -amp * 0.6 * max(0.0, math.sin(ph + off + 0.8)))
 
 
+ARM_REST = -1.15   # Meshy modeli T pozunda: kollar her klipte ~65° aşağı (dinlenme)
+
+
 def arms(lift_l, lift_r, fwd_l=0.0, fwd_r=0.0):
-    for s, lift, fwd, sg in (("l", lift_l, fwd_l, 1), ("r", lift_r, fwd_r, -1)):
+    for s, lift, fwd, sg in (("l", lift_l + ARM_REST, fwd_l, 1), ("r", lift_r + ARM_REST, fwd_r, -1)):
         ns = BR.get("arm_" + s, [])
         if ns:
             rot_world(ns[0], Y, -sg * lift); rot_world(ns[0], X, -fwd)
@@ -305,22 +308,24 @@ UPW = UP          # dik gövde
 TL = TAIL
 DR = NAME == "Dragon"
 
-make("Idle", 80, lambda t: (wave(UPW, 0.035, TAU * t), wave(TL, 0.06, TAU * t + 1), wings(0.12 * math.sin(TAU * t)) if DR else None,
-                            arms(0.05 * math.sin(TAU * t), 0.05 * math.sin(TAU * t)), root_bob(0.01 * H * math.sin(TAU * t))), True)
+make("Idle", 60, lambda t: (wave(UPW, 0.07, TAU * t), wave(TL, 0.14, TAU * t + 1), up_chain_pitch(0.08 * math.sin(TAU * t)),
+                            wings(0.25 * math.sin(TAU * t)) if DR else None,
+                            arms(0.12 * math.sin(TAU * t), 0.12 * math.sin(TAU * t + 0.6), 0.1 * math.sin(TAU * t), -0.1 * math.sin(TAU * t)),
+                            root_bob(0.02 * H * math.sin(TAU * t))), True)
 
 
 def run(t):
     ph = TAU * t
     if DR:
-        legs(ph, 0.55); wave(TL, 0.18, ph * 1 + 0.5); wave(UPW, 0.05, ph); wings(0.35 * math.sin(ph))
-        root_bob(0.03 * H * abs(math.sin(ph)))
+        legs(ph, 0.75); wave(TL, 0.3, ph * 1 + 0.5); wave(UPW, 0.08, ph); wings(0.7 * math.sin(ph))
+        up_chain_pitch(0.12 + 0.08 * math.sin(2 * ph)); root_bob(0.05 * H * abs(math.sin(ph)))
     else:   # kıvrılarak kayma: yan dalga gövdeden kuyruğa akar, dik kısım öne eğik
-        up_chain_pitch(0.35); wave(UPW, 0.10, ph, axis=Z, grow=False); wave(TL, 0.28, ph * 1 + 1.0, freq=1.3)
-        arms(0.25 + 0.15 * math.sin(ph), 0.25 - 0.15 * math.sin(ph), 0.3 * math.sin(ph), -0.3 * math.sin(ph))
-        root_bob(0.015 * H * math.sin(2 * ph))
+        up_chain_pitch(0.4 + 0.1 * math.sin(2 * ph)); wave(UPW, 0.18, ph, axis=Z, grow=False); wave(TL, 0.5, ph * 1 + 1.0, freq=1.3)
+        arms(0.15 + 0.2 * math.sin(ph), 0.15 - 0.2 * math.sin(ph), 0.7 * math.sin(ph), -0.7 * math.sin(ph))
+        root_bob(0.04 * H * abs(math.sin(ph)))
 
 
-make("Run", 24, run, True)
+make("Run", 20, run, True)
 
 
 def roar(t):
