@@ -28,13 +28,19 @@ FACADE = 5.5            # ev cephesi (yol ortasından)
 LANE_EDGE = 3.6         # şerit dışı bant başlangıcı (kaldırım süsü)
 MAP_GAP_X = 70.0        # haritalar yan yana
 
-# oyunla uyumlu hareket (PlayerController): basamak 0.35, zıplama tepe 1.9 m, ~5.7 m yol (8 m/sn), kafa 1.7 / kayarken 1.0
+# oyunla birebir hareket (PlayerController, 16 Eki): basamak 0.35, düşme payı 0.25, zıplama tepe 1.9 m, yerçekimi 30·(v/run),
+# yay uzunluğu = 2·√(2H/g)·v → bölüm 1 başı 8.5 m, tavan hız 10.7 m, bölüm 10 tavan 13.6 m; kafa 1.7 / kayarken 1.0
 STEP = 0.25
 STEP_UP = 0.35
+SNAP_DOWN = 0.25
 JUMP_H = 1.9
-JUMP_MIN, JUMP_MAX = 2.5, 5.5
+GRAVITY = 30.0
+FAST_DROP = 26.0
+SPEED_CASES = ((12.0, 12.0), (19.0, 12.0), (23.5, 15.6))   # (anlık hız, bölüm koşu hızı)
+TOL_TIME = 0.06          # zıplama zamanlaması payı (± sn): bu kadar erken/geç kalkış da geçmeli → adil
+LANE_SHIFT = 0.08        # şerit değişimi (sn) — oyunda keskinlik 16, şerit sınırını ~0.05 sn'de geçer
+REACT_TIME = 0.2        # inişten sonra en az bu kadar düz koşu (tepki payı, Subway Surfers mantığı)
 HEAD, SLIDE_HEAD = 1.7, 1.0
-LANE_CHANGE = 3.0
 BAND = 1.0              # şerit çarpışma yarı genişliği (araç tavanı için)
 
 # ---------------------------------------------------------------------------------------------- model kütüphanesi
@@ -180,6 +186,13 @@ class MapBuilder:
             prof = self._profile(o, ("ramp", model, rz))
             if best is None or prof[2] < best[1][2]: best = (rz, prof)
             bpy.data.objects.remove(o, do_unlink=True)
+        # Unity AutoSegments(ramp) ile aynı: ilk %80'in tepesine (×0.95) ilk ulaşılan dilime kadar kesintisiz düz eğim
+        prof = list(best[1]); nn = len(prof)
+        lim = max(2, int(nn * 0.8)); peak = max(prof[:lim])
+        top = 0
+        while top < lim - 1 and prof[top] < peak * 0.95: top += 1
+        for i in range(top): prof[i] = 0.05 + (prof[top] - 0.05) * i / max(1, top)
+        best = (best[0], prof)
         o = self._copy("G_" + model, f"{y:05.1f}_{model}_Rampa_{lane:+d}{tag}", best[0])
         mn, mx = self._put(o, self.lx(lane), y, 0.0)
         self.solids.append((lane, mn.y, mx.y, "profile", best[1]))
@@ -453,7 +466,7 @@ class MapBuilder:
         bpy.context.view_layer.update()
 
     # ---------------------------------------------------------------------------------- geçilebilirlik simülasyonu
-    def solve(self, length):
+    def _grid(self, length):
         n = int(math.ceil(length / STEP)) + 1
         surf = [[0.0] * n for _ in range(3)]
         ceil_lo = [[1e9] * n for _ in range(3)]
@@ -472,88 +485,184 @@ class MapBuilder:
                 elif kind == "ceiling":
                     ceil_lo[li][i] = min(ceil_lo[li][i], data[0])
                     ceil_hi[li][i] = max(ceil_hi[li][i], data[1])
-        W = int(LANE_CHANGE / STEP)
+        return n, surf, ceil_lo, ceil_hi
+
+    def solve(self, length):
+        """Her hız durumunda (SPEED_CASES) üç şeritten de başlayıp sona ulaşılmalı; portal en az birinde erişilir.
+        16 Eki: oyun fiziğiyle birebir (zıplama yayı hıza göre 8.5–13.6 m, kenardan düşme yayı, havada şerit değiştirme,
+        hızlı iniş) + adil zamanlama: zıplama, kalkış ±TOL_TIME sn kaysa da geçerli olmalı."""
+        n, surf, ceil_lo, ceil_hi = self._grid(length)
+        self.last_traps = []
+        ok_all, portal_hits, per_lane = True, {id(p): False for p in self.portals}, []
+        for v, run in SPEED_CASES:
+            ok, seen_all, lanes = self._solve_speed(n, surf, ceil_lo, ceil_hi, v, run)
+            ok_all = ok_all and ok
+            per_lane.append(lanes)
+            for p in self.portals:
+                pi = int(p["y"] / STEP)
+                if any(k[0] in range(pi - 2, pi + 3) and k[1] == p["lane"] + 1 and abs(k[2] - p["z"]) < 0.5 for k in seen_all):
+                    portal_hits[id(p)] = True
+        return ok_all, all(portal_hits.values()), per_lane
+
+    def _solve_speed(self, n, surf, ceil_lo, ceil_hi, v, run):
+        from collections import deque
+        k2 = max(1.0, v / run)                          # JumpScale² (yerçekimi çarpanı)
+        g = GRAVITY * k2
+        L = 2 * math.sqrt(2 * JUMP_H / g) * v           # zıplama yay uzunluğu (m)
+        tol = max(1, int(round(TOL_TIME * v / STEP)))
+        W = max(2, int(math.ceil(LANE_SHIFT * v / STEP)))
+        drop_slope = FAST_DROP * math.sqrt(k2) / v     # hızlı iniş: metre başına düşüş
+        lane_sw = (0.25, 0.5, 0.75)                     # havada şerit değiştirme anı (yay oranı)
+
+        def ceil_ok(li, i, z, head):
+            lo, hi = ceil_lo[li][i], ceil_hi[li][i]
+            return lo > 1e8 or z >= hi or z + head <= lo
 
         def can_walk(li, i, h):
             s = surf[li][i]
-            if s > h + STEP_UP: return False                       # duvar / yüksek basamak
-            return ceil_lo[li][i] > 1e8 or ceil_lo[li][i] - s > SLIDE_HEAD + 0.05   # tavan varsa altından kayılır
+            if s > h + STEP_UP: return False
+            return ceil_lo[li][i] > 1e8 or ceil_lo[li][i] - s > SLIDE_HEAD + 0.05
 
-        def ok_air(li, i, z):
-            if surf[li][i] > z - 0.02: return False
-            lo, hi = ceil_lo[li][i], ceil_hi[li][i]
-            if lo < 1e8 and not (z >= hi or z + 1.0 <= lo): return False
+        memo = {}
+
+        def fly(i, l, h, tl, sw, drop_at, vz0):
+            """Havada uçuş (zıplama vz0>0 ya da kenardan düşme vz0=0): iniş durumu ya da None (çarpma / düşüş ölümü)."""
+            key = (i, l, round(h, 2), tl, sw, drop_at, vz0 > 0)
+            if key in memo: return memo[key]
+            res = None
+            k = 0
+            zprev = h
+            dropping = False
+            while True:
+                k += 1
+                j = i + k
+                if j >= n:
+                    res = (n - 1, tl, 0.0) if zprev < 50 else None
+                    break
+                d = k * STEP
+                t = d / v
+                if dropping:
+                    z = zprev - drop_slope * STEP
+                else:
+                    z = h + vz0 * t - 0.5 * g * t * t
+                    if drop_at is not None and d >= drop_at * L and z <= zprev: dropping = True
+                frac = d / L if L > 0 else 1
+                lane_k = tl if (tl == l or frac >= sw) else l
+                s = surf[lane_k][j]
+                if z <= s:
+                    if s <= zprev + STEP_UP and lane_k == tl:      # üstten indi (basamak payı)
+                        res = (j, tl, s)
+                    break                                          # yüzüne çarptı → None
+                if not ceil_ok(lane_k, j, z, HEAD): break
+                if z < -2.0: break
+                zprev = z
+            memo[key] = res
+            return res
+
+        vz0 = math.sqrt(2 * g * JUMP_H)
+
+        def actions(i, l, h):
+            """Durumdan yapılabilecek hamleler: her biri, hepsi iyi olması gereken sonuç grubu (zıplamada ±tol kardeşleri)."""
+            acts = []
+            s = surf[l][i + 1]
+            if can_walk(l, i + 1, h):
+                if s >= h - SNAP_DOWN: acts.append(((i + 1, l, s),))
+                else:                                           # kenardan düştü: yay boyunca in
+                    r = fly(i, l, h, l, 1.0, None, 0.0)
+                    if r: acts.append((r,))
+            for d in (-1, 1):
+                tl = l + d
+                if tl < 0 or tl > 2 or i + W >= n: continue
+                hh, ok = h, True
+                for k in range(1, W + 1):
+                    lane_k = l if k <= W // 2 else tl
+                    sk = surf[lane_k][i + k]
+                    if sk > hh + STEP_UP: ok = False; break
+                    if ceil_lo[lane_k][i + k] < 1e8 and ceil_lo[lane_k][i + k] - max(sk, 0) <= SLIDE_HEAD + 0.05: ok = False; break
+                    if sk < hh - SNAP_DOWN:                     # yan şeritte boşluk: düşer
+                        r = fly(i + k, tl, hh, tl, 1.0, None, 0.0)
+                        if r: acts.append((r,))
+                        ok = False; break
+                    hh = sk
+                if ok: acts.append(((i + W, tl, hh),))
+            for tl in (l - 1, l, l + 1):
+                if tl < 0 or tl > 2: continue
+                for sw in (lane_sw if tl != l else (1.0,)):
+                    for drop_at in (None, 0.5):
+                        r = fly(i, l, h, tl, sw, drop_at, vz0)
+                        if r is None: continue
+                        group = [r]
+                        for di in (-tol, tol):                  # zamanlama payı: erken / geç kalkış da geçmeli
+                            ii = i + di
+                            if ii < 0 or ii >= n - 1 or surf[l][ii] > h + STEP_UP or surf[l][ii] < h - SNAP_DOWN: continue
+                            rr = fly(ii, l, h, tl, sw, drop_at, vz0)
+                            if rr is None: group = None; break
+                            group.append(rr)
+                        if group: acts.append(tuple(group))
+            return acts
+
+        def norm(c): return (c[0], c[1], round(c[2], 1))
+
+        # 1) keşif: üç şeritten erişilebilen tüm durumlar (+ zamanlama kardeşleri)
+        acts_of = {}
+        climbs = set()
+        q = deque()
+        for li in range(3):
+            s0 = (0, li, 0.0)
+            acts_of.setdefault(s0, None); q.append(s0)
+        while q:
+            st = q.popleft()
+            i, l, h = st
+            if i >= n - 1: acts_of[st] = (); continue
+            acts = tuple(tuple(norm(c) for c in grp) for grp in actions(i, l, h))
+            acts_of[st] = acts
+            for gi, grp in enumerate(acts):
+                for c in grp:
+                    if c[0] == i + 1 and c[1] == l and c[2] > max(h, 1.0) + 0.05: climbs.add(c)   # yürüyerek (rampa / kalas) tavana çıktı
+                    if c not in acts_of:
+                        acts_of[c] = None; q.append(c)
+        react = max(2, int(math.ceil(REACT_TIME * v / STEP)))
+
+        def clear_ahead(c):
+            """İnişten sonra REACT_TIME boyunca düz koşu engelsiz mi (tepki payı; kenardan düşmek serbest)."""
+            j, l, h = c
+            for k in range(1, react + 1):
+                if j + k >= n: return True
+                s = surf[l][j + k]
+                if s > h + STEP_UP or not ceil_ok(l, j + k, s if s >= h - SNAP_DOWN else h, HEAD): return False
+                if s < h - SNAP_DOWN: return True
+                h = s
             return True
 
-        best = {}   # (i, li) -> yükseklik kümesi
-        from collections import deque
-
-        def start(li):
-            seen = set()
-            q = deque([(0, li, 0.0)])
-            seen.add((0, li, 0.0))
-            reach_end = False
-            while q:
-                i, l, h = q.popleft()
-                if i >= n - 1:
-                    if h <= STEP_UP: reach_end = True
-                    continue
-                cands = []
-                # yürü / kay / tırman / düş
-                s = surf[l][i + 1]
-                if can_walk(l, i + 1, h):
-                    cands.append((i + 1, l, s))
-                # şerit değiştir (W adımda; ilk yarı kendi şeridi, ikinci yarı hedef)
-                for d in (-1, 1):
-                    tl = l + d
-                    if tl < 0 or tl > 2 or i + W >= n: continue
-                    hh, ok = h, True
-                    for k in range(1, W + 1):
-                        lane_k = l if k <= W // 2 else tl
-                        sk = surf[lane_k][i + k]
-                        if sk > hh + STEP_UP: ok = False; break
-                        if ceil_lo[lane_k][i + k] < 1e8 and ceil_lo[lane_k][i + k] - max(sk, 0) <= SLIDE_HEAD + 0.05: ok = False; break
-                        hh = sk
-                    if ok: cands.append((i + W, tl, hh))
-                # zıpla (aynı şeritte ya da çapraz), yay: z(t) = h + 4·H·t(1-t)
-                for tl in (l - 1, l, l + 1):
-                    if tl < 0 or tl > 2: continue
-                    for dist in (JUMP_MIN, 3.5, 4.5, JUMP_MAX):
-                        steps = int(dist / STEP)
-                        j = i + steps
-                        if j >= n: continue
-                        okj = True
-                        landed = None
-                        zprev = h
-                        for k in range(1, steps + 1):
-                            t = k / steps
-                            z = h + 4 * JUMP_H * t * (1 - t)
-                            lane_k = l if (tl == l or k <= steps // 2) else tl
-                            sk = surf[lane_k][i + k]
-                            if t >= 0.5 and sk >= z - 0.02:
-                                # iniyor: bir önceki adımda yüzeyin üstündeydik → üstüne iner; değilse yüzüne çarpar
-                                if sk <= zprev + 0.02 and lane_k == tl:
-                                    landed = (i + k, tl, sk); break
-                                okj = False; break
-                            if not ok_air(lane_k, i + k, z): okj = False; break
-                            zprev = z
-                        if okj:
-                            cands.append(landed or (j, tl, surf[tl][j]))
-                for c in cands:
-                    key = (c[0], c[1], round(c[2], 1))
-                    if key in seen: continue
-                    seen.add(key)
-                    q.append((c[0], c[1], c[2]))
-            return reach_end, seen
-
-        results = [start(li) for li in range(3)]
-        ok_all = all(r[0] for r in results)
-        portal_ok = True
-        for p in self.portals:
-            pi = int(p["y"] / STEP)
-            got = any(any(k[0] in range(pi - 2, pi + 3) and k[1] == p["lane"] + 1 and abs(k[2] - p["z"]) < 0.5 for k in r[1]) for r in results)
-            portal_ok = portal_ok and got
-        return ok_all, portal_ok, [r[0] for r in results]
+        # 2) geriye: sona (yerde) ulaşabilen durumlar — hamlenin tüm kardeşleri iyi olmalı (adil zamanlama)
+        good = {}
+        for st in sorted(acts_of, key=lambda s: -s[0]):
+            i, l, h = st
+            if i >= n - 1: good[st] = h <= STEP_UP; continue
+            good[st] = any(all(good.get(c, False) and (c[0] - i <= W or clear_ahead(c)) for c in grp) for grp in acts_of[st] or ())
+        starts_ok = [good[(0, li, 0.0)] for li in range(3)]
+        traps = [c for c in climbs if not good.get(c, False)]
+        # zıplayarak / şerit değiştirerek tavana inip (iyi bir durumdan) her zamanlamada çıkışsız kalmak da tuzak
+        for st, acts in acts_of.items():
+            if not acts or not good.get(st, False): continue
+            for grp in acts:
+                if len(grp) == 1 and grp[0][0] == st[0] + 1 and grp[0][1] == st[1]: continue   # düz yürüyüş
+                if all(c[2] > 1.0 for c in grp) and not any(good.get(c, False) for c in grp):
+                    traps.append(grp[0])
+                    break
+            if len(traps) > 3: break
+        self.last_traps = getattr(self, "last_traps", []) + [(v, round(c[0] * STEP, 1), c[1] - 1, c[2]) for c in traps[:3]]
+        for c in traps[:1]:                                    # tanı: tuzaktan ulaşılabilen en uzak durum
+            stack, vis, far = [c], {c}, c
+            while stack:
+                s = stack.pop()
+                if s[0] > far[0]: far = s
+                for grp in acts_of.get(s) or ():
+                    for m in grp:
+                        if m not in vis: vis.add(m); stack.append(m)
+            self.last_traps.append(("en_uzak", round(far[0] * STEP, 1), far[1] - 1, far[2], "surf", [round(surf[x][min(n - 1, far[0] + k)], 2) for x in range(3) for k in (1, 4, 8)]))
+        seen_good = {s for s, ok in good.items() if ok}
+        return all(starts_ok) and not traps, seen_good, starts_ok + [len(traps)]
 
     def save_json(self, length, theme, regions=None):
         """Engeller (anlamlı kayıt) + kenar dekoru (kütüphane modeli, konum, dönüş, ölçek) → Unity birebir kurar."""

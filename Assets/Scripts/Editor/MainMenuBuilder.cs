@@ -988,7 +988,8 @@ namespace Jumpline.EditorTools
                     },
                     // 16 Eki 2026 kullanıcı: bölüm 1 hız 8 → 16 m/sn, sonraki bölümler biraz daha hızlı;
                     // yoğunluk chunk zorluğundan gelir (DifficultyDirector: bölüm ilerledikçe eşikler öne çekilir)
-                    runSpeed = 8f + 0.4f * i, maxSpeed = 16f + 0.5f * i,
+                    // 16 Eki (2): "aşırı yavaşız, koştuğumu hissetmiyorum" → bölüm 1: 12 → 19 m/sn
+                    runSpeed = 12f + 0.4f * i, maxSpeed = 19f + 0.5f * i,
                     portalDistance = 1400f + 50f * i,
                     bossHearts = Mathf.Min(6, 4 + i / 3), bossDrift = 1f + 0.07f * i,
                     stoneTint = stops[i].city == "MARDIN" ? new Color(2.1f, 1.75f, 1.2f)      // Mardin: bal rengi kalker

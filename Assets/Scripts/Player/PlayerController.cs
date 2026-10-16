@@ -30,7 +30,7 @@ namespace Jumpline.Player
         [SerializeField, Min(0f)] private float maxSpeed = 18f;
         [Tooltip("Hız eğrisi zaman sabiti (sn): hız = taban + (tavan − taban)·(1 − e^(−t/τ)). " +
                  "τ=110 → 30 sn 1.15x, 1 dk 1.27x, 2 dk 1.42x, 5 dk 1.6x. İlk dakikalar hızlı, sonra yavaşça doyar.")]
-        [SerializeField, Min(1f)] private float speedTimeConstant = 140f;   // denge: hız daha yavaş artar
+        [SerializeField, Min(1f)] private float speedTimeConstant = 80f;   // hız tavana daha çabuk yaklaşır (16 Eki: "aşırı yavaşız")
         [Tooltip("\"HIZLANDI\" yazısı hız çarpanı her bu kadar arttığında çıkar (0.1 = %10).")]
         [SerializeField, Min(0.01f)] private float speedBannerStep = 0.1f;
         [Tooltip("Koşu animasyonunun bu hızda 1x oynadığı varsayılır; üstünde hızlanır.")]
@@ -107,6 +107,8 @@ namespace Jumpline.Player
         [SerializeField, Min(0.5f)] private float fallDeathDepth = 3f;
         [Tooltip("Düşüşten oyun bitti paneline kadar bekleme.")]
         [SerializeField, Min(0f)] private float fallGameOverDelay = 0.9f;
+        [Tooltip("Yeniden doğunca bu kadar sn önden çarpma öldürmez, çarpılan engel kalkar (Subway Surfers mantığı).")]
+        [SerializeField, Min(0f)] private float reviveGrace = 2.5f;
 
         [Header("Görsel")]
         [SerializeField] private Animator animator;
@@ -134,6 +136,7 @@ namespace Jumpline.Player
         private float jumpQueuedUntil = -1f;
         private int laneFrom;            // son şerit değişiminden önceki şerit (yandan çarpınca geri dönülür)
         private float lastStumble = -10f;
+        private float graceUntil = -10f;   // yeniden doğuştan sonra dokunulmazlık bitişi
 
         // zipline: kök (ayak) yolu
         private Vector3 zipA, zipB;
@@ -284,7 +287,7 @@ namespace Jumpline.Player
                 {
                     if (prevY < surface - stepUp)
                     {
-                        Crash(ref p, prevY);   // yanından/önünden girdi
+                        Collide(ref p, prevY, oldX);   // önden girdiyse ölüm, yandan sek
                         return;
                     }
                     p.y = surface;
@@ -292,11 +295,11 @@ namespace Jumpline.Player
                     state = State.Running;
                     if (slideQueued) StartSlide();                       // havada aşağı kaydırıldı
                     else if (Time.time <= jumpQueuedUntil) Jump();       // inmeden yukarı kaydırıldı
-                    else Trigger(LandTrigger);
+                    else Trigger(RunTrigger);   // 16 Eki kullanıcı: inişte ara hareket yok, doğrudan koşu
                 }
                 else if (surface > p.y + stepUp)
                 {
-                    Crash(ref p, prevY);       // yükselirken engelin yüzüne çarptı
+                    Collide(ref p, prevY, oldX);   // yükselirken: yüz → ölüm, tavana kafa → düş
                     return;
                 }
             }
@@ -316,7 +319,7 @@ namespace Jumpline.Player
                 if (walk > p.y) p.y = walk;
                 if (surface > p.y + stepUp)
                 {
-                    Crash(ref p, prevY);
+                    Collide(ref p, prevY, oldX);
                     return;
                 }
                 if (surface >= p.y - snapDown) p.y = surface;   // düz zemin, rampa çıkışı/inişi
@@ -336,7 +339,7 @@ namespace Jumpline.Player
             float head = state == State.Sliding ? slideHeadHeight : headHeight;
             if (ObstacleField.HitsCeiling(p.x, p.z, p.y, p.y + head))
             {
-                Crash(ref p, prevY);
+                Collide(ref p, prevY, oldX);
                 return;
             }
             if (p.y < groundHeight - fallDeathDepth) BeginFallDeath();
@@ -516,6 +519,7 @@ namespace Jumpline.Player
             diedRaised = false;
             slideQueued = false;
             jumpQueuedUntil = -1f;
+            graceUntil = Time.time + reviveGrace;   // geri sayımda zaman donuk → süre koşu başlayınca işler
             if (animator != null) animator.speed = 1f;
             Trigger(RunTrigger);
         }
@@ -548,11 +552,49 @@ namespace Jumpline.Player
         // Ölüm
         // ------------------------------------------------------------------
 
+        /// <summary>
+        /// 16 Eki kullanıcı: ölüm yalnız aşağı düşme ve önden (yüzle) çarpma. Eski şeritte, eski yükseklikte kalsa da
+        /// bu z'de engele giriyorsa önden çarpmadır → ölüm. Değilse temas yandan (şerit değişimi) ya da üstten
+        /// (zıplarken kafa tavana) → eski şeride sek / düşmeye başla, ölüm yok.
+        /// </summary>
+        private void Collide(ref Vector3 p, float prevY, float oldX)
+        {
+            if (Blocked(oldX, p.z, prevY))
+            {
+                Crash(ref p, prevY);
+                return;
+            }
+            if (Mathf.Abs(p.x - oldX) > 0.0005f)
+            {
+                p.x = oldX;
+                Stumble();
+            }
+            if (Blocked(p.x, p.z, p.y))
+            {
+                p.y = prevY;                                   // kafa tavana değdi ya da yana gömülecekti: eski yükseklik
+                if (verticalVelocity > 0f) verticalVelocity = 0f;
+                if (state != State.Airborne && ObstacleField.SurfaceAt(p.x, p.z, groundHeight) < p.y - snapDown)
+                {
+                    state = State.Airborne;
+                    gravityNow = gravity * JumpScale * JumpScale;
+                    Trigger(FallTrigger);
+                }
+            }
+            transform.position = p;
+        }
+
         private void Crash(ref Vector3 p, float prevY)
         {
             Obstacle hit = ObstacleField.SolidAt(p.x, p.z);
             if (hit == null || ObstacleField.SurfaceAt(p.x, p.z, groundHeight) <= p.y + stepUp)
                 hit = ObstacleField.CeilingHit(p.x, p.z, p.y, p.y + (state == State.Sliding ? slideHeadHeight : headHeight)) ?? hit;
+            if (Time.time < graceUntil)
+            {
+                if (hit != null) hit.gameObject.SetActive(false);   // dokunulmaz: engel kalkar, koşu sürer
+                p.y = Mathf.Max(prevY, groundHeight);
+                transform.position = p;
+                return;
+            }
             if (powerUps != null && powerUps.TryAbsorb(hit, currentSpeed))
             {
                 p.y = Mathf.Max(prevY, groundHeight);   // engel parçalandı: koşmaya devam

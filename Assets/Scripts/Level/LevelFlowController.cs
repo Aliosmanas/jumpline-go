@@ -51,7 +51,7 @@ namespace Jumpline.Level
         [SerializeField] private TMP_Text countdownLabel;
         [SerializeField, Min(1)] private int countdownFrom = 3;
         [Tooltip("Devam edince koşucunun önünden temizlenen mesafe (m).")]
-        [SerializeField, Min(5f)] private float clearAhead = 35f;
+        [SerializeField, Min(5f)] private float clearAhead = 45f;
         [SerializeField] private WorldSwitcher worldSwitcher;
 
         [Header("Canavar kovalaması (kampanya)")]
@@ -286,7 +286,7 @@ namespace Jumpline.Level
             Show(failPanel, false);
             Vector3 p = player.transform.position;
             Vector3 safe = worldSwitcher != null ? worldSwitcher.SafeRevivePoint(p) : new Vector3(p.x, 0f, p.z);
-            Course.ClearRange(safe.z - 8f, safe.z + clearAhead);
+            Course.ClearRange(safe.z - 12f, safe.z + clearAhead);
             if (player.IsDead) player.Revive(safe);
             if (boss != null && boss.gameObject.activeSelf) boss.Recover();
             Time.timeScale = 0f;                                   // geri sayım boyunca dünya donuk

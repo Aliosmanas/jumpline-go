@@ -33,6 +33,17 @@ namespace Jumpline.CameraSystem
         private float smoothedY;
         private float smoothedX;
         private float impulse;
+        private float support;   // koşucunun bastığı yüzey (zemine göre); havadayken son basılan
+
+        // 16 Eki kullanıcı: "arabaların üstüne çıkınca pov küçülüyor" → tavana çıkınca kamera da tam yükselir,
+        // yalnız zıplama yayının bir kısmı (heightFollow) izlenir; aşağı düşüşte yüzey de iner.
+        private float DesiredY()
+        {
+            float rel = target.position.y - BaseY;
+            if (player == null || !player.IsAirborne) support = rel;
+            else support = Mathf.Min(support, rel);
+            return support + (rel - support) * heightFollow;
+        }
 
         private float BaseX => player != null ? player.LaneOriginX : 0f;
         private float BaseY => player != null ? player.GroundHeight : 0f;
@@ -58,7 +69,8 @@ namespace Jumpline.CameraSystem
         public void Snap()
         {
             if (target == null) return;
-            smoothedY = (target.position.y - BaseY) * heightFollow;
+            support = target.position.y - BaseY;
+            smoothedY = DesiredY();
             smoothedX = (target.position.x - BaseX) * sideFollow;
             Apply();
         }
@@ -67,7 +79,7 @@ namespace Jumpline.CameraSystem
         {
             if (target == null) return;
             float dt = Time.deltaTime;
-            smoothedY = Mathf.Lerp(smoothedY, (target.position.y - BaseY) * heightFollow, 1f - Mathf.Exp(-heightSmoothing * dt));
+            smoothedY = Mathf.Lerp(smoothedY, DesiredY(), 1f - Mathf.Exp(-heightSmoothing * dt));
             smoothedX = Mathf.Lerp(smoothedX, (target.position.x - BaseX) * sideFollow, 1f - Mathf.Exp(-sideSmoothing * dt));
             Apply();
             if (player == null) return;

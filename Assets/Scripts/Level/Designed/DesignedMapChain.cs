@@ -27,6 +27,10 @@ namespace Jumpline.Level.Designed
         [SerializeField, Min(0)] private int noRepeat = 8;
         [Tooltip("Bölüm başından bu kadar koşmadan portal konmaz (m).")]
         [SerializeField, Min(0f)] private float portalMinDistance = 600f;
+        [Tooltip("Başlangıçta ilk harita koşucunun bu kadar gerisinden başlar (arkada boşluk görünmesin; o kısmın engelleri temizlenir).")]
+        [SerializeField, Min(0f)] private float startBehind = 30f;
+        [Tooltip("Başlangıçta koşucunun önünde engelsiz kalan yol (m).")]
+        [SerializeField, Min(0f)] private float startClear = 18f;
         [Tooltip("Havuzda tutulan en fazla kopya (bellek).")]
         [SerializeField, Min(3)] private int poolLimit = 10;
         [SerializeField] private int seed;
@@ -62,7 +66,7 @@ namespace Jumpline.Level.Designed
         {
             if (player == null || maps.Length == 0) return;
             float pz = player.transform.position.z;
-            if (live.Count == 0 || pz < live[0].z0 - 40f || pz > nextZ + 5f) { Rebuild(pz); return; }   // ışınlanma (zincir koşucunun 12 m önünden başlar)
+            if (live.Count == 0 || pz < live[0].z0 - 5f || pz > nextZ + 5f) { Rebuild(pz); return; }   // ışınlanma
             while (live.Count > 0 && live[0].z1 < pz - behind) Release(0);
             while (nextZ < pz + ahead) Append();
         }
@@ -74,8 +78,10 @@ namespace Jumpline.Level.Designed
             rng ??= new System.Random();
             if (float.IsNaN(startZ)) startZ = playerZ;
             untilSea = Next(seaEvery);
-            nextZ = playerZ + 12f;            // koşucunun önü birkaç metre boş başlar
+            nextZ = playerZ - startBehind;     // arkada da yol + evler (boşluk görünmesin)
             while (nextZ < playerZ + ahead) Append();
+            foreach (var l in live)            // koşucunun gerisi ve hemen önü engelsiz
+                if (l.z0 < playerZ + startClear) l.inst.ClearRange(-1e7f, playerZ + startClear);
         }
 
         private int Next(Vector2Int r) => rng.Next(r.x, r.y + 1);

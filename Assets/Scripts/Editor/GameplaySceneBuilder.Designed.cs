@@ -61,7 +61,8 @@ namespace Jumpline.EditorTools
         {
             var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
             go.transform.localPosition = Vector3.zero;
-            float baseYaw = src == "D" ? 180f : 0f;
+            // her iki kaynakta da Unity'deki varsayılan duruş Blender'dakinin 180° tersi (ölçüldü: kamyon rampası, minibüs kaputu)
+            float baseYaw = 180f;
             go.transform.localRotation = Quaternion.Euler(0f, baseYaw - yawB, 0f) * prefab.transform.localRotation;
             go.transform.localScale = prefab.transform.localScale;
             var target = new Vector3(mx[0] - mn[0], mx[2] - mn[2], mx[1] - mn[1]);   // Unity eksenleri
@@ -171,7 +172,7 @@ namespace Jumpline.EditorTools
                 switch (it.kind)
                 {
                     case "vehicle":
-                        o.Configure(Obstacle.Kind.Solid, 1.1f, BlockVehicleFront(AutoSegments(o.gameObject, 1.0f, false))
+                        o.Configure(Obstacle.Kind.Solid, 1.0f, BlockVehicleFront(AutoSegments(o.gameObject, 1.0f, false))
                                     ?? new[] { Seg(0f, len, top) });
                         DesignedHint(o, top <= 1.75f ? ObstacleHint.Action.Jump : ObstacleHint.Action.Block);
                         break;

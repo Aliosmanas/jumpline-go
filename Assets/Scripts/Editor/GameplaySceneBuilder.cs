@@ -65,7 +65,7 @@ namespace Jumpline.EditorTools
             var follow = cam.gameObject.AddComponent<Jumpline.CameraSystem.CameraFollow>();
             Set(follow, "target", runner);
             var fso = new SerializedObject(follow);
-            fso.FindProperty("offset").vector3Value = new Vector3(0f, 3.3f, -6.2f);
+            fso.FindProperty("offset").vector3Value = new Vector3(0f, 2.95f, -5.4f);   // 16 Eki: karakter biraz daha büyük görünsün
             fso.ApplyModifiedPropertiesWithoutUndo();
             BuildDust(cam);
             BuildPostFX(cam);

@@ -439,9 +439,60 @@ namespace Jumpline.EditorTools
         /// <summary>Tepegoz.fbx klipleri (Idle/Run döngü) + tetikleyicili controller (BossChase.Anim adları).</summary>
         private static RuntimeAnimatorController SetupTepegozAnimations() => SetupBossAnimations(TepegozPath, TepegozControllerPath);
 
+        // 16 Eki 2026 (kullanıcı: "canavar animasyonları bozuk, sağları solları ayrı oynuyor"): Mixamo iskeletli canavarlar
+        // Humanoid; klipler Mixamo'nun kendi FBX'leri (Blender'dan geçmemiş) → Unity her canavarın orantısına uyarlar.
+        // Koşucudaki kol bozulmasıyla aynı kök: Blender'dan dışa aktarılan Mixamo kliplerinde kemik yönleri bozuluyordu.
+        private const string BossAnimDir = BossDir + "/Anims";
+        private static readonly System.Collections.Generic.HashSet<string> HumanoidBosses = new System.Collections.Generic.HashSet<string>
+            { TepegozPath, HumbabaPath, KarakoncolosPath, StoneGuardianPath, LamassuPath };
+        private static System.Collections.Generic.Dictionary<string, AnimationClip> mixamoBossClips;
+
+        /// <summary>Mixamo canavar klipleri (Assets/Art/Boss/Anims/B_*.fbx, Humanoid): yerinde koşu, kök dönüşü/yatay kayma pozda.</summary>
+        private static System.Collections.Generic.Dictionary<string, AnimationClip> MixamoBossClips()
+        {
+            if (mixamoBossClips != null) return mixamoBossClips;
+            mixamoBossClips = new System.Collections.Generic.Dictionary<string, AnimationClip>();
+            foreach (string n in BossClips)
+            {
+                string path = $"{BossAnimDir}/B_{n}.fbx";
+                if (AssetImporter.GetAtPath(path) is not ModelImporter imp) continue;
+                imp.animationType = ModelImporterAnimationType.Human;
+                imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+                imp.importAnimation = true;
+                imp.materialImportMode = ModelImporterMaterialImportMode.None;
+                imp.SaveAndReimport();
+                var clips = imp.defaultClipAnimations;
+                foreach (var c in clips)
+                {
+                    c.name = n;
+                    c.loopTime = n == "Run" || n == "Idle";
+                    c.lockRootRotation = true; c.keepOriginalOrientation = true;
+                    c.lockRootPositionXZ = true; c.keepOriginalPositionXZ = true;   // ileri kayma yok (BossChase konumlar)
+                    c.lockRootHeightY = true; c.keepOriginalPositionY = true;       // yükseklik pozda (düşüş görünür)
+                }
+                imp.clipAnimations = clips;
+                imp.SaveAndReimport();
+                foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(path))
+                    if (o is AnimationClip clip && !clip.name.StartsWith("__preview")) { mixamoBossClips[n] = clip; break; }
+            }
+            return mixamoBossClips;
+        }
+
         private static RuntimeAnimatorController SetupBossAnimations(string modelPath, string controllerPath)
         {
             if (AssetImporter.GetAtPath(modelPath) is not ModelImporter imp) return null;
+            if (HumanoidBosses.Contains(modelPath))
+            {
+                imp.animationType = ModelImporterAnimationType.Human;
+                imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+                imp.importAnimation = false;
+                imp.SaveAndReimport();
+                Avatar av = null;
+                foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(modelPath)) if (o is Avatar a) av = a;
+                var hc = MixamoBossClips();
+                if (av != null && av.isValid && av.isHuman && hc.Count >= 4) return BuildBossController(controllerPath, hc);
+                Debug.LogWarning($"[Jumpline] {modelPath}: insansı avatar kurulamadı, eski (Generic) kliplerle devam");
+            }
             imp.animationType = ModelImporterAnimationType.Generic;
             imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
             imp.importAnimation = true;
@@ -459,6 +510,12 @@ namespace Jumpline.EditorTools
             var byName = new System.Collections.Generic.Dictionary<string, AnimationClip>();
             foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(modelPath))
                 if (o is AnimationClip clip && !clip.name.StartsWith("__preview")) byName[clip.name] = clip;
+            return BuildBossController(controllerPath, byName);
+        }
+
+        /// <summary>Kükreyerek başlar; Run/Roar/Throw/Hit/Defeat tetikleyicileri; koşu hızı parametreli; kısa kliplerden koşuya döner.</summary>
+        private static RuntimeAnimatorController BuildBossController(string controllerPath, System.Collections.Generic.Dictionary<string, AnimationClip> byName)
+        {
             AssetDatabase.DeleteAsset(controllerPath);
             var ctrl = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
             var sm = ctrl.layers[0].stateMachine;

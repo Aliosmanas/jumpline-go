@@ -26,8 +26,8 @@ namespace Jumpline.Tests
             Assert.AreEqual(8, cfg.Levels.Length, "8 durak");
             Assert.Greater(cfg.GetLevel(3).runSpeed, cfg.GetLevel(1).runSpeed, "hız bölümle artmalı");
             Assert.Greater(cfg.GetLevel(8).maxSpeed, cfg.GetLevel(1).maxSpeed, "tavan hız bölümle artmalı");
-            Assert.AreEqual(8f, cfg.GetLevel(1).runSpeed, 0.01f, "bölüm 1 başlangıç hızı 8 m/sn");
-            Assert.AreEqual(16f, cfg.GetLevel(1).maxSpeed, 0.01f, "bölüm 1 tavan hızı 16 m/sn");
+            Assert.AreEqual(12f, cfg.GetLevel(1).runSpeed, 0.01f, "bölüm 1 başlangıç hızı 12 m/sn");
+            Assert.AreEqual(19f, cfg.GetLevel(1).maxSpeed, 0.01f, "bölüm 1 tavan hızı 19 m/sn");
             Assert.AreSame(cfg.GetLevel(3), director.Current, "seçili bölüm uygulanmalı");
             GameSession.Level = 1;
         }

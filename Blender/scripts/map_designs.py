@@ -11,7 +11,7 @@ import map_kit as K
 L, M, R = -1, 0, 1
 JUMPERS = ["CrateStack", "ClayJug", "Watermelon", "TeaTable", "CrateStack"]
 DODGERS = ["TeaCart", "SimitCart", "MelonStall", "KebabGrill", "BusStop"]
-GAP_JUMP = 8.0          # zıplama/kayma engelleri arası (kullanıcı: 5 m çok zor → 8)
+GAP_JUMP = 12.0         # zıplama/kayma engelleri arası: bir zıplama yayı (8.5–13.6 m) + iniş payı (16 Eki: "imkansız yerler")
 ROW_GAP = 0.3           # yanaşık araçlar
 ROOF_GAP = 3.0          # tavandan tavana atlama boşluğu
 
@@ -172,7 +172,7 @@ def B_cifte_zipla(b, rng, y, mi):
 
 # ------------------------------------------------------------------ C: araç tavanında engel
 def C_tavan_kosusu(b, rng, y, mi):
-    """İki şeritte rampa + otobüs dizisi; tavanda sandık (zıpla) ve bariyer (kay); 3 m atlama; üçüncü şerit tezgâhlarla zor."""
+    """İki şeritte rampa + otobüs dizisi (tavanda engel yok); 3 m atlama; üçüncü şerit tezgâhlarla zor."""
     a, m, c = L * mi, M, R * mi
     _, t0, t1, _ = b.ramp("RampTruck", a, y)
     _, u0, u1, _ = b.ramp("MelonTruck", m, y + 1.0)
@@ -197,9 +197,7 @@ def C_tavan_kosusu(b, rng, y, mi):
             yk += 0.25
         yb = s1 + ROW_GAP + 1.5
         b.plank(ln, by, bz, yb, b.roof_at(ln, yb))
-    for kind, ln, yy, top in roof_obs:
-        if kind == "jump": b.jump("CrateStack", ln, yy, z=b.roof_at(ln, yy), h=1.1)
-        else: b.slide(ln, yy, z=b.roof_at(ln, yy))
+    # 16 Eki kullanıcı: "arabaların üstünde engel çıkmasın" — tavanlar açık koşu
     # üçüncü şerit: yerden geçilir ama yoğun (tezgâh + zıpla)
     yc = y + 4
     while yc < max(ya, ym) - 8:
@@ -436,7 +434,7 @@ def main():
             if ok:
                 done = (b, length, regions, rng, attempt)
                 break
-            print("  YENIDEN", b.name, "deneme", attempt, "seritler", per_lane, "portal", portal_ok)
+            print("  YENIDEN", b.name, "deneme", attempt, "seritler", per_lane, "portal", portal_ok, "tuzak", b.last_traps)
             for o in list(b.coll.objects): bpy.data.objects.remove(o, do_unlink=True)
             bpy.data.collections.remove(b.coll)
         if not done:
