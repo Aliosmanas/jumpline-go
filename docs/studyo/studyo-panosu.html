@@ -67,6 +67,7 @@ h2 { font-family: var(--f-display); font-size: 21px; letter-spacing: .03em; text
 .talk form { display: flex; gap: 8px; flex-wrap: wrap; }
 .talk form input { flex: 1; min-width: 10em; width: auto; }
 .chip:disabled { opacity: .5; cursor: default; }
+.mebar input[type="checkbox"] { width: auto; accent-color: var(--accent); }
 .chip { font: 500 13px var(--f-body); border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .chip:focus-visible, .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -120,6 +121,9 @@ h2 { font-family: var(--f-display); font-size: 21px; letter-spacing: .03em; text
       <label for="meName">Adın <input id="meName" maxlength="16" placeholder="Patron"></label>
       <label for="spName">Eşinin adı <input id="spName" maxlength="16" placeholder="Eşim"></label>
       <button class="chip" type="button" id="callSpouse">Eşimi çağır</button>
+      <label for="fightsOn"><input type="checkbox" id="fightsOn" checked> Kavgalar</label>
+      <label for="uncensored"><input type="checkbox" id="uncensored" checked> Sansürsüz</label>
+      <button class="chip" type="button" id="startFight">Kavga çıkar</button>
       <span class="note">Ofiste bir yere dokun: oraya yürürsün. Bir ajana dokun: yanına gidip konuşursun.</span>
     </div>
     <div class="feed" id="feed" aria-live="polite"></div>
@@ -287,6 +291,7 @@ function think(a, now) {
   if (a.mode === "walk" || a.cheer > now) return;
   if (a.mode === "visit") return;                      // eşiyle (eş kendi gidişini yönetir)
   if (a.mode === "talk") { if (now > a.talkUntil) { a.mode = "rest"; a.until = 0; } return; }   // patronla konuşuyor
+  if (a.mode === "fight" || a.mode === "watch") return;                                           // kavga sistemi yönetir
   if (a.mode === "chat") {
     const b = a.partner;
     if (!b || b.partner !== a) { endChat(a); return; }
@@ -338,7 +343,7 @@ function arrive(a, now) {
 function scheduleVisit(now) {
   if (now < nextVisit || spouses.length >= 2) return;
   nextVisit = now + rnd(70, 140);
-  const free = agents.filter(a => a.mode !== "visit" && a.mode !== "visitSeat" && a.mode !== "talk" && !a.partner && !spouses.some(s => s.host === a));
+  const free = agents.filter(a => !["visit", "visitSeat", "talk", "fight", "watch"].includes(a.mode) && !a.partner && !spouses.some(s => s.host === a));
   const idle = free.filter(a => !hasWork(a));
   const host = pick(idle.length ? idle : free);
   const pair = spots.couple.find(p => !used().has(p[0]) && !used().has(p[1]));
@@ -517,7 +522,9 @@ function drawChar(o, now) {
   const bob = walking ? Math.abs(Math.sin(now * 10 + o.phase)) * 3 : working ? Math.sin(now * 14 + o.phase) : Math.sin(now * 2 + o.phase) * 1.2;
   const jump = o.cheer > now ? Math.abs(Math.sin(now * 9)) * 14 : 0;
   const sitDrop = o.sit ? 6 : 0;
-  const x = o.x, y = o.y - bob - jump + sitDrop;
+  const angry = o.mode === "fight" || o.fightingMe;
+  const shake = angry ? (fightOn && fightOn.phase === "brawl" ? (Math.random() - .5) * 4 : Math.sin(now * 30) * 1.2) : 0;
+  const x = o.x + shake, y = o.y - bob - jump + sitDrop;
   const body = o.kind === "spouse" ? T[o.color] : o.kind === "player" ? T.me : T.claude;
   const dark = o.kind === "spouse" ? T.muted : o.kind === "player" ? T.meDark : T.claudeDark;
   cx.fillStyle = "rgba(0,0,0,.18)"; cx.beginPath(); cx.ellipse(o.x, o.y + 2, 13, 4, 0, 0, 7); cx.fill();
@@ -543,6 +550,10 @@ function drawChar(o, now) {
   const asleep = o.mode === "rest" && o.sit;
   if (asleep || blink) { cx.fillRect(x - 7 + ex, by + 10, 5, 2); cx.fillRect(x + 2 + ex, by + 10, 5, 2); }
   else { cx.fillRect(x - 6 + ex, by + 7, 4, 6); cx.fillRect(x + 3 + ex, by + 7, 4, 6); }
+  if (angry) {   // çatık kaşlar
+    cx.strokeStyle = T.wall; cx.lineWidth = 2; cx.beginPath();
+    cx.moveTo(x - 9 + ex, by + 3); cx.lineTo(x - 3 + ex, by + 6); cx.moveTo(x + 9 + ex, by + 3); cx.lineTo(x + 3 + ex, by + 6); cx.stroke();
+  }
   cx.fillStyle = T.cheek; cx.globalAlpha = .7; cx.beginPath(); cx.arc(x - 8 + ex, by + 15, 2.5, 0, 7); cx.arc(x + 8 + ex, by + 15, 2.5, 0, 7); cx.fill(); cx.globalAlpha = 1;
   if (working) {
     cx.strokeStyle = dark; cx.lineWidth = 3; const k = Math.sin(now * 20 + o.phase) * 2;
@@ -566,7 +577,7 @@ function bubble(x, by, text, heart) {
   const lines = wrapText(text, 26); cx.font = "500 12px 'Barlow', sans-serif";
   const tw = Math.max(...lines.map(l => cx.measureText(l).width)) + 14, th = lines.length * 15 + 8;
   const qx = Math.min(W - tw - 4, Math.max(4, x - tw / 2)), qy = Math.max(4, by - th - 10);
-  cx.fillStyle = heart ? T.heart : T.bubble; cx.strokeStyle = T.wall; cx.lineWidth = 1.5;
+  cx.fillStyle = heart === "angry" ? T.rug2 : heart ? T.heart : T.bubble; cx.strokeStyle = T.wall; cx.lineWidth = 1.5;
   rr(qx, qy, tw, th, 7); cx.fill(); cx.stroke();
   cx.beginPath(); cx.moveTo(x - 4, qy + th); cx.lineTo(x, qy + th + 7); cx.lineTo(x + 4, qy + th); cx.fill();
   cx.fillStyle = heart ? T.bubble : T.bubbleInk; cx.textBaseline = "top"; lines.forEach((l, i) => cx.fillText(l, qx + 7, qy + 5 + i * 15));
@@ -574,7 +585,7 @@ function bubble(x, by, text, heart) {
 let last = nowS(), thinkAt = 0;
 function frame() {
   const now = nowS(), dt = Math.min(.05, now - last); last = now;
-  if (now > thinkAt) { agents.forEach(a => think(a, now)); spouses.slice().forEach(s => spouseThink(s, now)); scheduleVisit(now); thinkAt = now + .4; }
+  if (now > thinkAt) { agents.forEach(a => think(a, now)); spouses.slice().forEach(s => spouseThink(s, now)); scheduleVisit(now); fightThink(now); thinkAt = now + .4; }
   agents.forEach(a => { step(a, dt, now); if (a.mode === "work" && !a.path.length && now > a.sayUntil + 4) arrive(a, now); });
   spouses.forEach(s => step(s, dt, now));
   step(me, dt, now);
@@ -582,9 +593,82 @@ function frame() {
   const sk = sky(now);
   drawHall(); DEPTS.forEach(d => drawRoom(d, sk, now)); drawLounge(sk); drawFamily(sk);
   [...agents, ...spouses, me].sort((p, q) => p.y - q.y).forEach(o => drawChar(o, now));
+  drawFightCloud(now);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+/* ---------------- kavga ---------------- */
+const TRIGGERS = ["Kim benim kahvemi içti lan?!", "Haritamı sen mi bozdun ulan?!", "Commit'imi ezmişsin şerefsiz!", "Rampa yine çalışmıyor, senin yüzünden!",
+  "Tepegöz'ü yine kaçırdın, beceriksiz!", "Masama oturma dedim sana!", "Testi kim kırdı lan?!"];
+const INSULTS = ["Senin ananı sikeyim!", "Orospunun oğlu!", "Dur kaçma gel, ananı laciverte boyayacam!", "Amını patlatacağım piçin oğlu!", "Kahpe dölü!",
+  "Ulan şerefsiz, gel buraya!", "Siktir git lan!", "Bacını sikerim senin!", "Göt herif!", "Yavşak seni!", "Ağzını burnunu kırarım lan!",
+  "Ananın amı!", "Pezevenk!", "Dalyarak!", "Seni orospu çocuğu, gel bakalım!", "Kafanı gözünü yararım lan!"];
+const BOSS_LINES = ["Ne oluyor lan burada?!", "İkinizin de ananı sikeyim, işe dönün!", "Sus lan! Kovarım ikinizi de!", "Siktirin gidin masanıza!", "Ulan şerefsizler, ofis burası!"];
+const CHEERS = ["Vur vur!", "Ooo kavga var!", "Ayırın şunları!", "Patlamış mısır getirin!", "Bırak bırak, değmez!", "Hadi bakalım!"];
+const CALM = ["Neyse… kusura bakma kanka.", "Tamam tamam, bitti.", "Bir dahakine görürsün!", "Hadi işimize bakalım.", "Kahveyi ben ısmarlıyorum, tamam mı?"];
+const BAD = ["sik", "orospu", "piç", "amı", "amın", "kahpe", "göt", "yavşak", "pezevenk", "dalyarak", "şerefsiz", "bacını", "ananı", "ananın"];
+const opt = { fights: store.get("ofis.fights", "1") === "1", raw: store.get("ofis.raw", "1") === "1" };
+function cuss(t) { return opt.raw ? t : t.replace(/[\p{L}']+/gu, w => BAD.some(b => w.toLocaleLowerCase("tr").startsWith(b)) ? w[0] + "*".repeat(Math.max(2, w.length - 1)) : w); }
+let fightOn = null, nextFight = nowS() + rnd(60, 120);
+const FIGHT_SPOTS = [[{ x: 478, y: CY }, { x: 514, y: CY }], [{ x: 300, y: 528 }, { x: 336, y: 528 }], [{ x: 775, y: CY }, { x: 811, y: CY }]];
+const busyMode = m => ["visit", "visitSeat", "talk", "fight", "watch"].includes(m);
+function startFight(force) {
+  if (fightOn || (!opt.fights && !force)) return false;
+  const cand = agents.filter(a => !busyMode(a.mode) && a.after !== "visitSeat" && !a.partner && !spouses.some(s => s.host === a));
+  if (cand.length < 2) return false;
+  const a = pick(cand), b = pick(cand.filter(o => o !== a)), spot = pick(FIGHT_SPOTS);
+  fightOn = { a, b, spot, phase: "approach", turn: 0, next: 0, end: 0, heat: 0, me: false, watchers: [], t0: nowS() };
+  for (const [o, s] of [[a, spot[0]], [b, spot[1]]]) { o.partner = null; o.chat = null; o.spot = null; o.path = route({ x: o.x, y: o.y }, s); o.mode = "walk"; o.after = "fight"; o.sit = false; o.prop = null; }
+  say(a, cuss(pick(TRIGGERS)), 3, "angry");
+  log(`${deptOf(a.id).short} ile ${deptOf(b.id).short} kavgaya tutuştu!`);
+  return true;
+}
+function fightThink(now) {
+  if (!fightOn) { if (opt.fights && now > nextFight) { nextFight = now + rnd(120, 220); startFight(false); } return; }
+  const f = fightOn, a = f.a, b = f.b;
+  if (a.mode !== "fight" || b.mode !== "fight") { if (now - f.t0 > 25) endFight(false); return; }
+  if (f.phase === "approach") { f.phase = "shout"; f.next = now + .4; f.end = now + rnd(18, 26); gatherWatchers(); }
+  a.face = Math.sign(b.x - a.x) || 1; b.face = -a.face;
+  if (now > f.next) {
+    const speakers = f.me ? [a, b, me] : [a, b], who = speakers[f.turn % speakers.length];
+    say(who, cuss(pick(who === me ? BOSS_LINES : INSULTS)), 2.6, "angry");
+    f.turn++; f.next = now + Math.max(1.4, 2.4 - f.heat * .3);
+    if (f.turn >= 4) f.phase = "brawl";
+    for (const w of f.watchers) if (w.mode === "watch" && Math.random() < .35) say(w, pick(CHEERS), 2);
+  }
+  if (now > f.end + (f.me ? 12 : 0)) endFight(false);
+}
+function gatherWatchers() {
+  const f = fightOn;
+  agents.filter(o => o !== f.a && o !== f.b && ["rest", "wander", "paper"].includes(o.mode) && !o.partner).slice(0, 2).forEach((o, i) => {
+    o.spot = null; o.path = route({ x: o.x, y: o.y }, { x: f.spot[0].x - 34 + i * 104, y: f.spot[0].y + 30 }); o.mode = "walk"; o.after = "watch"; o.sit = false; o.prop = null;
+    f.watchers.push(o);
+  });
+}
+function endFight(separated) {
+  const f = fightOn; if (!f) return;
+  fightOn = null; nextFight = nowS() + rnd(120, 220);
+  for (const o of [f.a, f.b]) { o.path = []; o.mode = "rest"; o.until = nowS() + 4; say(o, separated ? pick(["Tamam patron…", "Peki, özür dilerim.", "Haklısın patron."]) : pick(CALM), 3); }
+  for (const w of f.watchers) if (w.mode === "watch" || w.after === "watch") { w.path = []; w.mode = "rest"; w.after = "rest"; w.until = 0; }
+  me.fightingMe = false;
+  log(separated ? "Kavgayı sen ayırdın" : "Kavga bitti");
+  if (talkTarget && (talkTarget === f.a || talkTarget === f.b)) closeTalk();
+}
+function drawFightCloud(now) {
+  const f = fightOn; if (!f || f.phase !== "brawl") return;
+  const mx = (f.a.x + f.b.x) / 2, my = (f.a.y + f.b.y) / 2 - 18;
+  cx.fillStyle = T.muted; cx.globalAlpha = .55;
+  for (let i = 0; i < 9; i++) { const t = now * 6 + i * 0.7; cx.beginPath(); cx.arc(mx + Math.cos(t) * 20, my + Math.sin(t * 1.3) * 12, 9 + (i % 3) * 3, 0, 7); cx.fill(); }
+  cx.globalAlpha = 1; cx.fillStyle = T.crown;
+  for (let i = 0; i < 3; i++) { const t = now * 8 + i * 2.1, sx = mx + Math.cos(t) * 26, sy = my - 14 + Math.sin(t) * 8; cx.beginPath();
+    for (let k = 0; k < 10; k++) { const r = k % 2 ? 2 : 5, ang = k * Math.PI / 5; cx.lineTo(sx + Math.cos(ang) * r, sy + Math.sin(ang) * r); } cx.fill(); }
+}
+$("fightsOn").checked = opt.fights; $("uncensored").checked = opt.raw;
+$("fightsOn").addEventListener("change", e => { opt.fights = e.target.checked; store.set("ofis.fights", opt.fights ? "1" : "0"); if (!opt.fights && fightOn) endFight(false); });
+$("uncensored").addEventListener("change", e => { opt.raw = e.target.checked; store.set("ofis.raw", opt.raw ? "1" : "0"); });
+$("startFight").addEventListener("click", () => { if (!startFight(true)) log(fightOn ? "Zaten kavga var!" : "Kavga edecek boş ajan yok"); });
+const inFight = o => fightOn && (fightOn.a === o || fightOn.b === o);
+
 /* ---------------- sen: yürüme, konuşma, eşin ---------------- */
 let talkTarget = null, sampleFn = null;
 const JOKES = ["Neden Tepegöz hiç kaybolmaz? Tek gözü hep haritada!", "Bug değil, özellik… ta ki QA görene kadar.", "Kahve bitti, derleme de bitmedi.",
@@ -598,7 +682,7 @@ function walkMe(p, mode) {
   me.sit = false; me.path = route({ x: me.x, y: me.y }, p); me.mode = "walk"; me.after = mode || "idle";
 }
 function approach(o) {
-  if (o.kind === "agent") {
+  if (o.kind === "agent" && !inFight(o) && o.mode !== "watch") {
     if (o.partner) { const b = o.partner; endChat(b); endChat(o); }
     if (o.mode !== "visit") { o.path = []; o.mode = "talk"; o.talkUntil = nowS() + 40; }
   }
@@ -612,6 +696,16 @@ function openTalk(o) {
   const box = $("talk"), opts = $("talkOpts"); box.hidden = false; opts.replaceChildren();
   const btn = (label, fn) => { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = label; b.onclick = fn; opts.append(b); };
   $("talkAnswer").textContent = "";
+  if (o.kind === "agent" && inFight(o)) {
+    const f = fightOn, other = f.a === o ? f.b : f.a;
+    box.style.setProperty("--c", "var(--rug2)"); $("talkWho").textContent = "Kavga!"; $("talkRole").textContent = `${deptOf(f.a.id).name} ile ${deptOf(f.b.id).name}`;
+    $("talkAnswer").textContent = "Ne yapacaksın?"; $("askForm").hidden = true;
+    btn("Ayır", () => { say(me, cuss("Ayrılın lan! Herkes masasına!"), 3, "angry"); endFight(true); });
+    btn("Kışkırt", () => { if (!fightOn) return; fightOn.heat++; fightOn.end += 10; fightOn.phase = "brawl"; say(me, pick(["Vur vur! Geri durma!", "Hadi bakalım, göreyim sizi!", "Bırakmayın birbirinizi!"]), 2.5); $("talkAnswer").textContent = "Kavga kızıştı."; });
+    btn("Sen de karış", () => { if (!fightOn) return; fightOn.me = true; me.fightingMe = true; fightOn.end = nowS() + 20; say(me, cuss(pick(BOSS_LINES)), 2.6, "angry"); $("talkAnswer").textContent = "Kavgaya daldın! Ayırmak için tekrar dokun."; });
+    btn("İzle", () => { closeTalk(); say(me, "Patlamış mısır nerede…", 2.5); });
+    return;
+  }
   if (o.kind === "agent") {
     const d = deptOf(o.id);
     box.style.setProperty("--c", `var(--d-${d.id})`); $("talkWho").textContent = d.name; $("talkRole").textContent = d.role;
